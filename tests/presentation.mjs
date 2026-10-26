@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {present, clock, actionInfo} from '../extension/presentation.js';
+assert.equal(clock(3661), '1:01:01');
+assert.equal(clock(-1), '0:00');
+const timer = present({id:'timer',title:'Timer',description:'00:04:32',status:'paused',progress:.4});
+assert.equal(timer.metric, '04:32');
+assert.equal(timer.detail, 'Paused');
+assert.equal(actionInfo('PlayPause','paused')[1], 'Play');
+assert.equal(actionInfo('PlayPause','active')[1], 'Pause');
+const track = present({id:'media:org.mpris.MediaPlayer2.player',title:'Track',description:'Artist',status:'active',position_seconds:83,duration_seconds:214});
+assert.equal(track.elapsed, '1:23');assert.equal(track.duration,'3:34');
+assert.equal(track.subtitle, 'Artist');
+assert.equal(present({id:'external::1:job',title:'Build',description:'Compiling',status:'warning'}).type,'external');
+assert.equal(present(null).state,'idle');
+console.log('PASS: native presentation formatting, pause controls, media timing, external and empty states');

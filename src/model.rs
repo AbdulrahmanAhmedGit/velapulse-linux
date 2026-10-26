@@ -20,6 +20,12 @@ pub struct Activity {
     pub expires_in: u64,
     #[serde(default)]
     pub controls: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub position_seconds: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_seconds: Option<f64>,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub source: String,
 }
 fn active() -> String {
     "active".into()
@@ -38,6 +44,9 @@ impl Activity {
             icon: String::new(),
             expires_in: 300,
             controls: vec![],
+            position_seconds: None,
+            duration_seconds: None,
+            source: String::new(),
         }
     }
     pub fn validate(&self) -> Result<(), String> {
@@ -67,6 +76,12 @@ impl Activity {
             || !(1..=86400).contains(&self.expires_in)
         {
             return Err("invalid progress or expiry".into());
+        }
+        if self.position_seconds.is_some()
+            || self.duration_seconds.is_some()
+            || !self.source.is_empty()
+        {
+            return Err("provider metadata cannot be supplied externally".into());
         }
         if !self.controls.is_empty() {
             return Err("external controls are forbidden".into());

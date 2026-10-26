@@ -32,6 +32,8 @@ with tempfile.TemporaryDirectory() as cfg:
   media=lambda:next((x for x in snapshot(a) if x['id'].startswith('media:')),None)
   track=wait(media)
   assert track['title']=='Fixture track' and track['description']=='Test artist'
+  assert track['duration_seconds']==120 and track['position_seconds']>=10
+  assert track['source']=='VelaPulseFixture'
   assert 'Previous' not in track['controls'] and 'Next' in track['controls']
   p=track['progress'];time.sleep(1.2);assert media()['progress']>p
   call(a,'Command','(sst)',(track['id'],'PlayPause',0))

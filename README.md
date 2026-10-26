@@ -1,6 +1,6 @@
 # VelaPulse
 
-Native Linux live activities with an original forest-and-mint visual identity. A Rust session service drives a GNOME Shell extension and a GTK4 Wayland layer-shell client. This is a working **early milestone**, not a daily-use stability release.
+Native Linux live activities with an original midnight, iris and sea-glass visual identity. A Rust session service drives a GNOME Shell extension and a GTK4 Wayland layer-shell client. This is a working **early milestone**, not a daily-use stability release.
 
 ## What works
 - Countdown timers and stopwatches: start, pause, resume, reset and completion notification.
@@ -8,6 +8,8 @@ Native Linux live activities with an original forest-and-mint visual identity. A
 - UPower battery status and optional PipeWire/WirePlumber volume via `wpctl`.
 - Priority-ordered activities; bounded, connection-owned external activities over session D-Bus.
 - XDG configuration, themes, top/bottom placement, monitor selection, motion preference and daemon autostart.
+- Slim pills with independent icon controls, artwork-first media cards, large timer readouts, activity switching and reduced-motion support.
+- Native preferences with live preview, appearance, size, opacity, position, display, provider visibility and startup settings.
 - GNOME pill/card with outside-click collapse, Escape, focusable controls and lifecycle cleanup.
 - Real layer-shell surface using GTK4, with zero exclusive zone and on-demand expanded keyboard input.
 
@@ -41,6 +43,10 @@ Requires GJS, GTK4 and `gir1.2-gtk4layershell-1.0`/`libgtk4-layer-shell0` (distr
 
 The launcher sets Wayland and preloads gtk4-layer-shell before GTK. Always use it instead of invoking the JavaScript file directly. Unsupported compositors are rejected; GNOME's extension remains independent of future Mutter work. Never run both renderers in the same session unless duplicate UI is intentional.
 
+### Preferences
+
+Open the gear in a card, use `gnome-extensions prefs velapulse@velapulse.local`, or run `./scripts/preferences.sh`. Preferences apply to the running service immediately.
+
 ## External activities
 
 ```sh
@@ -51,9 +57,9 @@ A CLI push is one-shot and expires. Applications updating/removing activities mu
 
 ## Verification and limitations
 
-See [TESTING](docs/TESTING.md), [ROADMAP](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), and [environment](docs/ENVIRONMENT.md). Tested with isolated GNOME 50.1 and Sway 1.11; live service installation verified. The active desktop needs logout/login before its newly installed extension can be shown. Actual Spotify/browser playback, physical monitor hotplug, suspend/resume, fractional scaling and long-running reliability remain unverified.
+See [TESTING](docs/TESTING.md), [ROADMAP](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), and [environment](docs/ENVIRONMENT.md). Tested with isolated GNOME 50.1 and Sway 1.11; live service installation verified. The design update requires logout/login to replace version 1 already loaded by GNOME. Actual Spotify/browser playback, physical monitor hotplug, suspend/resume, fractional scaling and long-running reliability remain unverified.
 
-Audio uses a bounded 15-second fallback rather than native PipeWire subscription. Remote artwork is deliberately not downloaded. Timers are monotonic in-process and not persisted across service restart; suspend time is not included on Linux. Some settings are available only through the JSON configuration API. Layer-shell styling/features are less complete than the GNOME renderer.
+Audio uses a bounded 15-second fallback rather than native PipeWire subscription. Remote artwork is deliberately not downloaded. Timers are monotonic in-process and not persisted across service restart; suspend time is not included on Linux. Activity priorities remain available through the JSON configuration API. Layer-shell styling/features are less complete than the GNOME renderer.
 
 ## License and inspiration
 

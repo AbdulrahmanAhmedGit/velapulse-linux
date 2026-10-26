@@ -47,6 +47,9 @@ with tempfile.TemporaryDirectory() as config:
         assert not os.path.exists(os.path.join(config,'autostart/io.github.velapulse.desktop'))
         assert os.path.exists(os.path.join(config,'velapulse/config.json'))
         call('configure', '{"position":"sideways"}', ok=False)
+        call('configure', '{"opacity":1}', ok=False)
+        call('configure', '{"size":"giant"}', ok=False)
+        call('push', '{"id":"spoof","title":"Spoof","source":"player"}', ok=False)
         # A second daemon must fail, not silently queue behind the existing service.
         second = subprocess.run([bin,'daemon'], env=env,capture_output=True,timeout=5)
         assert second.returncode != 0

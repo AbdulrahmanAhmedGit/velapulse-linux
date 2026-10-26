@@ -11,6 +11,7 @@ cargo build --locked
 ./scripts/test-providers.sh
 node --check extension/extension.js
 node --check backends/layer-shell.js
+node tests/presentation.mjs
 ```
 
 The second test suite requires `/usr/bin/python3` with PyGObject. Tests run on private D-Bus sessions; do not redirect them to the real session. Optional system UPower/wpctl reads are still possible but no system setting is changed.
@@ -20,3 +21,5 @@ For isolated Shell testing use separate XDG_DATA_HOME/XDG_CONFIG_HOME, `GSETTING
 Sway tests used headless backend, pixman rendering and locally extracted Ubuntu packages. The client used `GSK_RENDERER=cairo` to avoid software-headless Vulkan warnings. `cargo build --example test-pointer` builds a small virtual-pointer fixture; use `VELAPULSE_ISOLATED_TEST=1` and an explicitly isolated WAYLAND_DISPLAY. Never point this fixture at a user's live desktop.
 
 Package core and extension independently. `scripts/install-user.sh` installs to user directories; `scripts/uninstall-user.sh` reverses the installation and preserves settings. No system Mutter patching is involved.
+
+Optional preferences integration test on an isolated bus and Wayland display: `VELAPULSE_ISOLATED_TEST=1 gjs -m tests/preferences-smoke.js`. It manipulates actual native controls and verifies the saved D-Bus configuration. libadwaita is required for preferences. Set the private bus activation environment to its test display/XDG directories before testing the extension preferences host; do not let activated applications use the user's real display.

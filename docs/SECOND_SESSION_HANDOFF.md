@@ -14,3 +14,5 @@ Use [the complete implementation prompt](../CODEX_SESSION_2_PROMPT.md). The proj
 - No system compositor was changed. User service installation was explicitly authorized; live extension discovery awaits logout/login.
 
 Locate/clone https://github.com/AbdulrahmanAhmedGit/velapulse-linux and use its actual checkout as VELAPULSE_ROOT. Machine-private paths and transient bus addresses are intentionally not published. Build Mutter in a separate directory/prefix. Use a private bus and isolated display for VelaPulse integration to avoid controlling the user's running instance.
+
+The design refinement adds shared presentation rules, original SVG fallback artwork, native libadwaita preferences, size/opacity settings and provider-owned media timing fields. The core D-Bus interface name and layer-shell contract remain unchanged. Native preferences use the same service and should be launched on the isolated bus/display during compositor testing.

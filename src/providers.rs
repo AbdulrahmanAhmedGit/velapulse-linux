@@ -39,7 +39,15 @@ async fn media(c: &Connection, e: &Shared) -> Vec<(String, i64, i64, Instant)> {
         else {
             continue;
         };
+        let status = p
+            .get_property::<String>("PlaybackStatus")
+            .await
+            .unwrap_or_default();
         let title = text(metadata.get("xesam:title"));
+        // A browser's empty, inactive MPRIS endpoint is not a live activity.
+        if title.is_empty() && status != "Playing" {
+            continue;
+        }
         let mut a = Activity::new(
             &format!("media:{name}"),
             if title.is_empty() {
@@ -57,10 +65,6 @@ async fn media(c: &Connection, e: &Shared) -> Vec<(String, i64, i64, Instant)> {
             .chars()
             .take(512)
             .collect();
-        let status = p
-            .get_property::<String>("PlaybackStatus")
-            .await
-            .unwrap_or_default();
         a.status = if status == "Playing" {
             "active"
         } else {
@@ -72,6 +76,14 @@ async fn media(c: &Connection, e: &Shared) -> Vec<(String, i64, i64, Instant)> {
             .and_then(|v| i64::try_from(v).ok())
             .unwrap_or(0);
         let pos = p.get_property::<i64>("Position").await.unwrap_or(0).max(0);
+        a.position_seconds = Some(pos as f64 / 1_000_000.0);
+        a.duration_seconds = (length > 0).then_some(length as f64 / 1_000_000.0);
+        a.source = name
+            .trim_start_matches("org.mpris.MediaPlayer2.")
+            .split('.')
+            .next()
+            .unwrap_or("Media")
+            .to_string();
         if length > 0 {
             a.progress = Some((pos as f64 / length as f64).clamp(0.0, 1.0));
             if status == "Playing" {
@@ -222,7 +234,7 @@ pub fn spawn(e: Shared, w: Arc<Notify>) {
                     tokio::select! {
                      msg=stream.next()=> {let Some(Ok(msg))=msg else{break};let h=msg.header();let relevant=h.path().is_some_and(|p|p.as_str()==MPRIS_PATH)|| (h.member().is_some_and(|m|m.as_str()=="NameOwnerChanged")&&msg.body().deserialize::<(String,String,String)>().is_ok_and(|(n,_,_)|n.starts_with("org.mpris.MediaPlayer2.")));
                        if relevant {playing=media(&c,&engine).await;wake.notify_one();}},
-                     _=tokio::time::sleep(Duration::from_secs(1)),if !playing.is_empty()=>{let mut e=engine.lock().await;for (id,pos,len,at) in &playing {if let Some(a)=e.providers.get_mut(id){a.progress=Some(((*pos as f64+at.elapsed().as_micros() as f64)/ *len as f64).clamp(0.0,1.0));}}wake.notify_one();}
+                     _=tokio::time::sleep(Duration::from_secs(1)),if !playing.is_empty()=>{let mut e=engine.lock().await;for (id,pos,len,at) in &playing {if let Some(a)=e.providers.get_mut(id){a.position_seconds=Some(((*pos as f64+at.elapsed().as_micros() as f64)/1_000_000.0).min(*len as f64/1_000_000.0));a.progress=Some(((*pos as f64+at.elapsed().as_micros() as f64)/ *len as f64).clamp(0.0,1.0));}}wake.notify_one();}
                     }
                 }
             }
@@ -272,6 +284,16 @@ pub fn spawn(e: Shared, w: Arc<Notify>) {
                         .chars()
                         .take(80)
                         .collect();
+                    a.progress = a
+                        .description
+                        .split_whitespace()
+                        .nth(1)
+                        .and_then(|s| s.parse::<f64>().ok())
+                        .filter(|v| v.is_finite())
+                        .map(|v| v.clamp(0.0, 1.0));
+                    if a.description.contains("MUTED") {
+                        a.status = "paused".into();
+                    }
                     engine.providers.insert(a.id.clone(), a);
                 }
                 w.notify_one();

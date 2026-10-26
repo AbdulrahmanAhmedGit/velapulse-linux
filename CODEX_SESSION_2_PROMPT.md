@@ -32,6 +32,8 @@ On your isolated bus, start `target/release/velapulse daemon`, then `scripts/run
 
 The launcher sets GDK_BACKEND=wayland and preloads libgtk4-layer-shell.so.0. This is essential: without preloading, the first session observed an ordinary xdg toplevel instead of a layer surface. Confirm the compositor receives real layer-shell requests.
 
+The design refinement also includes shared presentation rules, original fallback artwork and native libadwaita preferences. Media snapshots expose source, position_seconds and duration_seconds; none of this changes the compositor contract.
+
 The core owns session bus name `io.github.velapulse.Service`, object `/io/github/velapulse/Service`, interface `io.github.velapulse.Service1`. Snapshot returns JSON `{version:1,activities,config}`; Changed broadcasts snapshots. Command accepts `(id:string, action:string, seconds:uint64)`. Start a timer with `velapulse timer start 300` and verify live UI updates, expand/collapse, controls and positioning. The compositor implementation should require no core API changes.
 
 A gated virtual-pointer fixture exists at `tests/fixtures/wayland_pointer.rs`; build with `cargo build --example test-pointer`. Use it only with VELAPULSE_ISOLATED_TEST=1 and an isolated display. Alternatively write a minimal conformance client. Existing tests established Sway rendering and timer-button input, not complete protocol conformance.

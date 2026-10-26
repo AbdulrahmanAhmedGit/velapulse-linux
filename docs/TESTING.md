@@ -25,3 +25,11 @@ Release daemon, no clocks/player active, UPower and wpctl enabled: 20.00-second 
 Real Spotify/browser-player behavior; end-to-end notification visibility; real keyboard/screen-reader accessibility; fullscreen/lockscreen behavior; fractional scaling; physical monitor hotplug; suspend/resume; timer recovery after restart; long-duration CPU/memory stability. GNOME declares version 50 only. The Python fixture emits a deprecation warning for Gio.register_object on this host but passes; it is test-only code.
 
 CI workflow is supplied. Its hosted result is separate from these local results and must be checked after publication.
+
+## Design refinement validation
+- Midnight/iris/sea-glass styling, content-specific media/timer/power cards and compact icon controls implemented in both native renderers.
+- Pure presentation checks pass for clocks, paused/playing controls, media timing, external and idle states.
+- Native libadwaita widget test passes: selecting size/appearance and toggling motion updates and persists the real service configuration on an isolated bus.
+- Local screenshots inspected for GNOME timer and media cards, GTK battery layout, light appearance and native preferences. Controlled MPRIS fixtures are labeled as test players and do not ship as production providers.
+- Configuration writes are serialized; invalid opacity/size and external attempts to supply provider metadata are rejected by integration tests.
+- Live installed service upgraded; the previous login-started instance was stopped only after verifying no active clocks/external work. The GNOME extension has updated files, but version 1 remains loaded until a new login. Standalone preferences was opened against the live service.

@@ -1,18 +1,54 @@
-.vela-root { color: #f4f1e9; font-family: sans-serif; spacing: 8px; }
-.vela-pill { border-radius: 28px; background-color: #182b2b; border: 1px solid #49625c; padding: 13px 18px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.22); }
-.vela-pill:hover { background-color: #23413b; }
-.vela-pill:focus, .vela-button:focus { border: 2px solid #8fe2c2; }
-.vela-card { border-radius: 24px; padding: 24px; background-color: #132222; border: 1px solid #3c514c; spacing: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.24); }
-.vela-eyebrow { font-size: 10px; font-weight: 700; color: #9bc7b7; padding-top: 8px; }
+.vela-root { color: #f4f2f8; font-family: "Adwaita Sans", sans-serif; spacing: 10px; }
+.vela-pill { background-color: #15161e; border-radius: 26px; border: 1px solid rgba(255,255,255,0.09); padding: 5px; spacing: 3px; box-shadow: 0 5px 18px rgba(0,0,0,0.24); }
+.vela-pill-main { border-radius: 22px; padding: 0; }
+.vela-pill-main:focus { background-color: #333044; }
+.vela-pill-summary { spacing: 10px; }
+.vela-well { width: 34px; height: 34px; border-radius: 18px; }
+.vela-pill-title { font-size: 13px; font-weight: 700; }
+.vela-pill-detail { font-size: 10px; color: #a8a7b5; padding-top: 1px; }
+.vela-inline-controls { spacing: 1px; padding-right: 3px; }
+.vela-icon-button { width: 30px; height: 30px; border-radius: 16px; color: #f4f2f8; background-color: transparent; border: 1px solid transparent; }
+.vela-icon-button:hover { background-color: #35343f; }
+.vela-icon-button:focus, .vela-text-button:focus { border-color: #c7b8fc; background-color: #353142; }
+.vela-card { background-color: #191a23; border: 1px solid rgba(255,255,255,0.08); border-radius: 30px; padding: 21px; spacing: 12px; box-shadow: 0 12px 30px rgba(0,0,0,0.30); }
+.vela-card-header { spacing: 6px; padding-bottom: 2px; }
+.vela-tag { spacing: 7px; }
+.vela-caption { font-size: 11px; font-weight: 600; color: #b5b1c2; }
+.vela-quiet { color: #aaa6b8; width: 27px; height: 27px; }
+.vela-artwork { border-radius: 19px; background-color: #292536; background-size: cover; background-position: center; }
+.vela-source { font-size: 10px; font-weight: 600; color: #b5a4f5; padding-top: 1px; }
 .vela-title { font-size: 23px; font-weight: 700; }
-.vela-detail { font-size: 13px; color: #b6c7c1; }
-.vela-row { spacing: 6px; }
-.vela-button { border-radius: 12px; padding: 8px 10px; font-size: 11px; background-color: #2b403b; border: 1px solid transparent; }
-.vela-button:hover { background-color: #426256; }
-.vela-track { background-color: #30443e; border-radius: 2px; height: 4px; }
-.vela-progress { background-color: #a0edc9; border-radius: 2px; }
-.vela-light { color: #182b27; }
-.vela-light .vela-pill, .vela-light .vela-card { background-color: #f6f3e9; border-color: #b9c7bc; }
-.vela-light .vela-detail, .vela-light .vela-eyebrow { color: #4b6359; }
-.vela-light .vela-button { background-color: #dce7db; }
-.vela-light .vela-progress { background-color: #327858; }
+.vela-subtitle { font-size: 12px; color: #a9a6b7; }
+.vela-track { border-radius: 2px; background-color: #363540; margin-top: 5px; }
+.vela-progress { border-radius: 2px; }
+.vela-times { padding-top: 0; }
+.vela-time-label { font-size: 10px; color: #9c98ab; }
+.vela-transport { spacing: 17px; padding: 3px 0 4px; }
+.vela-primary { width: 58px; height: 58px; border-radius: 30px; background-color: #b5a4f5; color: #211a38; }
+.vela-primary:hover { background-color: #cbbdfb; }
+.vela-secondary { width: 44px; height: 44px; border-radius: 23px; background-color: #2c2c38; }
+.vela-metric-panel { padding: 14px 2px 12px; spacing: 9px; }
+.vela-metric { font-size: 57px; font-weight: 600; font-feature-settings: "tnum"; letter-spacing: -2px; }
+.vela-metric-title { font-size: 17px; font-weight: 600; }
+.vela-summary-panel { padding: 13px 0; spacing: 15px; }
+.vela-activity-rail { spacing: 6px; background-color: #12131a; padding: 4px 8px; border-radius: 20px; }
+.vela-rail-item { width: 28px; height: 28px; color: #777486; }
+.vela-rail-selected { width: 28px; height: 28px; background-color: #393245; color: #d8cbff; }
+.vela-text-button { padding: 10px 14px; border-radius: 14px; background-color: #2a2a35; color: #e8e4f3; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
+.vela-text-button:hover { background-color: #373441; }
+.vela-new-activity { background-color: transparent; color: #a9a4ba; padding: 6px; font-size: 11px; }
+.vela-launcher { spacing: 10px; padding-top: 9px; }
+.vela-presets { spacing: 8px; }
+.vela-preset { padding: 11px 22px; }
+.vela-stopwatch-launch { background-color: transparent; color: #b5a4f5; }
+.vela-battery .vela-metric { color: #8bdcc2; }
+.vela-volume .vela-metric, .vela-stopwatch .vela-metric { color: #a7c9f5; }
+.vela-light { color: #252431; }
+.vela-light .vela-card, .vela-light .vela-pill { background-color: #f1eff6; border-color: rgba(36,31,50,0.10); }
+.vela-light .vela-icon-button { color: #3b354d; }
+.vela-light .vela-caption, .vela-light .vela-subtitle, .vela-light .vela-pill-detail { color: #777084; }
+.vela-light .vela-track { background-color: #d5d0df; }
+.vela-light .vela-secondary, .vela-light .vela-text-button { background-color: #e2ddeb; color: #3a314e; }
+.vela-light .vela-activity-rail { background-color: #e2ddeb; }
+.vela-light .vela-primary { background-color: #b5a4f5; color: #211a38; }
+.vela-light .vela-metric { color: #554876; }

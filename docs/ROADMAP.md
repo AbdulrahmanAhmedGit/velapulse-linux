@@ -10,8 +10,8 @@ Rust core, validated local IPC, priority scheduling, clocks, MPRIS, UPower, volu
 - Replace 15-second wpctl sampling with event-driven audio integration.
 - Add suspend-aware and restart-persistent timer policy, with tests. Current monotonic timers exclude suspend.
 - Remote artwork caching with strict resource/security limits; complete GTK artwork and settings parity.
-- Full preferences dialog for custom durations, providers, priorities and monitor selection.
-- Refine collapse/activity transitions, reduced-motion integration, long titles and accessibility.
+- Arbitrary timer-duration entry and priority controls in preferences. Native preferences now cover provider visibility, appearance, size, opacity, position, display and startup.
+- Continue checking transitions, long titles and accessibility across display sizes. Native animation preferences now respect system reduced motion.
 - Provider restart/backoff stress testing, malformed peer fuzzing and extended soak benchmarks.
 - Standardized packaging and cross-distribution CI; broader GNOME versions only after testing.
 

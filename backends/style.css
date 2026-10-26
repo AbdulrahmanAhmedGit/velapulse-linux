@@ -1,0 +1,56 @@
+window.vela-window { background: transparent; color: #f4f2f8; font-family: "Adwaita Sans", sans-serif; }
+.vela-root { color: #f4f2f8; }
+.vela-pill { background: #15161e; border-radius: 26px; border: 1px solid rgba(255,255,255,.09); padding: 5px; }
+.vela-pill-main { background: transparent; border: none; box-shadow: none; border-radius: 22px; padding: 0; min-height: 0; }
+.vela-pill-title { font-size: 13px; font-weight: 700; }
+.vela-pill-detail { font-size: 10px; color: #a8a7b5; }
+.vela-well { min-width: 34px; min-height: 34px; border-radius: 18px; background: #2a253c; color: #b5a4f5; }
+.vela-inline-controls { padding-right: 3px; }
+.vela-icon-button { padding: 0; min-width: 30px; min-height: 30px; border-radius: 16px; color: #f4f2f8; background: transparent; border: 1px solid transparent; box-shadow: none; }
+.vela-icon-button:hover { background: #35343f; }
+.vela-icon-button:focus-visible, .vela-text-button:focus-visible { outline: 2px solid #c7b8fc; outline-offset: 1px; }
+.vela-card { background: #191a23; border: 1px solid rgba(255,255,255,.08); border-radius: 30px; padding: 21px; }
+.vela-caption { font-size: 11px; font-weight: 600; color: #b5b1c2; }
+.vela-tag image { color: #b5a4f5; }
+.vela-quiet { color: #aaa6b8; min-width: 27px; min-height: 27px; }
+.vela-artwork { border-radius: 19px; background: #292536; }
+.vela-source { font-size: 10px; font-weight: 600; color: #b5a4f5; }
+.vela-title { font-size: 23px; font-weight: 700; }
+.vela-subtitle { font-size: 12px; color: #a9a6b7; }
+.vela-progress trough { min-height: 4px; border: none; border-radius: 2px; background: #363540; }
+.vela-progress progress { min-height: 4px; border-radius: 2px; background: #b5a4f5; border: none; }
+.vela-time-label { font-size: 10px; color: #9c98ab; }
+.vela-transport { padding: 3px 0 4px; }
+.vela-primary { min-width: 58px; min-height: 58px; border-radius: 30px; background: #b5a4f5; color: #211a38; }
+.vela-primary image { -gtk-icon-size: 24px; }
+.vela-primary:hover { background: #cbbdfb; }
+.vela-secondary { min-width: 44px; min-height: 44px; border-radius: 23px; background: #2c2c38; }
+.vela-metric-panel { padding: 14px 2px 12px; }
+.vela-metric { font-size: 57px; font-weight: 600; font-feature-settings: "tnum"; letter-spacing: -2px; }
+.vela-metric-title { font-size: 17px; font-weight: 600; }
+.vela-summary-panel { padding: 13px 0; }
+.vela-activity-rail { background: #12131a; padding: 4px 8px; border-radius: 20px; }
+.vela-rail-item { min-width: 28px; min-height: 28px; color: #777486; }
+.vela-rail-selected { min-width: 28px; min-height: 28px; background: #393245; color: #d8cbff; }
+.vela-text-button { padding: 10px 14px; border-radius: 14px; background: #2a2a35; color: #e8e4f3; font-size: 12px; font-weight: 600; border: 1px solid transparent; box-shadow: none; }
+.vela-text-button:hover { background: #373441; }
+.vela-new-activity { background: transparent; color: #a9a4ba; padding: 6px; font-size: 11px; }
+.vela-launcher { padding-top: 9px; }
+.vela-preset { padding: 11px 22px; }
+.vela-stopwatch-launch { background: transparent; color: #b5a4f5; }
+.vela-battery .vela-metric { color: #8bdcc2; }
+.vela-battery .vela-well { color: #77d5b6; background: #1b332f; }
+.vela-battery .vela-progress progress { background: #77d5b6; }
+.vela-volume .vela-metric, .vela-stopwatch .vela-metric { color: #a7c9f5; }
+.vela-volume .vela-well, .vela-stopwatch .vela-well { color: #89bdf1; background: #202e41; }
+.vela-volume .vela-progress progress, .vela-stopwatch .vela-progress progress { background: #89bdf1; }
+.vela-external .vela-well { color: #f0bd7e; background: #392e23; }
+.vela-light { color: #252431; }
+.vela-light .vela-card, .vela-light .vela-pill { background: #f1eff6; border-color: rgba(36,31,50,.1); }
+.vela-light .vela-icon-button { color: #3b354d; }
+.vela-light .vela-caption, .vela-light .vela-subtitle, .vela-light .vela-pill-detail { color: #777084; }
+.vela-light .vela-progress trough { background: #d5d0df; }
+.vela-light .vela-secondary, .vela-light .vela-text-button { background: #e2ddeb; color: #3a314e; }
+.vela-light .vela-activity-rail { background: #e2ddeb; }
+.vela-light .vela-primary { background: #b5a4f5; color: #211a38; }
+.vela-light .vela-metric { color: #554876; }

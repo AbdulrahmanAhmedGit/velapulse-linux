@@ -5,10 +5,17 @@ cd "$(dirname "$0")/.."
 data="${XDG_DATA_HOME:-$HOME/.local/share}"
 config="${XDG_CONFIG_HOME:-$HOME/.config}"
 bin="$HOME/.local/bin"
-mkdir -p "$bin" "$data/gnome-shell/extensions/velapulse@velapulse.local" "$data/velapulse" "$config/systemd/user"
-install -m 755 target/release/velapulse "$bin/velapulse"
-cp extension/metadata.json extension/extension.js extension/stylesheet.css "$data/gnome-shell/extensions/velapulse@velapulse.local/"
-cp backends/layer-shell.js "$data/velapulse/"
+mkdir -p "$bin" "$data/gnome-shell/extensions/velapulse@velapulse.local" "$data/velapulse/backends" "$data/velapulse/extension/assets" "$config/systemd/user"
+# Replace atomically so updating a running user service is safe.
+install -m 755 target/release/velapulse "$bin/velapulse.new"
+mv "$bin/velapulse.new" "$bin/velapulse"
+cp extension/metadata.json extension/extension.js extension/stylesheet.css extension/prefs.js extension/preferences.js extension/presentation.js "$data/gnome-shell/extensions/velapulse@velapulse.local/"
+mkdir -p "$data/gnome-shell/extensions/velapulse@velapulse.local/assets"
+cp extension/assets/orbit.svg "$data/gnome-shell/extensions/velapulse@velapulse.local/assets/"
+rm -f "$data/velapulse/layer-shell.js"
+cp backends/layer-shell.js backends/preferences.js backends/style.css "$data/velapulse/backends/"
+cp extension/presentation.js extension/preferences.js "$data/velapulse/extension/"
+cp extension/assets/orbit.svg "$data/velapulse/extension/assets/"
 cat > "$config/systemd/user/velapulse.service" <<'UNIT'
 [Unit]
 Description=VelaPulse live activity service
@@ -26,7 +33,17 @@ PrivateTmp=yes
 WantedBy=graphical-session.target
 UNIT
 systemctl --user daemon-reload
-systemctl --user start velapulse.service
+if systemctl --user is-active --quiet velapulse.service; then
+    if "$bin/velapulse" snapshot | /usr/bin/python3 -c 'import json,sys; s=json.load(sys.stdin); sys.exit(0 if any(a["id"] in ("timer","stopwatch") or a["id"].startswith("external:") for a in s["activities"]) else 1)'; then
+        printf '%s\n' 'An activity is running. Core update is deferred until the service next starts.'
+    else
+        systemctl --user restart velapulse.service
+    fi
+elif busctl --user call io.github.velapulse.Service /io/github/velapulse/Service org.freedesktop.DBus.Peer Ping >/dev/null 2>&1; then
+    printf '%s\n' 'A login-started VelaPulse is already running. Updated core files take effect after it exits or at the next login.'
+else
+    systemctl --user start velapulse.service
+fi
 if ! gnome-extensions enable velapulse@velapulse.local; then
     /usr/bin/python3 - <<'PYCODE'
 from gi.repository import Gio

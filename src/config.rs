@@ -10,11 +10,13 @@ pub struct Config {
     pub enabled: Vec<String>,
     pub priorities: BTreeMap<String, i32>,
     pub autostart: bool,
+    pub size: String,
+    pub opacity: u8,
 }
 impl Default for Config {
     fn default() -> Self {
         Self {
-            position: "top".into(),
+            position: "bottom".into(),
             appearance: "dark".into(),
             animations: true,
             monitor: -1,
@@ -28,6 +30,8 @@ impl Default for Config {
                 ("stopwatch".into(), 60),
             ]),
             autostart: false,
+            size: "medium".into(),
+            opacity: 98,
         }
     }
 }
@@ -59,6 +63,14 @@ impl Config {
         anyhow::ensure!(
             ["dark", "light"].contains(&self.appearance.as_str()),
             "appearance must be dark or light"
+        );
+        anyhow::ensure!(
+            ["small", "medium", "large"].contains(&self.size.as_str()),
+            "invalid surface size"
+        );
+        anyhow::ensure!(
+            (65..=100).contains(&self.opacity),
+            "opacity must be 65..100"
         );
         anyhow::ensure!((-1..32).contains(&self.monitor), "invalid monitor");
         anyhow::ensure!(

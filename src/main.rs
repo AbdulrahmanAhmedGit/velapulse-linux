@@ -121,8 +121,10 @@ impl Service {
             return Err(invalid("configuration too large"));
         }
         let c: config::Config = serde_json::from_str(json).map_err(invalid)?;
+        let mut config = self.config.lock().await;
         c.save().map_err(invalid)?;
-        *self.config.lock().await = c;
+        *config = c;
+        drop(config);
         self.wake.notify_one();
         Ok(())
     }
