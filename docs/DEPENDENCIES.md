@@ -84,6 +84,8 @@ Generated from Cargo.lock and Cargo metadata. Runtime GTK/GJS/GNOME libraries ar
 | wasm-bindgen-shared | 0.2.129 | MIT OR Apache-2.0 |
 | wayland-backend | 0.3.17 | MIT |
 | wayland-client | 0.31.15 | MIT |
+| wayland-protocols | 0.32.13 | MIT |
+| wayland-protocols-wlr | 0.3.12 | MIT |
 | wayland-scanner | 0.31.11 | MIT |
 | wayland-sys | 0.31.11 | MIT |
 | windows-link | 0.2.1 | MIT OR Apache-2.0 |

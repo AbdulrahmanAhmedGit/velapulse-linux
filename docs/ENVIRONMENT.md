@@ -9,3 +9,7 @@
 - No actual org.mpris.MediaPlayer2 service advertised at inspection.
 - Native GNOME backend selected. Mutter layer-shell support must be checked through the registry, never inferred from the desktop name.
 - GNOME supports headless virtual monitors and devkit flags; no compositor replacement authorized.
+- Live registry probe: current GNOME/Mutter has no `zwlr_layer_shell_v1`; compositor, shm, output, seat, xdg-shell, viewporter and fractional-scale globals were present.
+- Isolated Sway 1.11 / wlroots 0.19.2 advertises `zwlr_layer_shell_v1` version 4. Test packages were extracted into the development workspace, not installed system-wide.
+- Workspace-local Rust 1.99.1 successfully built both debug and release profiles.
+- With explicit user approval, the VelaPulse user service and extension files were installed. Service active; live extension discovery requires logout/login. No system Mutter files or privileged packages changed.

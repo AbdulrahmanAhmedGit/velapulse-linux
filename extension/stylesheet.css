@@ -1,0 +1,18 @@
+.vela-root { color: #f4f1e9; font-family: sans-serif; spacing: 8px; }
+.vela-pill { border-radius: 28px; background-color: #182b2b; border: 1px solid #49625c; padding: 13px 18px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.22); }
+.vela-pill:hover { background-color: #23413b; }
+.vela-pill:focus, .vela-button:focus { border: 2px solid #8fe2c2; }
+.vela-card { border-radius: 24px; padding: 24px; background-color: #132222; border: 1px solid #3c514c; spacing: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.24); }
+.vela-eyebrow { font-size: 10px; font-weight: 700; color: #9bc7b7; padding-top: 8px; }
+.vela-title { font-size: 23px; font-weight: 700; }
+.vela-detail { font-size: 13px; color: #b6c7c1; }
+.vela-row { spacing: 6px; }
+.vela-button { border-radius: 12px; padding: 8px 10px; font-size: 11px; background-color: #2b403b; border: 1px solid transparent; }
+.vela-button:hover { background-color: #426256; }
+.vela-track { background-color: #30443e; border-radius: 2px; height: 4px; }
+.vela-progress { background-color: #a0edc9; border-radius: 2px; }
+.vela-light { color: #182b27; }
+.vela-light .vela-pill, .vela-light .vela-card { background-color: #f6f3e9; border-color: #b9c7bc; }
+.vela-light .vela-detail, .vela-light .vela-eyebrow { color: #4b6359; }
+.vela-light .vela-button { background-color: #dce7db; }
+.vela-light .vela-progress { background-color: #327858; }

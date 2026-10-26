@@ -17,3 +17,10 @@ wayland-client = "0.31"
 [profile.release]
 lto = true
 strip = true
+
+[dev-dependencies]
+wayland-protocols-wlr = { version = "0.3", features = ["client"] }
+
+[[example]]
+name = "test-pointer"
+path = "tests/fixtures/wayland_pointer.rs"
