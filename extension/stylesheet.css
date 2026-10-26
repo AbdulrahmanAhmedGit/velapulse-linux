@@ -3,7 +3,7 @@
 .vela-pill-main { border-radius: 22px; padding: 0; }
 .vela-pill-main:focus { background-color: #333044; }
 .vela-pill-summary { spacing: 10px; }
-.vela-well { width: 34px; height: 34px; border-radius: 18px; }
+.vela-well { width: 24px; height: 24px; border-radius: 13px; }
 .vela-pill-title { font-size: 13px; font-weight: 700; }
 .vela-pill-detail { font-size: 10px; color: #a8a7b5; padding-top: 1px; }
 .vela-inline-controls { spacing: 1px; padding-right: 3px; }
@@ -54,8 +54,8 @@
 .vela-light .vela-metric { color: #554876; }
 /* Reference-led density: one-line pills, neutral cards and artwork captions. */
 .vela-root { color:#faf9f7; font-family:sans-serif; spacing:10px; }
-.vela-pill { background-color:#111113; border:none; padding:4px 9px 4px 4px; border-radius:25px; }
-.vela-well { width:32px; height:32px; border-radius:18px; color:#fff; }
+.vela-pill { min-height:32px; background-color:#111113; border:none; padding:4px 9px 4px 4px; border-radius:25px; }
+.vela-well { width:24px; height:24px; border-radius:13px; color:#fff; }
 .vela-pill-title { font-size:14px; font-weight:700; }
 .vela-pill-detail { font-size:13px; color:#b7b3b7; padding:0; }
 .vela-inline { width:28px; height:30px; }
@@ -97,7 +97,7 @@
 .vela-light.vela-media .vela-source,.vela-light.vela-media .vela-output { color:#ddd4dd; }
 .vela-light.vela-media .vela-primary,.vela-light.vela-media .vela-secondary { background-color:#383039; color:#fff; }
 .vela-light.vela-media .vela-new-activity { background-color:transparent; color:#a99da7; }
-.vela-panel-pill { padding:0 3px; border-radius:16px; background-color:transparent; box-shadow:none; }
+.vela-panel-pill { min-height:0; padding:0 3px; border-radius:16px; background-color:transparent; box-shadow:none; }
 .vela-panel-pill .vela-well { width:21px; height:21px; border-radius:12px; }
 .vela-panel-pill .vela-well StIcon { icon-size:13px; }
 .vela-panel-pill .vela-pill-title,.vela-panel-pill .vela-pill-detail { font-size:11px; }
