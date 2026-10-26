@@ -11,7 +11,7 @@ const PROVIDERS = [
 ];
 export function fillPreferences(window) {
     window.set_default_size(1180,820);window.set_title('VelaPulse');
-    let config={},activities=[],syncing=false,proxy,signal,ownerSignal,closed=false,pending=0;
+    let config={},activities=[],syncing=false,proxy,signal,ownerSignal,closed=false,pending=0,lastConfigKey=null,lastAppearance=null;
     const box=(vertical=false,style='',spacing=0)=>new Gtk.Box({orientation:vertical?Gtk.Orientation.VERTICAL:Gtk.Orientation.HORIZONTAL,spacing,css_classes:style?style.split(/\s+/):[]});
     const text=(value,style='',expand=false)=>new Gtk.Label({label:value,xalign:0,hexpand:expand,ellipsize:3,max_width_chars:style==='preview-pill-title'?16:style==='preview-pill-detail'?14:100,css_classes:style?style.split(/\s+/):[]});
     const button=(value,fn,style='')=>{const b=new Gtk.Button({label:value,css_classes:style?style.split(/\s+/):[]});b.connect('clicked',fn);return b;};
@@ -41,7 +41,7 @@ export function fillPreferences(window) {
     appearance.append(text('Live activities','section-title'));
     const previewRows=new Map(),toggles=new Map();
     for(const [id,title,icon] of PROVIDERS) {
-        const row=box(false,'preview-row',10);const enabled=new Gtk.CheckButton({tooltip_text:`Show ${title}`,name:`enabled-${id}`});toggles.set(id,enabled);
+        const row=box(false,'preview-row',10);row.set_name(`preview-${id}`);const enabled=new Gtk.CheckButton({tooltip_text:`Show ${title}`,name:`enabled-${id}`});toggles.set(id,enabled);
         enabled.connect('toggled',()=>{if(syncing)return;const next=new Set(config.enabled??[]);if(enabled.active)next.add(id);else next.delete(id);save({enabled:[...next]});});row.append(enabled);
         const labels=box(false,'',8);labels.hexpand=true;labels.append(text(title,'preview-name'));const positionLabel=text('background','muted');labels.append(positionLabel);row.append(labels);
         const pill=box(false,`pill-preview preview-${id}`,7);pill.set_size_request(230,30);
@@ -97,34 +97,62 @@ export function fillPreferences(window) {
     const position=new Adw.ComboRow({title:'Position',model:Gtk.StringList.new(['Top','Bottom'])});inspectorGroup.add(position);position.connect('notify::selected',()=>{if(!syncing)save({position:position.selected?'bottom':'top'});});
     const opacityRow=box(true,'inspector-section',10);opacityRow.append(text('Opacity','inspector-label'));
     const opacity=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,65,100,1);opacity.set_draw_value(true);opacity.set_value_pos(Gtk.PositionType.RIGHT);opacityRow.append(opacity);inspector.append(opacityRow);
-    opacity.connect('value-changed',()=>{if(syncing)return;if(pending)GLib.Source.remove(pending);pending=GLib.timeout_add(GLib.PRIORITY_DEFAULT,140,()=>{pending=0;save({opacity:Math.round(opacity.get_value())});return GLib.SOURCE_REMOVE;});});
+    opacity.connect('value-changed',()=>{if(syncing)return;draft={opacity:Math.round(opacity.get_value())};if(pending)GLib.Source.remove(pending);pending=GLib.timeout_add(GLib.PRIORITY_DEFAULT,140,()=>{pending=0;const patch=draft;draft={};save(patch);return GLib.SOURCE_REMOVE;});});
     const motionGroup=new Adw.PreferencesGroup({title:'Motion'});inspector.append(motionGroup);const motion=new Adw.SwitchRow({title:'Animations'});motionGroup.add(motion);motion.connect('notify::active',()=>{if(!syncing)save({animations:motion.active});});
     inspector.append(text('Changes apply immediately','inspector-note'));
-    search.connect('search-changed',()=>{const q=search.text.toLowerCase();for(const [id,{row}] of previewRows)row.visible=!q||id.includes(q)||PROVIDERS.find(x=>x[0]===id)[1].toLowerCase().includes(q);sizes.visible=!q||'pill size'.includes(q);cards.visible=!q||'card size'.includes(q);});
+    function applySearch() {
+        const q=search.text.trim().toLowerCase();
+        for(const [id,{row}] of previewRows) {
+            const match=!q||id.includes(q)||PROVIDERS.find(x=>x[0]===id)[1].toLowerCase().includes(q);
+            row.visible=match&&(id!=='stopwatch'||activities.some(a=>a.id==='stopwatch')||Boolean(q));
+        }
+        sizes.visible=!q||'pill size'.includes(q);cards.visible=!q||'card size'.includes(q);
+    }
+    search.connect('search-changed',applySearch);
     function command(id,action,seconds) {proxy?.call('Command',new GLib.Variant('(sst)',[id,action,seconds]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{p.call_finish(r);}catch{status.label='This action is unavailable.';}});}
-    let saving=false,queued={};
+    let saving=false,queued={},inFlight={},draft={};
     function save(patch) {queued={...queued,...patch};flush();}
     function flush() {
         if(closed||saving||!Object.keys(queued).length)return;
         if(!proxy?.g_name_owner){status.label='Start VelaPulse to change settings.';return;}
-        const patch=queued;queued={};config={...config,...patch};saving=true;
-        proxy.call('Configure',new GLib.Variant('(s)',[JSON.stringify(config)]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{saving=false;try{p.call_finish(r);status.label='Changes apply immediately';}catch{status.label='Settings could not be saved.';refresh();}flush();});
+        const patch=queued;queued={};inFlight=patch;config={...config,...patch};saving=true;
+        proxy.call('Configure',new GLib.Variant('(s)',[JSON.stringify(config)]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{saving=false;inFlight={};if(closed)return;try{p.call_finish(r);status.label='Changes apply immediately';}catch{status.label='Settings could not be saved.';refresh();}flush();});
     }
     function update(json) {
         if(closed)return;let s;try{s=JSON.parse(json);}catch{return;}
-        config={...s.config,...queued};activities=s.activities;syncing=true;
-        placement.selected=config.surface==='panel'?1:0;position.sensitive=config.surface!=='panel';theme.selected=config.appearance==='light'?1:0;position.selected=config.position==='bottom'?1:0;opacity.set_value(config.opacity??98);motion.active=config.animations;startup.active=config.autostart;monitor.selected=config.monitor+1;
-        for(const [id,b] of sizeButtons)b.active=id===config.size;for(const [id,b] of cardButtons)b.active=id===(config.card_size??'normal');
-        for(const [id,{row,titleLabel,detail,positionLabel}] of previewRows) {
-            toggles.get(id).active=config.enabled.includes(id);
-            const a=activities.find(a=>a.id.split(':')[0]===id),p=present(a);
-            titleLabel.label=a?p.compact:(id==='media'?'Media':'');detail.label=a?` · ${p.detail}`:(id==='media'?'Nothing playing':'Not running');
-            const foreground=activities[0]?.id.split(':')[0]===id;positionLabel.label=foreground?'foreground':'background';row.set_css_classes(['preview-row',...(foreground?['preview-row-selected']:[])]);row.visible=id!=='stopwatch'||Boolean(a)||search.text.toLowerCase().includes('stopwatch');
-            const refs=providerPages.get(id);refs.visible.active=config.enabled.includes(id);refs.priority.value=config.priorities[id]??50;refs.description.label=a?`${a.title} · ${a.description}`:'No activity right now.';
+        if(lastConfigKey===null)status.label='Changes apply immediately';
+        config={...s.config,...inFlight,...queued,...draft};activities=s.activities;syncing=true;
+        const configKey=JSON.stringify(config);
+        if(configKey!==lastConfigKey) {
+            lastConfigKey=configKey;
+            placement.selected=config.surface==='panel'?1:0;position.sensitive=config.surface!=='panel';theme.selected=config.appearance==='light'?1:0;position.selected=config.position==='bottom'?1:0;opacity.set_value(config.opacity??98);motion.active=config.animations;startup.active=config.autostart;monitor.selected=config.monitor+1;
+            for(const [id,b] of sizeButtons)b.active=id===config.size;for(const [id,b] of cardButtons)b.active=id===(config.card_size??'normal');
+            for(const [id,refs] of providerPages) {
+                toggles.get(id).active=config.enabled.includes(id);
+                refs.visible.active=config.enabled.includes(id);refs.priority.value=config.priorities[id]??50;
+            }
+            if(config.appearance!==lastAppearance) {
+                lastAppearance=config.appearance;
+                root.set_css_classes(['vela-settings',...(config.appearance==='light'?['settings-light']:[])]);
+                Adw.StyleManager.get_default().color_scheme=config.appearance==='light'?Adw.ColorScheme.FORCE_LIGHT:Adw.ColorScheme.FORCE_DARK;
+            }
         }
-        syncing=false;status.label='Changes apply immediately';
-        root.set_css_classes(['vela-settings',...(config.appearance==='light'?['settings-light']:[])]);
-        Adw.StyleManager.get_default().color_scheme=config.appearance==='light'?Adw.ColorScheme.FORCE_LIGHT:Adw.ColorScheme.FORCE_DARK;
+        for(const [id,{row,titleLabel,detail,positionLabel}] of previewRows) {
+            const a=activities.find(a=>a.id.split(':')[0]===id),p=present(a);
+            const title=a?p.compact:(id==='media'?'Media':'');
+            const subtitle=a?` · ${p.detail}`:(id==='media'?'Nothing playing':'Not running');
+            if(titleLabel.label!==title)titleLabel.label=title;
+            if(detail.label!==subtitle)detail.label=subtitle;
+            const foreground=activities[0]?.id.split(':')[0]===id;
+            const position=foreground?'foreground':'background';
+            if(positionLabel.label!==position)positionLabel.label=position;
+            if(row.has_css_class('preview-row-selected')!==foreground) {
+                if(foreground)row.add_css_class('preview-row-selected');else row.remove_css_class('preview-row-selected');
+            }
+            const description=a?`${a.title} · ${a.description}`:'No activity right now.';
+            const refs=providerPages.get(id);if(refs.description.label!==description)refs.description.label=description;
+        }
+        applySearch();syncing=false;
     }
     function refresh() {if(!proxy?.g_name_owner){status.label='Activity service unavailable';return;}proxy.call('Snapshot',null,Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{update(p.call_finish(r).deep_unpack()[0]);}catch{status.label='Activity service unavailable';}});}
     Gio.DBusProxy.new_for_bus(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,'io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',null,(_,result)=>{if(closed)return;try{proxy=Gio.DBusProxy.new_for_bus_finish(result);}catch{status.label='Activity service unavailable';return;}signal=proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')update(args.deep_unpack()[0]);});ownerSignal=proxy.connect('notify::g-name-owner',refresh);refresh();});
