@@ -36,6 +36,6 @@ if 'velapulse@velapulse.local' not in items:
     settings.set_strv('enabled-extensions', items + ['velapulse@velapulse.local'])
 Gio.Settings.sync()
 PYCODE
-    echo 'The extension is scheduled for enablement. Log out and back in for GNOME to discover it.' 
+    echo 'The extension is scheduled for enablement. Log out and back in for GNOME to discover it.'
 fi
 printf '%s\n' 'VelaPulse installed. Autostart remains controlled by the application setting.'
