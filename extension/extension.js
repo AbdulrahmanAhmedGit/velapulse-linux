@@ -85,8 +85,8 @@ export default class VelaPulse extends Extension {
         if (a?.icon?.startsWith('file://')) {
             try {const file = Gio.File.new_for_uri(a.icon);this._card.add_child(new St.Icon({gicon: new Gio.FileIcon({file}), icon_size: 64}));} catch {/* optional artwork */}
         }
-        const track = new St.Bin({style_class: 'vela-track', x_align: Clutter.ActorAlign.START, width: 300});
-        this._progress = new St.Widget({style_class: 'vela-progress', height: 4, width: Math.round(300 * (a?.progress ?? 0)), x_align: Clutter.ActorAlign.START});track.set_child(this._progress);this._card.add_child(track);
+        const track = new St.BoxLayout({style_class: 'vela-track', x_align: Clutter.ActorAlign.START, width: 300});
+        this._progress = new St.Widget({style_class: 'vela-progress', height: 4, width: Math.round(300 * (a?.progress ?? 0)), x_align: Clutter.ActorAlign.START});track.add_child(this._progress);this._card.add_child(track);
         const controls = new St.BoxLayout({style_class: 'vela-row'});
         for (const action of a?.controls ?? []) controls.add_child(this._button(action, () => this._command(a.id, action)));
         if (this._state.activities.length > 1) controls.add_child(this._button('Next activity →', () => {const items = this._state.activities;this._selected = items[(items.findIndex(x => x.id === this._selected) + 1) % items.length].id;this._renderCard();}));

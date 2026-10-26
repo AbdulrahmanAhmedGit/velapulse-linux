@@ -38,6 +38,7 @@ function render(json) {
     title.label = a?.title ?? 'A little space for what matters';
     detail.label = a?.description ?? 'Start a timer or stopwatch below';
     progress.fraction = a?.progress ?? 0;
+    artwork.visible = Boolean(a?.icon?.startsWith('file://'));
     if (artwork._uri !== a?.icon) {artwork._uri = a?.icon;artwork.clear();if (a?.icon?.startsWith('file://')) {const path=Gio.File.new_for_uri(a.icon).get_path();if(path)artwork.set_from_file(path);}}
     const key = JSON.stringify([a?.id,a?.controls,state.activities.map(a=>a.id)]);
     if (controls._key !== key) {
