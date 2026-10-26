@@ -1,0 +1,62 @@
+.vela-settings { background:#171717; color:#f3f1ec; --accent-bg-color:#ffdf70; --accent-fg-color:#242018; font-family: "Adwaita Sans",sans-serif; }
+.settings-sidebar { background:linear-gradient(135deg,#282826,#20201f); border:1px solid #383836; border-radius:22px; margin:10px; padding:20px 12px 15px; }
+.settings-brand { padding:1px 10px 23px; color:#ffdf70; }
+.brand-title { font-size:16px; font-weight:700; color:#f5f3ec; }
+.nav-section { color:#aaa69e; font-size:12px; margin:12px 10px 6px; }
+.nav-button { background:transparent; border:none; box-shadow:none; border-radius:12px; padding:11px 12px; font-size:13px; font-weight:500; }
+.nav-button:checked { background:#393937; color:#fff; }
+.nav-button:hover { background:#30302e; }
+.settings-header { background:transparent; box-shadow:none; }
+.header-title { font-size:14px; font-weight:600; }
+.settings-page { padding:18px 23px 26px; }
+.settings-search { border-radius:14px; padding:6px 10px; background:#20201f; box-shadow:none; border:1px solid #33332f; }
+.muted { color:#96928a; font-size:12px; }
+.section-title { color:#aaa69c; font-size:12px; font-weight:500; }
+.preview-row { padding:9px; border-radius:12px; margin-top:-12px; }
+.preview-row-selected { background:#383324; }
+.preview-name { font-size:13px; font-weight:500; }
+.pill-preview { background:#101010; border-radius:22px; padding:3px 8px 3px 3px; color:#faf9f7; }
+.preview-well { background:#6156ce; border-radius:20px; padding:6px; color:#fff; }
+.preview-media .preview-well { background:#592e42; }
+.preview-battery .preview-well { background:#26bf59; }
+.preview-volume .preview-well { background:#3979ef; }
+.preview-stopwatch .preview-well { background:#307a9d; }
+.preview-pill-title { font-size:11px; font-weight:700; }
+.preview-pill-detail { font-size:10px; color:#b1aca9; }
+.size-choice,.card-choice { background:#222221; border:2px solid transparent; border-radius:16px; box-shadow:none; padding:8px; min-width:130px; min-height:117px; }
+.size-choice:checked,.card-choice:checked { border-color:#dec77a; background:#242421; }
+.size-choice:hover,.card-choice:hover { background:#2a2a27; }
+.size-choice-content { padding:15px 0; }
+.size-label { font-size:12px; color:#d4cfc6; }
+.mini-pill { background:#53232f; border-radius:18px; padding:3px; }
+.mini-disc { background:radial-gradient(circle at 35% 30%,#ffb7a1,#aa283e 55%,#4e142a); border-radius:15px; min-width:16px; min-height:16px; }
+.mini-line { background:#cdb8be; border-radius:4px; min-height:3px; }
+.card-choice { min-width:196px; min-height:136px; }
+.card-choice-content { padding:10px 0; }
+.mini-cover { background:radial-gradient(circle at 20% 15%,#d19b71,transparent 65%),radial-gradient(circle at 90% 30%,#bd3977,transparent 65%),#3d284d; border-radius:12px; }
+.settings-status { font-size:11px; color:#c1b69a; padding-top:8px; }
+.settings-inspector { background:#121212; border-left:1px solid #272725; padding:20px 16px; }
+.inspector-title { font-size:14px; font-weight:600; margin-bottom:14px; }
+.inspector-label { font-size:13px; }
+.inspector-section { padding:12px 4px; border-bottom:1px solid #282825; }
+.inspector-note { font-size:11px; color:#8e887c; margin-top:18px; }
+.settings-inspector list { background:transparent; border:none; box-shadow:none; }
+.settings-inspector row { padding:6px 2px; border-bottom:1px solid #282825; }
+.settings-inspector row .title { font-size:12px; }
+.settings-inspector scale highlight { background:#ffdf70; }
+.vela-settings switch:checked { background:#ffdf70; color:#25211b; }
+.vela-settings checkbutton check:checked { background:#ffdf70; color:#242018; border-color:#ffdf70; }
+.page-title { font-size:27px; font-weight:700; }
+.provider-detail { color:#aba69d; font-size:14px; }
+.provider-controls { margin-top:18px; }
+.settings-light { background:#eceae3; color:#24221e; }
+.settings-light .settings-sidebar { background:#e1dfd7; border-color:#cecabf; }
+.settings-light .brand-title { color:#25231f; }
+.settings-light .nav-button:checked { background:#ccc8bc; color:#25231f; }
+.settings-light .settings-inspector { background:#e0ddd4; border-color:#cbc7bb; }
+.settings-light .preview-row-selected { background:#ddd3b4; }
+.settings-light .size-choice,.settings-light .card-choice { background:#e3dfd5; }
+.settings-light .settings-search { background:#f8f6ef; color:#25231f; border-color:#c7c1b5; }
+.settings-light .size-label { color:#625d52; }
+.settings-light .muted,.settings-light .section-title,.settings-light .inspector-note { color:#80796c; }
+.settings-light .settings-inspector row { border-bottom-color:#c7c1b5; }

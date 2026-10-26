@@ -4,7 +4,8 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {present, kind, actionInfo, SIZES} from './presentation.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import {present, kind, actionInfo, SIZES, drawProgress} from './presentation.js';
 
 const BUS = 'io.github.velapulse.Service';
 const PATH = '/io/github/velapulse/Service';
@@ -15,6 +16,7 @@ const CENTER = Clutter.ActorAlign.CENTER;
 export default class VelaPulse extends Extension {
     enable() {
         this._alive = true;
+        this._bottom = null;
         this._expanded = false;
         this._launcherOpen = false;
         this._state = {activities: [], config: {}};
@@ -26,7 +28,7 @@ export default class VelaPulse extends Extension {
         this._pillWell = new St.Bin({style_class: 'vela-well', y_align: CENTER});
         this._pillIcon = new St.Icon({icon_name: 'weather-clear-night-symbolic', icon_size: 17});
         this._pillWell.set_child(this._pillIcon); summary.add_child(this._pillWell);
-        const lines = new St.BoxLayout({vertical: true, x_expand: true, y_align: CENTER});
+        const lines = new St.BoxLayout({style_class: 'vela-pill-text', x_expand: true, y_align: CENTER});
         this._pillTitle = this._label('VelaPulse', 'vela-pill-title');
         this._pillDetail = this._label('Ready when you are', 'vela-pill-detail');
         lines.add_child(this._pillTitle); lines.add_child(this._pillDetail); summary.add_child(lines);
@@ -36,6 +38,7 @@ export default class VelaPulse extends Extension {
         this._root.add_child(this._pill);
         this._card = new St.BoxLayout({vertical: true, style_class: 'vela-card'});
         this._root.add_child(this._card); this._card.hide();
+        this._pill.connect('notify::allocation', () => this._position());
         this._pillMain.connect('clicked', () => this._expand(!this._expanded));
         this._root.connect('key-press-event', (_, event) => {
             if (event.get_key_symbol() === Clutter.KEY_Escape) {this._expand(false); return Clutter.EVENT_STOP;}
@@ -47,7 +50,7 @@ export default class VelaPulse extends Extension {
         this._outsideSignal = global.stage.connect('captured-event', (_, event) => {
             if (this._expanded && event.type() === Clutter.EventType.BUTTON_PRESS) {
                 const actor = global.stage.get_actor_at_pos(Clutter.PickMode.REACTIVE, ...event.get_coords());
-                if (actor && !this._root.contains(actor)) this._expand(false);
+                if (actor && !this._root.contains(actor) && !this._pill.contains(actor) && !this._panel?.contains(actor)) this._expand(false);
             }
             return Clutter.EVENT_PROPAGATE;
         });
@@ -94,11 +97,13 @@ export default class VelaPulse extends Extension {
         if ((!this._expanded && oldTop !== activities[0]?.id) || !activities.some(a => a.id === this._selected)) this._selected = activities[0]?.id;
         const a = this._current(), p = present(a), config = this._state.config;
         this._root.set_style_class_name(`vela-root ${config.appearance === 'light' ? 'vela-light' : ''} vela-${p.type}`);
+        this._syncSurface();
         this._root.opacity = Math.round((config.opacity ?? 98) * 2.55);
-        this._pillWell.set_style(`background-color: ${p.tint}; color: ${p.accent};`);
+        this._pill.opacity = this._panel ? this._root.opacity : 255;
+        this._pillWell.set_style(`background-color: ${p.tint}; color: #ffffff;`);
         this._pillIcon.icon_name = p.icon;
         this._pillTitle.text = p.compact;
-        this._pillDetail.text = p.detail;
+        this._pillDetail.text = `${p.type === 'media' ? '· ' : ''}${p.detail}`;
         const key = JSON.stringify([a?.id, a?.controls, a?.status]);
         if (key !== this._pillKey) {
             this._pillKey = key; this._pillControls.destroy_all_children();
@@ -125,7 +130,7 @@ export default class VelaPulse extends Extension {
             header.add_child(tag);
             header.add_child(this._iconButton('emblem-system-symbolic', 'Preferences', () => {this._expand(false);this.openPreferences().catch(() => this._error('Preferences could not be opened'));}, 'vela-quiet'));
             header.add_child(this._iconButton('window-close-symbolic', 'Collapse activity', () => this._expand(false), 'vela-quiet'));
-            this._card.add_child(header);
+            if (p.type !== 'media') this._card.add_child(header);
             if (p.type === 'media') this._buildMedia(p);
             else if (['timer', 'stopwatch', 'battery', 'volume'].includes(p.type)) this._buildMetric(p);
             else this._buildSummary(p);
@@ -164,16 +169,23 @@ export default class VelaPulse extends Extension {
         else change();
     }
     _buildMedia(p) {
-        this._hero = new St.Widget({style_class: 'vela-artwork', height: 190});
-        this._card.add_child(this._hero);
-        this._sourceLabel = this._label(p.source, 'vela-source'); this._card.add_child(this._sourceLabel);
-        this._title = this._label(p.title, 'vela-title'); this._card.add_child(this._title);
-        this._detail = this._label(p.subtitle, 'vela-subtitle'); this._card.add_child(this._detail);
-        this._buildProgress();
+        const hero = new St.Widget({layout_manager: new Clutter.BinLayout(), style_class: 'vela-artwork', height: 220});
+        this._hero = new St.Widget({style_class: 'vela-cover-image', x_expand: true, y_expand: true});hero.add_child(this._hero);
+        const overlay = new St.BoxLayout({vertical: true, style_class: 'vela-cover-caption', x_expand: true, y_expand: true, y_align: Clutter.ActorAlign.END});
+        this._title = this._label(p.title, 'vela-title');this._detail = this._label(p.subtitle, 'vela-subtitle');overlay.add_child(this._title);overlay.add_child(this._detail);hero.add_child(overlay);
+        const corners = new St.BoxLayout({style_class: 'vela-cover-corners', x_expand: true, y_expand: true, y_align: Clutter.ActorAlign.START});
+        corners.add_child(this._iconButton('emblem-system-symbolic', 'Preferences', () => {this._expand(false);this.openPreferences().catch(() => this._error('Preferences unavailable'));}, 'vela-cover-button'));
+        corners.add_child(new St.Widget({x_expand: true}));
+        corners.add_child(this._iconButton('window-close-symbolic', 'Collapse', () => this._expand(false), 'vela-cover-button'));hero.add_child(corners);this._card.add_child(hero);
+        const source = new St.BoxLayout({style_class: 'vela-provider-row'});
+        source.add_child(new St.Icon({icon_name: p.icon, icon_size: 18, style_class: 'vela-provider-icon'}));
+        this._sourceLabel = this._label(p.source, 'vela-source', true);source.add_child(this._sourceLabel);
+        const volume = this._state.activities.find(a => a.id === 'volume');
+        if (volume) {source.add_child(new St.Icon({icon_name: 'audio-headphones-symbolic', icon_size: 15}));source.add_child(this._label('System audio', 'vela-output'));}
+        this._card.add_child(source);this._buildProgress(true);
         const times = new St.BoxLayout({style_class: 'vela-times'});
-        this._elapsedLabel = this._label(p.elapsed, 'vela-time-label', true);
-        this._durationLabel = this._label(p.duration, 'vela-time-label');
-        times.add_child(this._elapsedLabel); times.add_child(this._durationLabel); this._card.add_child(times);
+        this._elapsedLabel = this._label(p.elapsed, 'vela-time-label', true);this._durationLabel = this._label(p.duration, 'vela-time-label');
+        times.add_child(this._elapsedLabel);times.add_child(this._durationLabel);this._card.add_child(times);
     }
     _buildMetric(p) {
         const panel = new St.BoxLayout({vertical: true, style_class: 'vela-metric-panel'});
@@ -189,13 +201,19 @@ export default class VelaPulse extends Extension {
         this._detail = this._label(p.subtitle, 'vela-subtitle'); panel.add_child(this._detail);
         this._card.add_child(panel); this._buildProgress();
     }
-    _buildProgress() {
+    _buildProgress(wave = false) {
+        this._wave = wave;
+        if (wave) {
+            this._track = new St.DrawingArea({height: 14, style_class: 'vela-wave'});
+            this._track.connect('repaint', area => {const cr=area.get_context();const [w,h]=area.get_surface_size();drawProgress(cr,w,h,present(this._current()).progress);cr.$dispose();});
+            this._progress = null;this._card.add_child(this._track);return;
+        }
         this._track = new St.BoxLayout({style_class: 'vela-track', height: 4});
         this._progress = new St.Widget({style_class: 'vela-progress', height: 4});
         this._track.add_child(this._progress); this._card.add_child(this._track);
         this._track.connect('notify::allocation', () => this._setProgress(present(this._current())));
     }
-    _setProgress(p) {if (this._progress) {this._progress.width = Math.round(Math.max(0, this._track.width) * p.progress);this._progress.set_style(`background-color: ${p.accent};`);}}
+    _setProgress(p) {if (this._wave) {this._track.queue_repaint();return;}if (this._progress) {this._progress.width = Math.round(Math.max(0, this._track.width) * p.progress);this._progress.set_style(`background-color: ${p.accent};`);}}
     _buildLauncher() {
         const launch = new St.BoxLayout({vertical: true, style_class: 'vela-launcher'});
         launch.add_child(this._label('Start something', 'vela-caption'));
@@ -218,9 +236,28 @@ export default class VelaPulse extends Extension {
             this._elapsedLabel.text = p.elapsed; this._durationLabel.text = p.duration;
         } else this._artUri = null;
     }
+    _syncSurface() {
+        const panel = this._state.config.surface === 'panel';
+        if (panel === Boolean(this._panel)) return;
+        this._pill.get_parent()?.remove_child(this._pill);
+        if (panel) {
+            this._panel = new PanelMenu.Button(0.0, 'VelaPulse live activities', true);
+            this._panel.add_child(this._pill);this._pill.add_style_class_name('vela-panel-pill');
+            this._panel.connect('notify::allocation', () => this._position());
+            this._panel.connect('key-press-event', (_, event) => {
+                if (event.get_key_symbol() === Clutter.KEY_Escape) {this._expand(false);return Clutter.EVENT_STOP;}
+                if (global.stage.get_key_focus() === this._panel && [Clutter.KEY_Return, Clutter.KEY_space].includes(event.get_key_symbol())) {this._expand(!this._expanded);return Clutter.EVENT_STOP;}
+                return Clutter.EVENT_PROPAGATE;
+            });
+            Main.panel.addToStatusArea('velapulse', this._panel, 0, 'right');
+        } else {
+            this._pill.remove_style_class_name('vela-panel-pill');this._root.insert_child_at_index(this._pill, 0);
+            this._panel.destroy();this._panel = null;this._bottom = null;this._root.show();
+        }
+    }
     _motion() {return this._state.config.animations !== false && St.Settings.get().enable_animations;}
     _expand(open) {
-        this._expanded = open; this._card.remove_all_transitions();
+        this._expanded = open; if (open) this._root.show();this._card.remove_all_transitions();
         if (open) {
             this._card.show(); this._renderCard(); this._card.opacity = 0; this._card.translation_y = this._state.config.position === 'bottom' ? 10 : -10;
             this._card.ease({opacity: 255, translation_y: 0, duration: this._motion() ? 240 : 0, mode: Clutter.AnimationMode.EASE_OUT_CUBIC});
@@ -231,12 +268,22 @@ export default class VelaPulse extends Extension {
         this._position();
     }
     _position() {
-        if (!this._root) return;
+        if (!this._alive || !this._root?.get_stage()) return;
         const config = this._state.config, sizes = SIZES[config.size] ?? SIZES.medium;
-        const monitor = Main.layoutManager.monitors[config.monitor] ?? Main.layoutManager.primaryMonitor;
+        const monitor = this._panel ? Main.layoutManager.primaryMonitor : Main.layoutManager.monitors[config.monitor] ?? Main.layoutManager.primaryMonitor;
         if (!monitor) return;
-        const width = Math.min(this._expanded ? sizes.card : sizes.pill, monitor.width - 32);
-        this._root.width = width; this._pill.width = Math.min(sizes.pill, width);
+        const width = Math.min(this._expanded ? (config.card_size === 'large' ? 520 : sizes.card) : sizes.pill, monitor.width - 32);
+        this._root.width = width;
+        if (this._panel) {
+            const panelWidth = Math.min(sizes.pill, 280);
+            if (this._pill.width !== panelWidth) this._pill.width = panelWidth;
+            const [px, py] = this._panel.get_transformed_position();
+            const x = Math.round(Math.max(monitor.x + 12, Math.min(px + this._panel.width / 2 - width / 2, monitor.x + monitor.width - width - 12)));
+            const y = Math.round(py + this._panel.height + 10);
+            if (this._root.x !== x || this._root.y !== y) this._root.set_position(x,y);
+            this._root.visible = this._expanded;return;
+        }
+        this._pill.width = Math.min(sizes.pill, width);
         const bottom = config.position === 'bottom';
         if (this._bottom !== bottom) {this._bottom = bottom;this._root.set_child_at_index(this._card, bottom ? 0 : 1);}
         const x = Math.round(monitor.x + (monitor.width - width) / 2);
@@ -249,7 +296,9 @@ export default class VelaPulse extends Extension {
         if (this._ownerSignal) this._proxy.disconnect(this._ownerSignal);
         if (this._monitorSignal) Main.layoutManager.disconnect(this._monitorSignal);
         if (this._outsideSignal) global.stage.disconnect(this._outsideSignal);
-        this._root?.destroy(); this._root = this._proxy = null;
+        if (this._panel) {this._pill.get_parent()?.remove_child(this._pill);this._root.add_child(this._pill);this._panel.destroy();this._panel = null;}
+        if (this._root) {Main.layoutManager.removeChrome(this._root);this._root.destroy();}
+        this._root = this._proxy = null;
         this._signal = this._ownerSignal = this._monitorSignal = this._outsideSignal = null;
         this._cardKey = this._pillKey = this._artUri = null;
         this._title = this._detail = this._metricLabel = this._hero = this._progress = null;

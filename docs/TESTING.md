@@ -27,11 +27,20 @@ Real Spotify/browser-player behavior; end-to-end notification visibility; real k
 CI workflow is supplied. Its hosted result is separate from these local results and must be checked after publication.
 
 ## Design refinement validation
-- Midnight/iris/sea-glass styling, content-specific media/timer/power cards and compact icon controls implemented in both native renderers.
+- Reference-led charcoal/plum styling, content-specific media/timer/power cards and compact icon controls implemented in both native renderers.
 - Pure presentation checks pass for clocks, paused/playing controls, media timing, external and idle states.
 - Native libadwaita widget test passes: selecting size/appearance and toggling motion updates and persists the real service configuration on an isolated bus.
 - Local screenshots inspected for GNOME timer and media cards, GTK battery layout, light appearance and native preferences. Controlled MPRIS fixtures are labeled as test players and do not ship as production providers.
 - Configuration writes are serialized; invalid opacity/size and external attempts to supply provider metadata are rejected by integration tests.
 - Live installed service upgraded; the previous login-started instance was stopped only after verifying no active clocks/external work. The GNOME extension has updated files, but version 1 remains loaded until a new login. Standalone preferences was opened against the live service.
 
-A final layer-shell screenshot exposed an artwork sizing bug: the source image's intrinsic width could expand the GTK card off-screen. The renderer now uses a native artwork widget whose measurement is independent of source pixels, and limits label measurement. The corrected 390px media card was inspected under Sway without clipping.
+A final layer-shell screenshot exposed an artwork sizing bug: the source image's intrinsic width could expand the GTK card off-screen. The renderer now uses a native artwork widget whose measurement is independent of source pixels, and limits label measurement. The corrected media card was inspected under Sway without clipping.
+
+## Reference layout and Top Bar update
+- GNOME 50 isolated test: six live switches between floating and panel placements, compact-button activation, media controls, repeated expansion, panel cleanup and re-enable. Panel mode hides the floating pill and anchors the expanded card below the panel control.
+- Custom three-column preferences verified through both the GNOME extension preferences host and the standalone app. Native widget integration persists appearance, size, motion and panel placement over D-Bus.
+- Dark media and settings screenshots inspected at 1600×1000; GTK media card inspected at 1280×720 under Sway. Test artwork/title are deterministic fixtures.
+- Added validation for unknown surface and card sizes. Existing settings default to floating with normal cards. Layer-shell intentionally stays floating.
+- User-level files installed. An active desktop timer caused the installer to defer the core restart; the timer was preserved. Updated core and extension take effect at the next login. The isolated session ran the updated binaries.
+
+A synthetic stress test that destroys the extension immediately after 20 expand/collapse calls in one frame triggers a GNOME allocation warning for the removed actor. Allowing a frame before lifecycle removal passes without new warnings; ordinary mode switches and preferences were inspected independently. This edge case remains a stress-test limitation.

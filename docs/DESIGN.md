@@ -1,9 +1,11 @@
 # VelaPulse design direction
 
-The supplied reference images establish useful density and hierarchy: pill-shaped live summaries, immediately reachable controls, content-specific expanded cards, large media imagery and separate preferences. Their assets, typography, branding and exact geometry are not reused.
+The supplied Now Bar screenshots guide the visual hierarchy and proportions: single-line rounded pills, colored activity wells, near-black media cards, large artwork, white type, a wavy progress line and neutral round transport buttons. Implementation and fallback artwork are original; reference assets and code are not imported.
 
-VelaPulse uses an original orbital motif and a cool neutral ink base (#15161e), raised surfaces (#22242e), off-white type (#f4f2f8), iris (#b5a4f5), sea glass (#77d5b6), sky (#89bdf1) and warm amber (#f0bd7e). Color identifies activity types; warnings override with amber. Adwaita Sans supplies native body/display type and tabular numerals carry clocks. No font binaries are bundled.
+Media uses plum (#b778a7), timers purple (#6558d8), battery green (#2ac85a) and audio blue (#347bfa). Native system typography keeps text legible at desktop scale. The original peach/plum/purple gradient is used when local album artwork is absent. No font binaries are bundled.
 
-The compact surface has a 32px activity well, a two-level summary and independent icon controls. Opening reveals a content-specific card: artwork-first media, large clock figures, power/volume metrics or an external activity summary. A narrow activity rail makes other live work visible. Settings belong in native preferences, reached by a gear button. The orbital artwork is an original SVG used only when actual media artwork is absent; it does not pretend to be album artwork.
+Preferences follow the supplied three-column reference: navigation, live activity previews and size tiles, then an appearance inspector. A warm yellow accent marks selection. Pill and expanded-card sizes are independent. Dark and light appearances are supported.
 
-Native St/Clutter and GTK4 implementations share pure presentation rules. Only supported actions are displayed. No fabricated weather, sport, device or lyric integrations are shown. Typography, color, spacing, focus states and motion are checked in actual native screenshots, with controlled test peers clearly identified as fixtures.
+GNOME supports either a floating pill at the top/bottom or a compact activity in the Top Bar. Panel mode keeps the card anchored beneath its panel control without reserving desktop space. The layer-shell renderer remains floating because GNOME panel integration belongs to the extension.
+
+Native St/Clutter and GTK4 implementations share presentation rules. Only supported actions are displayed. Weather, sports, device controls and lyrics are not fabricated. Controlled test peers shown in validation screenshots are fixtures, not release providers.

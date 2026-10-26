@@ -1,6 +1,6 @@
 # VelaPulse
 
-Native Linux live activities with an original midnight, iris and sea-glass visual identity. A Rust session service drives a GNOME Shell extension and a GTK4 Wayland layer-shell client. This is a working **early milestone**, not a daily-use stability release.
+Native Linux live activities with a reference-led pill and card design. A Rust session service drives a GNOME Shell extension and a GTK4 Wayland layer-shell client. This is a working **early milestone**, not a daily-use stability release.
 
 ## What works
 - Countdown timers and stopwatches: start, pause, resume, reset and completion notification.
@@ -9,7 +9,7 @@ Native Linux live activities with an original midnight, iris and sea-glass visua
 - Priority-ordered activities; bounded, connection-owned external activities over session D-Bus.
 - XDG configuration, themes, top/bottom placement, monitor selection, motion preference and daemon autostart.
 - Slim pills with independent icon controls, artwork-first media cards, large timer readouts, activity switching and reduced-motion support.
-- Native preferences with live preview, appearance, size, opacity, position, display, provider visibility and startup settings.
+- Native three-column preferences with live previews, pill and card sizes, appearance, opacity, floating placement or GNOME Top Bar, display, provider visibility and startup settings.
 - GNOME pill/card with outside-click collapse, Escape, focusable controls and lifecycle cleanup.
 - Real layer-shell surface using GTK4, with zero exclusive zone and on-demand expanded keyboard input.
 
@@ -45,7 +45,7 @@ The launcher sets Wayland and preloads gtk4-layer-shell before GTK. Always use i
 
 ### Preferences
 
-Open the gear in a card, use `gnome-extensions prefs velapulse@velapulse.local`, or run `./scripts/preferences.sh`. Preferences apply to the running service immediately.
+Open the gear in a card, use `gnome-extensions prefs velapulse@velapulse.local`, or run `./scripts/preferences.sh`. Preferences apply to the running service immediately. In Appearance, choose Placement → GNOME Top Bar to embed the compact activity in the GNOME panel. Floating pill restores the top/bottom overlay. The layer-shell client stays floating.
 
 ## External activities
 
@@ -59,7 +59,7 @@ A CLI push is one-shot and expires. Applications updating/removing activities mu
 
 See [TESTING](docs/TESTING.md), [ROADMAP](docs/ROADMAP.md), [architecture](docs/ARCHITECTURE.md), and [environment](docs/ENVIRONMENT.md). Tested with isolated GNOME 50.1 and Sway 1.11; live service installation verified. The design update requires logout/login to replace version 1 already loaded by GNOME. Actual Spotify/browser playback, physical monitor hotplug, suspend/resume, fractional scaling and long-running reliability remain unverified.
 
-Audio uses a bounded 15-second fallback rather than native PipeWire subscription. Remote artwork is deliberately not downloaded. Timers are monotonic in-process and not persisted across service restart; suspend time is not included on Linux. Activity priorities remain available through the JSON configuration API. Layer-shell styling/features are less complete than the GNOME renderer.
+Audio uses a bounded 15-second fallback rather than native PipeWire subscription. Remote artwork is deliberately not downloaded. Timers are monotonic in-process and not persisted across service restart; suspend time is not included on Linux. Activity priorities can be changed per provider in preferences or through the JSON configuration API. Layer-shell styling/features are less complete than the GNOME renderer.
 
 ## License and inspiration
 

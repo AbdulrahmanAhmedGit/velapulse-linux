@@ -49,6 +49,10 @@ with tempfile.TemporaryDirectory() as config:
         call('configure', '{"position":"sideways"}', ok=False)
         call('configure', '{"opacity":1}', ok=False)
         call('configure', '{"size":"giant"}', ok=False)
+        call('configure', '{"surface":"dock"}', ok=False)
+        call('configure', '{"card_size":"huge"}', ok=False)
+        call('configure', '{"surface":"panel","card_size":"large"}')
+        assert snapshot()['config']['surface'] == 'panel'
         call('push', '{"id":"spoof","title":"Spoof","source":"player"}', ok=False)
         # A second daemon must fail, not silently queue behind the existing service.
         second = subprocess.run([bin,'daemon'], env=env,capture_output=True,timeout=5)

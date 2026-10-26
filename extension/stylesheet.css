@@ -15,7 +15,7 @@
 .vela-tag { spacing: 7px; }
 .vela-caption { font-size: 11px; font-weight: 600; color: #b5b1c2; }
 .vela-quiet { color: #aaa6b8; width: 27px; height: 27px; }
-.vela-artwork { border-radius: 19px; background-color: #292536; background-size: cover; background-position: center; }
+.vela-artwork { border-radius: 19px; background-color: #292536; background-size: cover; }
 .vela-source { font-size: 10px; font-weight: 600; color: #b5a4f5; padding-top: 1px; }
 .vela-title { font-size: 23px; font-weight: 700; }
 .vela-subtitle { font-size: 12px; color: #a9a6b7; }
@@ -52,3 +52,54 @@
 .vela-light .vela-activity-rail { background-color: #e2ddeb; }
 .vela-light .vela-primary { background-color: #b5a4f5; color: #211a38; }
 .vela-light .vela-metric { color: #554876; }
+/* Reference-led density: one-line pills, neutral cards and artwork captions. */
+.vela-root { color:#faf9f7; font-family:sans-serif; spacing:10px; }
+.vela-pill { background-color:#111113; border:none; padding:4px 9px 4px 4px; border-radius:25px; }
+.vela-well { width:32px; height:32px; border-radius:18px; color:#fff; }
+.vela-pill-title { font-size:14px; font-weight:700; }
+.vela-pill-detail { font-size:13px; color:#b7b3b7; padding:0; }
+.vela-inline { width:28px; height:30px; }
+.vela-card { background-color:#1c1c1e; border:none; border-radius:37px; padding:18px; spacing:12px; }
+.vela-media .vela-card { background-color:#160e15; }
+.vela-card-header { padding:1px 4px; }
+.vela-caption { color:#aaa6aa; }
+.vela-artwork { border-radius:26px; background-color:#382330; }
+.vela-cover-image { border-radius:26px; background-size:cover; }
+.vela-cover-caption { padding:25px 20px 20px; spacing:5px; }
+.vela-cover-corners { padding:12px; }
+.vela-cover-button { background-color:rgba(24,10,20,0.55); width:31px; height:31px; }
+.vela-title { font-size:25px; font-weight:700; color:#fff; }
+.vela-subtitle { color:#bfb8c2; font-size:15px; }
+.vela-provider-row { spacing:8px; padding:3px 5px; }
+.vela-provider-icon { color:#3bda72; }
+.vela-source { color:#d8d3da; font-size:14px; font-weight:400; padding:0; }
+.vela-output { color:#d8d3da; font-size:12px; }
+.vela-wave { margin:1px 4px; }
+.vela-times { padding:0 4px; }
+.vela-time-label { color:#b7afb8; font-size:12px; }
+.vela-transport { spacing:20px; padding:0 0 3px; }
+.vela-primary, .vela-secondary { width:62px; height:62px; border-radius:33px; background-color:#383039; color:#fff; }
+.vela-primary:hover, .vela-secondary:hover { background-color:#4a3f4a; }
+.vela-primary StIcon, .vela-secondary StIcon { icon-size:25px; }
+.vela-activity-rail { background-color:transparent; padding:0; }
+.vela-rail-selected { background-color:#54404e; color:#fff; width:23px; height:23px; }
+.vela-rail-item { width:23px; height:23px; }
+.vela-metric { font-size:48px; letter-spacing:-1px; color:#fff; }
+.vela-battery .vela-metric,.vela-volume .vela-metric,.vela-stopwatch .vela-metric { color:#fff; }
+.vela-metric-panel { padding:5px 6px 10px; }
+.vela-new-activity { font-size:10px; padding:2px; color:#9f929d; }
+.vela-text-button:focus,.vela-icon-button:focus { border-color:#ffdf70; }
+.vela-light .vela-title { color:#252126; }
+.vela-light .vela-source,.vela-light .vela-output { color:#504750; }
+.vela-pill-text { spacing:5px; }
+.vela-root.vela-light { color:#252126; }
+.vela-cover-caption .vela-title { color:#fff; }
+.vela-light.vela-media .vela-source,.vela-light.vela-media .vela-output { color:#ddd4dd; }
+.vela-light.vela-media .vela-primary,.vela-light.vela-media .vela-secondary { background-color:#383039; color:#fff; }
+.vela-light.vela-media .vela-new-activity { background-color:transparent; color:#a99da7; }
+.vela-panel-pill { padding:0 3px; border-radius:16px; background-color:transparent; box-shadow:none; }
+.vela-panel-pill .vela-well { width:21px; height:21px; border-radius:12px; }
+.vela-panel-pill .vela-well StIcon { icon-size:13px; }
+.vela-panel-pill .vela-pill-title,.vela-panel-pill .vela-pill-detail { font-size:11px; }
+.vela-panel-pill .vela-inline { width:21px; height:23px; }
+.vela-panel-pill .vela-inline StIcon { icon-size:13px; }

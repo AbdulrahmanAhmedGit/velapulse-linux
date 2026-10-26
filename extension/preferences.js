@@ -3,105 +3,130 @@ import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import {present, SIZES} from './presentation.js';
+import {present, PALETTE} from './presentation.js';
 
+const PROVIDERS = [
+    ['media','Media','audio-x-generic-symbolic'],['timer','Timer','alarm-symbolic'],
+    ['stopwatch','Stopwatch','preferences-system-time-symbolic'],['battery','Battery','battery-good-symbolic'],['volume','Audio','audio-volume-high-symbolic'],
+];
 export function fillPreferences(window) {
-    window.set_default_size(860, 680);
-    window.set_title('VelaPulse preferences');
-    window.set_search_enabled(true);
-    let config = {}, syncing = false, proxy, signal, ownerSignal, pending, closed = false;
-    const rows = {};
-    const css = new Gtk.CssProvider();
-    css.load_from_string('.vela-preview {background: #14151e; color: #f4f2f8; border-radius: 28px; padding: 12px 18px; margin: 22px 28px;} .vela-preview .preview-title {font-size: 14px; font-weight: 700;} .vela-preview .preview-detail {font-size: 11px; color: #a8a3b9;} .vela-preview .preview-icon {color: #b5a4f5; margin-right: 12px;} .vela-preview-light {background: #e9e5f1; color: #252431;} .vela-preview-light .preview-detail {color: #777084;} .vela-preview-title {font-size: 24px; font-weight: 700; margin-top: 10px;} .vela-preview-caption {color: #9c95ab; margin-bottom: 6px;}');
-    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
-    const appearance = new Adw.PreferencesPage({title: 'Appearance', icon_name: 'preferences-desktop-appearance-symbolic'});
-    const previewGroup = new Adw.PreferencesGroup();
-    const previewBox = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL});
-    previewBox.append(new Gtk.Label({label: 'A little space for what matters', css_classes: ['vela-preview-title']}));
-    previewBox.append(new Gtk.Label({label: 'Changes appear on your desktop as you make them.', css_classes: ['vela-preview-caption']}));
-    const preview = new Gtk.Box({css_classes: ['vela-preview'], halign: Gtk.Align.CENTER});
-    const previewIcon = new Gtk.Image({icon_name: 'weather-clear-night-symbolic', pixel_size: 22, css_classes: ['preview-icon']}); preview.append(previewIcon);
-    const texts = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL, valign: Gtk.Align.CENTER});
-    const title = new Gtk.Label({label: 'VelaPulse', xalign: 0, ellipsize: 3, max_width_chars: 26, css_classes: ['preview-title']});
-    const detail = new Gtk.Label({label: 'Waiting for the service', xalign: 0, ellipsize: 3, max_width_chars: 32, css_classes: ['preview-detail']});
-    texts.append(title); texts.append(detail); preview.append(texts); previewBox.append(preview); previewGroup.add(previewBox); appearance.add(previewGroup);
-    const surfaces = new Adw.PreferencesGroup({title: 'Make it yours', description: 'Choose the size, position and finish of your live activities.'}); appearance.add(surfaces);
-    const choices = (name, label, values, labels, description = '') => {
-        const row = new Adw.ComboRow({title: label, subtitle: description, model: Gtk.StringList.new(labels)});
-        rows[name] = {row, values};
-        row.connect('notify::selected', () => {if (!syncing) save({[name]: values[row.selected]});});
-        surfaces.add(row);
-    };
-    choices('appearance', 'Appearance', ['dark', 'light'], ['Midnight', 'Daylight']);
-    choices('position', 'Position', ['top', 'bottom'], ['Top of screen', 'Bottom of screen']);
-    choices('size', 'Pill size', ['small', 'medium', 'large'], ['Compact', 'Balanced', 'Roomy']);
-    const opacity = new Adw.ActionRow({title: 'Opacity', subtitle: 'Keep text comfortable to read against your wallpaper.'});
-    const opacityScale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 65, 100, 1);
-    opacityScale.set_size_request(180, -1); opacityScale.set_draw_value(true); opacityScale.set_value_pos(Gtk.PositionType.RIGHT); opacityScale.set_valign(Gtk.Align.CENTER);
-    opacity.add_suffix(opacityScale); surfaces.add(opacity);
-    opacityScale.connect('value-changed', () => {
-        if (syncing) return;
-        if (pending) GLib.Source.remove(pending);
-        pending = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 160, () => {pending = 0;save({opacity: Math.round(opacityScale.get_value())});return GLib.SOURCE_REMOVE;});
-    });
-    const motion = new Adw.SwitchRow({title: 'Animations', subtitle: 'Gentle movement when a card opens or closes.'}); surfaces.add(motion);
-    motion.connect('notify::active', () => {if (!syncing) save({animations: motion.active});});
-    const activities = new Adw.PreferencesPage({title: 'Activities', icon_name: 'view-grid-symbolic'});
-    const providers = new Adw.PreferencesGroup({title: 'Your live activities', description: 'Show the things you want to keep close.'}); activities.add(providers);
-    const switches = new Map();
-    for (const [id, label, description, icon] of [
-        ['media','Music and media','Track information and playback controls','multimedia-player-symbolic'],
-        ['timer','Timers','A countdown for a little focus','alarm-symbolic'],
-        ['stopwatch','Stopwatch','Keep track of elapsed time','preferences-system-time-symbolic'],
-        ['battery','Battery','Charge level and power status','battery-good-symbolic'],
-        ['volume','Audio','The volume of your default output','audio-volume-high-symbolic'],
-    ]) {
-        const row = new Adw.SwitchRow({title: label, subtitle: description});row.add_prefix(new Gtk.Image({icon_name: icon}));
-        row.connect('notify::active', () => {if (!syncing) {const enabled = new Set(config.enabled ?? []);if (row.active) enabled.add(id);else enabled.delete(id);save({enabled: [...enabled]});}});
-        providers.add(row); switches.set(id, row);
+    window.set_default_size(1180,820);window.set_title('VelaPulse');
+    let config={},activities=[],syncing=false,proxy,signal,ownerSignal,closed=false,pending=0;
+    const box=(vertical=false,style='',spacing=0)=>new Gtk.Box({orientation:vertical?Gtk.Orientation.VERTICAL:Gtk.Orientation.HORIZONTAL,spacing,css_classes:style?style.split(/\s+/):[]});
+    const text=(value,style='',expand=false)=>new Gtk.Label({label:value,xalign:0,hexpand:expand,ellipsize:3,max_width_chars:style==='preview-pill-title'?16:style==='preview-pill-detail'?14:100,css_classes:style?style.split(/\s+/):[]});
+    const button=(value,fn,style='')=>{const b=new Gtk.Button({label:value,css_classes:style?style.split(/\s+/):[]});b.connect('clicked',fn);return b;};
+    const css=new Gtk.CssProvider();css.load_from_file(Gio.File.new_for_uri(import.meta.url).get_parent().get_child('preferences.css'));
+    Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+    const root=box(false,'vela-settings');window.set_content(root);
+    const sidebar=box(true,'settings-sidebar',5);sidebar.set_size_request(206,-1);root.append(sidebar);
+    const brand=box(false,'settings-brand',10);brand.append(new Gtk.Image({icon_name:'media-record-symbolic',pixel_size:18}));brand.append(text('VelaPulse','brand-title'));sidebar.append(brand);
+    const stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:120,hexpand:true,vexpand:true});
+    const body=box(true,'settings-body');body.hexpand=true;root.append(body);
+    const header=new Adw.HeaderBar({show_start_title_buttons:false,css_classes:['flat','settings-header']});
+    const sectionTitle=text('Appearance','header-title');header.set_title_widget(sectionTitle);body.append(header);
+    const columns=box(false,'settings-columns');columns.vexpand=true;body.append(columns);
+    const scroll=new Gtk.ScrolledWindow({hscrollbar_policy:Gtk.PolicyType.NEVER,hexpand:true,vexpand:true});scroll.set_child(stack);columns.append(scroll);
+    const inspector=box(true,'settings-inspector',12);inspector.set_size_request(260,-1);columns.append(inspector);
+    const navButtons=[];
+    function nav(title,icon,page,section) {
+        if(section)sidebar.append(text(section,'nav-section'));
+        const b=new Gtk.ToggleButton({css_classes:['nav-button']});const row=box(false,'',10);row.append(new Gtk.Image({icon_name:icon,pixel_size:16}));row.append(text(title));b.set_child(row);
+        if(navButtons.length)b.set_group(navButtons[0]);navButtons.push(b);
+        b.connect('toggled',()=>{if(b.active){stack.visible_child_name=page;sectionTitle.label=title;}});sidebar.append(b);return b;
     }
-    const general = new Adw.PreferencesPage({title: 'General', icon_name: 'emblem-system-symbolic'});
-    const startup = new Adw.PreferencesGroup({title: 'Ready when you are'}); general.add(startup);
-    const autostart = new Adw.SwitchRow({title: 'Start at login', subtitle: 'Keep the activity service ready in the background.'}); startup.add(autostart);
-    autostart.connect('notify::active', () => {if (!syncing) save({autostart: autostart.active});});
-    const display = new Adw.PreferencesGroup({title: 'Display'}); general.add(display);
-    const monitor = new Adw.ComboRow({title: 'Show activities on', model: Gtk.StringList.new(['Default display', ...Array.from({length: Gdk.Display.get_default().get_monitors().get_n_items()}, (_,i) => `Display ${i + 1}`)])});
-    monitor.connect('notify::selected', () => {if (!syncing) save({monitor: monitor.selected - 1});}); display.add(monitor);
-    const info = new Adw.PreferencesGroup({title: 'VelaPulse', description: 'Independent native live activities for Linux. Original design, MIT licensed.'}); general.add(info);
-    const statusRow = new Adw.ActionRow({title: 'Activity service', subtitle: 'Connecting…'}); info.add(statusRow);
-    const website = new Adw.ActionRow({title: 'Project and source', subtitle: 'github.com/AbdulrahmanAhmedGit/velapulse-linux', activatable: true});website.add_suffix(new Gtk.Image({icon_name: 'adw-external-link-symbolic'}));website.connect('activated', () => Gio.AppInfo.launch_default_for_uri_async('https://github.com/AbdulrahmanAhmedGit/velapulse-linux',null,null,()=>{}));info.add(website);
-    window.add(appearance); window.add(activities); window.add(general);
-    function save(patch) {
-        if (!proxy?.g_name_owner) {statusRow.subtitle = 'Start the VelaPulse service to change settings.';return;}
-        config = {...config, ...patch};
-        proxy.call('Configure',new GLib.Variant('(s)',[JSON.stringify(config)]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{
-            try {p.call_finish(r);statusRow.subtitle = 'Connected · settings saved';} catch (e) {statusRow.subtitle = 'Settings could not be saved';refresh();}
-        });
+    function page(name) {const p=box(true,'settings-page',20);stack.add_named(p,name);return p;}
+    const appearance=page('appearance');
+    const search=new Gtk.SearchEntry({placeholder_text:'Find a setting…',css_classes:['settings-search']});appearance.append(search);
+    const searchHint=text('Choose the shape of your desktop activities.','muted');appearance.append(searchHint);
+    appearance.append(text('Live activities','section-title'));
+    const previewRows=new Map(),toggles=new Map();
+    for(const [id,title,icon] of PROVIDERS) {
+        const row=box(false,'preview-row',10);const enabled=new Gtk.CheckButton({tooltip_text:`Show ${title}`,name:`enabled-${id}`});toggles.set(id,enabled);
+        enabled.connect('toggled',()=>{if(syncing)return;const next=new Set(config.enabled??[]);if(enabled.active)next.add(id);else next.delete(id);save({enabled:[...next]});});row.append(enabled);
+        const labels=box(false,'',8);labels.hexpand=true;labels.append(text(title,'preview-name'));const positionLabel=text('background','muted');labels.append(positionLabel);row.append(labels);
+        const pill=box(false,`pill-preview preview-${id}`,7);pill.set_size_request(230,30);
+        const well=box(false,'preview-well');well.append(new Gtk.Image({icon_name:icon,pixel_size:14}));pill.append(well);
+        const titleLabel=text('','preview-pill-title'),detail=text('','preview-pill-detail',true);pill.append(titleLabel);pill.append(detail);
+        if(id==='media'||id==='timer')pill.append(new Gtk.Image({icon_name:'media-playback-pause-symbolic',pixel_size:13}));
+        row.append(pill);appearance.append(row);previewRows.set(id,{row,titleLabel,detail,pill,positionLabel});
+    }
+    const sizes=box(true,'size-section',12);sizes.append(text('Pill size  ·  3 options','section-title'));appearance.append(sizes);
+    const sizeRow=box(false,'size-grid',12);sizes.append(sizeRow);const sizeButtons=new Map();
+    for(const [id,title,width] of [['small','Small',76],['medium','Normal',96],['large','Large',112]]) {
+        const b=new Gtk.ToggleButton({name:`size-${id}`,css_classes:['size-choice']});if(sizeButtons.size)b.set_group([...sizeButtons.values()][0]);
+        const sample=box(true,'size-choice-content',17);sample.halign=Gtk.Align.CENTER;sample.valign=Gtk.Align.CENTER;
+        const miniature=box(false,'mini-pill',6);miniature.valign=Gtk.Align.CENTER;miniature.set_size_request(width,20);miniature.append(box(false,'mini-disc'));
+        const line=box(false,'mini-line');line.hexpand=true;line.valign=Gtk.Align.CENTER;miniature.append(line);sample.append(miniature);sample.append(text(title,'size-label'));b.set_child(sample);
+        b.connect('toggled',()=>{if(b.active&&!syncing)save({size:id});});sizeButtons.set(id,b);sizeRow.append(b);
+    }
+    const cards=box(true,'size-section',12);cards.append(text('Card size  ·  2 options','section-title'));const cardRow=box(false,'size-grid',12);cards.append(cardRow);appearance.append(cards);const cardButtons=new Map();
+    for(const [id,title] of [['normal','Normal'],['large','Large']]) {
+        const b=new Gtk.ToggleButton({name:`card-${id}`,css_classes:['card-choice']});if(cardButtons.size)b.set_group([...cardButtons.values()][0]);
+        const sample=box(true,'card-choice-content',8);sample.halign=Gtk.Align.CENTER;const cover=box(true,'mini-cover');cover.set_size_request(id==='large'?90:72,id==='large'?70:55);sample.append(cover);
+        const line=box(false,'mini-line');line.set_size_request(60,3);sample.append(line);sample.append(text(title,'size-label'));b.set_child(sample);
+        b.connect('toggled',()=>{if(b.active&&!syncing)save({card_size:id});});cardButtons.set(id,b);cardRow.append(b);
+    }
+    const status=text('Connecting to your activities…','settings-status');appearance.append(status);
+    const general=page('general');general.append(text('General','page-title'));general.append(text('Startup, display and motion.','muted'));
+    const generalGroup=new Adw.PreferencesGroup();general.append(generalGroup);
+    const startup=new Adw.SwitchRow({title:'Start at login',subtitle:'Keep your activities ready in the background.'});generalGroup.add(startup);startup.connect('notify::active',()=>{if(!syncing)save({autostart:startup.active});});
+    const monitor=new Adw.ComboRow({title:'Display',model:Gtk.StringList.new(['Default display',...Array.from({length:Gdk.Display.get_default().get_monitors().get_n_items()},(_,i)=>`Display ${i+1}`)])});generalGroup.add(monitor);monitor.connect('notify::selected',()=>{if(!syncing)save({monitor:monitor.selected-1});});
+    const providerPages=new Map();
+    for(const [id,title,icon] of PROVIDERS) {
+        const p=page(id);p.append(text(title,'page-title'));const description=text('','provider-detail');p.append(description);
+        const group=new Adw.PreferencesGroup();p.append(group);
+        const visible=new Adw.SwitchRow({title:`Show ${title.toLowerCase()}`,subtitle:'Display this activity when information is available.'});group.add(visible);visible.connect('notify::active',()=>{if(syncing)return;const next=new Set(config.enabled??[]);if(visible.active)next.add(id);else next.delete(id);save({enabled:[...next]});});
+        const priority=new Adw.SpinRow({title:'Priority',subtitle:'Higher priorities appear first.',adjustment:new Gtk.Adjustment({lower:-100,upper:100,step_increment:5,page_increment:10})});group.add(priority);priority.connect('notify::value',()=>{if(!syncing)save({priorities:{...config.priorities,[id]:Math.round(priority.value)}});});
+        if(id==='timer'||id==='stopwatch') {
+            const controls=box(false,'provider-controls',10);
+            if(id==='timer') {const duration=new Gtk.SpinButton({adjustment:new Gtk.Adjustment({lower:1,upper:1440,value:5,step_increment:1,page_increment:5}),numeric:true});duration.set_tooltip_text('Duration in minutes');controls.append(duration);controls.append(button('Start timer',()=>command(id,'start',duration.get_value_as_int()*60),'suggested-action'));}
+            else controls.append(button('Start stopwatch',()=>command(id,'start',0),'suggested-action'));
+            controls.append(button('Reset',()=>command(id,'reset',0)));p.append(controls);
+        }
+        providerPages.set(id,{description,visible,priority});
+    }
+    const about=page('about');about.append(text('VelaPulse','page-title'));about.append(text('Live activities for your Linux desktop.','muted'));about.append(text('Independent implementation · MIT licensed','muted'));about.append(button('Project and source',()=>Gio.AppInfo.launch_default_for_uri_async('https://github.com/AbdulrahmanAhmedGit/velapulse-linux',null,null,()=>{})));
+    nav('Appearance','preferences-desktop-appearance-symbolic','appearance','Settings').active=true;
+    nav('General','emblem-system-symbolic','general');
+    for(const [id,title,icon] of PROVIDERS)nav(title,icon,id,id==='media'?'Activities':null);
+    const spacer=box();spacer.vexpand=true;sidebar.append(spacer);nav('About','help-about-symbolic','about');
+    inspector.append(text('Appearance','inspector-title'));
+    const inspectorGroup=new Adw.PreferencesGroup();inspector.append(inspectorGroup);
+    const placement=new Adw.ComboRow({title:'Placement',subtitle:'Top Bar requires GNOME',model:Gtk.StringList.new(['Floating pill','GNOME Top Bar'])});inspectorGroup.add(placement);placement.connect('notify::selected',()=>{if(!syncing)save({surface:placement.selected?'panel':'floating'});});
+    const theme=new Adw.ComboRow({title:'Appearance',model:Gtk.StringList.new(['Dark','Light'])});inspectorGroup.add(theme);theme.connect('notify::selected',()=>{if(!syncing)save({appearance:theme.selected?'light':'dark'});});
+    const position=new Adw.ComboRow({title:'Position',model:Gtk.StringList.new(['Top','Bottom'])});inspectorGroup.add(position);position.connect('notify::selected',()=>{if(!syncing)save({position:position.selected?'bottom':'top'});});
+    const opacityRow=box(true,'inspector-section',10);opacityRow.append(text('Opacity','inspector-label'));
+    const opacity=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,65,100,1);opacity.set_draw_value(true);opacity.set_value_pos(Gtk.PositionType.RIGHT);opacityRow.append(opacity);inspector.append(opacityRow);
+    opacity.connect('value-changed',()=>{if(syncing)return;if(pending)GLib.Source.remove(pending);pending=GLib.timeout_add(GLib.PRIORITY_DEFAULT,140,()=>{pending=0;save({opacity:Math.round(opacity.get_value())});return GLib.SOURCE_REMOVE;});});
+    const motionGroup=new Adw.PreferencesGroup({title:'Motion'});inspector.append(motionGroup);const motion=new Adw.SwitchRow({title:'Animations'});motionGroup.add(motion);motion.connect('notify::active',()=>{if(!syncing)save({animations:motion.active});});
+    inspector.append(text('Changes apply immediately','inspector-note'));
+    search.connect('search-changed',()=>{const q=search.text.toLowerCase();for(const [id,{row}] of previewRows)row.visible=!q||id.includes(q)||PROVIDERS.find(x=>x[0]===id)[1].toLowerCase().includes(q);sizes.visible=!q||'pill size'.includes(q);cards.visible=!q||'card size'.includes(q);});
+    function command(id,action,seconds) {proxy?.call('Command',new GLib.Variant('(sst)',[id,action,seconds]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{p.call_finish(r);}catch{status.label='This action is unavailable.';}});}
+    let saving=false,queued={};
+    function save(patch) {queued={...queued,...patch};flush();}
+    function flush() {
+        if(closed||saving||!Object.keys(queued).length)return;
+        if(!proxy?.g_name_owner){status.label='Start VelaPulse to change settings.';return;}
+        const patch=queued;queued={};config={...config,...patch};saving=true;
+        proxy.call('Configure',new GLib.Variant('(s)',[JSON.stringify(config)]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{saving=false;try{p.call_finish(r);status.label='Changes apply immediately';}catch{status.label='Settings could not be saved.';refresh();}flush();});
     }
     function update(json) {
-        if (closed) return;
-        let snapshot;try {snapshot = JSON.parse(json);} catch {return;}
-        config = snapshot.config; syncing = true;
-        for (const [key,{row, values}] of Object.entries(rows)) row.selected = Math.max(0,values.indexOf(config[key]));
-        opacityScale.set_value(config.opacity ?? 98);motion.active = config.animations;autostart.active = config.autostart;
-        monitor.selected = config.monitor + 1;
-        for (const [id,row] of switches) row.active = config.enabled.includes(id);
-        syncing = false;
-        preview.set_css_classes(['vela-preview', ...(config.appearance === 'light' ? ['vela-preview-light'] : [])]);
-        const p = present(snapshot.activities[0]);title.label = p.compact;detail.label = p.detail;previewIcon.icon_name = p.type === 'media' ? 'media-playback-start-symbolic' : p.icon;
-        const size = SIZES[config.size] ?? SIZES.medium;preview.set_size_request(size.pill - 40, -1);preview.opacity = (config.opacity ?? 98)/100;
-        statusRow.subtitle = 'Connected · changes apply immediately';
-        Adw.StyleManager.get_default().color_scheme = config.appearance === 'light' ? Adw.ColorScheme.FORCE_LIGHT : Adw.ColorScheme.FORCE_DARK;
+        if(closed)return;let s;try{s=JSON.parse(json);}catch{return;}
+        config={...s.config,...queued};activities=s.activities;syncing=true;
+        placement.selected=config.surface==='panel'?1:0;position.sensitive=config.surface!=='panel';theme.selected=config.appearance==='light'?1:0;position.selected=config.position==='bottom'?1:0;opacity.set_value(config.opacity??98);motion.active=config.animations;startup.active=config.autostart;monitor.selected=config.monitor+1;
+        for(const [id,b] of sizeButtons)b.active=id===config.size;for(const [id,b] of cardButtons)b.active=id===(config.card_size??'normal');
+        for(const [id,{row,titleLabel,detail,positionLabel}] of previewRows) {
+            toggles.get(id).active=config.enabled.includes(id);
+            const a=activities.find(a=>a.id.split(':')[0]===id),p=present(a);
+            titleLabel.label=a?p.compact:(id==='media'?'Media':'');detail.label=a?` · ${p.detail}`:(id==='media'?'Nothing playing':'Not running');
+            const foreground=activities[0]?.id.split(':')[0]===id;positionLabel.label=foreground?'foreground':'background';row.set_css_classes(['preview-row',...(foreground?['preview-row-selected']:[])]);row.visible=id!=='stopwatch'||Boolean(a)||search.text.toLowerCase().includes('stopwatch');
+            const refs=providerPages.get(id);refs.visible.active=config.enabled.includes(id);refs.priority.value=config.priorities[id]??50;refs.description.label=a?`${a.title} · ${a.description}`:'No activity right now.';
+        }
+        syncing=false;status.label='Changes apply immediately';
+        root.set_css_classes(['vela-settings',...(config.appearance==='light'?['settings-light']:[])]);
+        Adw.StyleManager.get_default().color_scheme=config.appearance==='light'?Adw.ColorScheme.FORCE_LIGHT:Adw.ColorScheme.FORCE_DARK;
     }
-    function refresh() {
-        if (!proxy?.g_name_owner) {statusRow.subtitle = 'Service unavailable · start VelaPulse and try again';detail.label = 'Service unavailable';return;}
-        proxy.call('Snapshot',null,Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try {update(p.call_finish(r).deep_unpack()[0]);} catch {statusRow.subtitle='Service unavailable';}});
-    }
-    Gio.DBusProxy.new_for_bus(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,'io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',null,(_,result)=>{
-        if (closed) return;
-        try {proxy = Gio.DBusProxy.new_for_bus_finish(result);} catch {statusRow.subtitle='Service unavailable';return;}
-        signal = proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')update(args.deep_unpack()[0]);});
-        ownerSignal = proxy.connect('notify::g-name-owner',refresh);refresh();
-    });
+    function refresh() {if(!proxy?.g_name_owner){status.label='Activity service unavailable';return;}proxy.call('Snapshot',null,Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{update(p.call_finish(r).deep_unpack()[0]);}catch{status.label='Activity service unavailable';}});}
+    Gio.DBusProxy.new_for_bus(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,'io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',null,(_,result)=>{if(closed)return;try{proxy=Gio.DBusProxy.new_for_bus_finish(result);}catch{status.label='Activity service unavailable';return;}signal=proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')update(args.deep_unpack()[0]);});ownerSignal=proxy.connect('notify::g-name-owner',refresh);refresh();});
     window.connect('close-request',()=>{closed=true;if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(pending)GLib.Source.remove(pending);Gtk.StyleContext.remove_provider_for_display(Gdk.Display.get_default(),css);return false;});
 }

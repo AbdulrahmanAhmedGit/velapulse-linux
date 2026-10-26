@@ -1,14 +1,14 @@
 // Pure presentation rules shared by the two native renderers.
 export const PALETTE = {
-    media: {accent: '#b5a4f5', tint: '#292436', icon: 'audio-x-generic-symbolic', label: 'Now playing'},
-    timer: {accent: '#b5a4f5', tint: '#2a253c', icon: 'alarm-symbolic', label: 'Timer'},
-    stopwatch: {accent: '#89bdf1', tint: '#202e41', icon: 'preferences-system-time-symbolic', label: 'Stopwatch'},
-    battery: {accent: '#77d5b6', tint: '#1b332f', icon: 'battery-good-symbolic', label: 'Power'},
-    volume: {accent: '#89bdf1', tint: '#202e41', icon: 'audio-volume-high-symbolic', label: 'Audio'},
+    media: {accent: '#b778a7', tint: '#4a2539', icon: 'audio-x-generic-symbolic', label: 'Now playing'},
+    timer: {accent: '#6558d8', tint: '#6558d8', icon: 'alarm-symbolic', label: 'Timer'},
+    stopwatch: {accent: '#347bfa', tint: '#347bfa', icon: 'preferences-system-time-symbolic', label: 'Stopwatch'},
+    battery: {accent: '#2ac85a', tint: '#2ac85a', icon: 'battery-good-symbolic', label: 'Power'},
+    volume: {accent: '#347bfa', tint: '#347bfa', icon: 'audio-volume-high-symbolic', label: 'Audio'},
     external: {accent: '#f0bd7e', tint: '#392e23', icon: 'view-refresh-symbolic', label: 'Live activity'},
-    idle: {accent: '#b5a4f5', tint: '#292436', icon: 'weather-clear-night-symbolic', label: 'VelaPulse'},
+    idle: {accent: '#b778a7', tint: '#4a2539', icon: 'weather-clear-night-symbolic', label: 'VelaPulse'},
 };
-export const SIZES = {small: {pill: 278, card: 354}, medium: {pill: 338, card: 390}, large: {pill: 386, card: 426}};
+export const SIZES = {small: {pill: 310, card: 400}, medium: {pill: 380, card: 440}, large: {pill: 430, card: 480}};
 export function kind(a) {return a ? (PALETTE[a.id.split(':')[0]] ? a.id.split(':')[0] : 'external') : 'idle';}
 export function clock(value) {
     const seconds = Math.max(0, Math.floor(Number(value) || 0));
@@ -62,4 +62,14 @@ export function present(a) {
         elapsed: Number.isFinite(a?.position_seconds) ? clock(a.position_seconds) : '',
         duration: Number.isFinite(a?.duration_seconds) ? clock(a.duration_seconds) : '',
     };
+}
+
+// Native Cairo drawing used by St and GTK; no animation loop or image assets.
+export function drawProgress(cr,width,height,fraction,color='#b778a7') {
+    const rgb=color.replace('#','').match(/../g).map(c=>parseInt(c,16)/255);
+    const end=4+Math.max(0,Math.min(1,fraction))*Math.max(0,width-8),mid=height/2;
+    cr.setLineWidth(3);cr.setLineCap(1);cr.setSourceRGBA(.55,.51,.55,.6);cr.moveTo(4,mid);cr.lineTo(Math.max(4,width-4),mid);cr.stroke();
+    cr.setSourceRGBA(...rgb,1);cr.moveTo(4,mid);
+    for(let x=4;x<=end;x+=2)cr.lineTo(x,mid+Math.sin((x-4)/3.4)*2.6);
+    cr.stroke();cr.setSourceRGBA(1,1,1,1);cr.arc(end,mid,4,0,Math.PI*2);cr.fill();
 }

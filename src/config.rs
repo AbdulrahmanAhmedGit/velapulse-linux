@@ -4,6 +4,7 @@ use std::{collections::BTreeMap, path::PathBuf};
 #[serde(default, deny_unknown_fields)]
 pub struct Config {
     pub position: String,
+    pub surface: String,
     pub appearance: String,
     pub animations: bool,
     pub monitor: i32,
@@ -11,12 +12,14 @@ pub struct Config {
     pub priorities: BTreeMap<String, i32>,
     pub autostart: bool,
     pub size: String,
+    pub card_size: String,
     pub opacity: u8,
 }
 impl Default for Config {
     fn default() -> Self {
         Self {
             position: "bottom".into(),
+            surface: "floating".into(),
             appearance: "dark".into(),
             animations: true,
             monitor: -1,
@@ -31,6 +34,7 @@ impl Default for Config {
             ]),
             autostart: false,
             size: "medium".into(),
+            card_size: "normal".into(),
             opacity: 98,
         }
     }
@@ -57,12 +61,20 @@ impl Config {
     }
     pub fn validate(&self) -> anyhow::Result<()> {
         anyhow::ensure!(
+            ["floating", "panel"].contains(&self.surface.as_str()),
+            "surface must be floating or panel"
+        );
+        anyhow::ensure!(
             ["top", "bottom"].contains(&self.position.as_str()),
             "position must be top or bottom"
         );
         anyhow::ensure!(
             ["dark", "light"].contains(&self.appearance.as_str()),
             "appearance must be dark or light"
+        );
+        anyhow::ensure!(
+            ["normal", "large"].contains(&self.card_size.as_str()),
+            "invalid card size"
         );
         anyhow::ensure!(
             ["small", "medium", "large"].contains(&self.size.as_str()),
