@@ -4,7 +4,22 @@ import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Layer from 'gi://Gtk4LayerShell';
+import GObject from 'gi://GObject';
 import {present, actionInfo, SIZES} from '../extension/presentation.js';
+
+// An artwork's intrinsic pixel size must never dictate the surface width.
+const CoverArtwork = GObject.registerClass(class CoverArtwork extends Gtk.Widget {
+    _init() {
+        super._init({hexpand:true, vexpand:true});
+        this._picture = new Gtk.Picture({content_fit:Gtk.ContentFit.COVER, can_shrink:true});
+        this._picture.set_parent(this);
+    }
+    vfunc_measure(orientation, _forSize) {return orientation === Gtk.Orientation.HORIZONTAL ? [0,0,-1,-1] : [190,190,-1,-1];}
+    vfunc_size_allocate(width, height, baseline) {this._picture?.allocate(width,height,baseline,null);}
+    vfunc_snapshot(snapshot) {if(this._picture)this.snapshot_child(this._picture,snapshot);}
+    set_file(file) {this._picture?.set_file(file);}
+    release() {this._picture?.unparent();this._picture=null;}
+});
 
 const BUS = 'io.github.velapulse.Service', PATH = '/io/github/velapulse/Service', IFACE = 'io.github.velapulse.Service1';
 const here = Gio.File.new_for_uri(import.meta.url).get_parent();
@@ -18,7 +33,7 @@ function call(method, signature, args, done = () => {}) {
     });
 }
 function command(id, action, seconds = 0) {if(action === 'start') {selected = id;launcherOpen = false;}call('Command', '(sst)', [id, action, seconds]);}
-function label(text, style, expand = false) {return new Gtk.Label({label:text, xalign:0, ellipsize:3, hexpand:expand, css_classes:[style]});}
+function label(text, style, expand = false) {return new Gtk.Label({label:text, xalign:0, ellipsize:3, max_width_chars:style==='vela-pill-title'?22:style==='vela-title'?25:42, hexpand:expand, css_classes:[style]});}
 function box(vertical = false, style = '', spacing = 0) {return new Gtk.Box({orientation:vertical ? Gtk.Orientation.VERTICAL : Gtk.Orientation.HORIZONTAL, spacing, css_classes:style ? [style] : []});}
 function clear(widget) {while(widget.get_first_child())widget.remove(widget.get_first_child());}
 function iconButton(icon, name, action, style = '') {
@@ -70,13 +85,13 @@ function renderCard() {
     const a=state.activities.find(a=>a.id===selected),p=present(a);
     const key=JSON.stringify([a?.id,a?.controls,a?.status,state.activities.map(a=>a.id),launcherOpen]);
     if(key !== cardKey) {
-        cardKey=key;clear(card);refs={};
+        cardKey=key;refs.art?.release();clear(card);refs={};
         const header=box(false,'vela-card-header',6),tag=box(false,'vela-tag',7);
         tag.hexpand=true;tag.valign=Gtk.Align.CENTER;tag.append(new Gtk.Image({icon_name:p.icon,pixel_size:13}));tag.append(label(p.label,'vela-caption'));
         header.append(tag);header.append(iconButton('emblem-system-symbolic','Preferences',preferences,'vela-quiet'));header.append(iconButton('window-close-symbolic','Collapse activity',()=>setExpanded(false),'vela-quiet'));card.append(header);
         if(p.type==='media') {
             const hero=new Gtk.Box({css_classes:['vela-artwork'],overflow:Gtk.Overflow.HIDDEN,height_request:190});
-            refs.art=new Gtk.Picture({content_fit:Gtk.ContentFit.COVER,can_shrink:true,hexpand:true,vexpand:true});hero.append(refs.art);card.append(hero);
+            refs.art=new CoverArtwork();hero.append(refs.art);card.append(hero);
             refs.source=label(p.source,'vela-source');card.append(refs.source);
             refs.title=label(p.title,'vela-title');card.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');card.append(refs.detail);buildProgress();
             const times=box(false,'vela-times');refs.elapsed=label(p.elapsed,'vela-time-label',true);refs.duration=label(p.duration,'vela-time-label');times.append(refs.elapsed);times.append(refs.duration);card.append(times);
@@ -135,5 +150,5 @@ app.connect('activate',()=>{
     signal=proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')render(args.deep_unpack()[0]);});ownerSignal=proxy.connect('notify::g-name-owner',refresh);
     refresh();position();window.present();
 });
-app.connect('shutdown',()=>{if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
+app.connect('shutdown',()=>{refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
 app.run([]);

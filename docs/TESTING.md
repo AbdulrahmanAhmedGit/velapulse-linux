@@ -33,3 +33,5 @@ CI workflow is supplied. Its hosted result is separate from these local results 
 - Local screenshots inspected for GNOME timer and media cards, GTK battery layout, light appearance and native preferences. Controlled MPRIS fixtures are labeled as test players and do not ship as production providers.
 - Configuration writes are serialized; invalid opacity/size and external attempts to supply provider metadata are rejected by integration tests.
 - Live installed service upgraded; the previous login-started instance was stopped only after verifying no active clocks/external work. The GNOME extension has updated files, but version 1 remains loaded until a new login. Standalone preferences was opened against the live service.
+
+A final layer-shell screenshot exposed an artwork sizing bug: the source image's intrinsic width could expand the GTK card off-screen. The renderer now uses a native artwork widget whose measurement is independent of source pixels, and limits label measurement. The corrected 390px media card was inspected under Sway without clipping.
