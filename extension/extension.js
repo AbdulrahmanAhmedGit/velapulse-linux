@@ -66,7 +66,7 @@ export default class VelaPulse extends Extension {
     }
     _current() {return this._state.activities.find(a => a.id === this._selected);}
     _button(text, fn) {const b = new St.Button({label: text, style_class: 'vela-button', reactive: true, can_focus: true});b.connect('clicked', fn);return b;}
-    _command(id, action, seconds = 0) {this._proxy?.CommandRemote(id, action, seconds, (_, error) => {if (error && this._alive) this._label.text = '◈  Action unavailable';});}
+    _command(id, action, seconds = 0) {if (action === 'start') this._selected = id;this._proxy?.CommandRemote(id, action, seconds, (_, error) => {if (error && this._alive) this._label.text = '◈  Action unavailable';});}
     _configure(patch) {this._proxy?.ConfigureRemote(JSON.stringify({...this._state.config, ...patch}), (_, error) => {if (error && this._alive) this._label.text = '◈  Settings could not be saved';});}
     _renderCard() {
         if (!this._expanded) return;
@@ -89,7 +89,7 @@ export default class VelaPulse extends Extension {
         this._progress = new St.Widget({style_class: 'vela-progress', height: 4, width: Math.round(300 * (a?.progress ?? 0)), x_align: Clutter.ActorAlign.START});track.add_child(this._progress);this._card.add_child(track);
         const controls = new St.BoxLayout({style_class: 'vela-row'});
         for (const action of a?.controls ?? []) controls.add_child(this._button(action, () => this._command(a.id, action)));
-        if (this._state.activities.length > 1) controls.add_child(this._button('Next activity →', () => {const items = this._state.activities;this._selected = items[(items.findIndex(x => x.id === this._selected) + 1) % items.length].id;this._renderCard();}));
+        if (this._state.activities.length > 1) controls.add_child(this._button('Next activity →', () => {const items = this._state.activities;this._selected = items[(items.findIndex(x => x.id === this._selected) + 1) % items.length].id;this._update(JSON.stringify(this._state));}));
         this._card.add_child(controls);
         const start = new St.BoxLayout({style_class: 'vela-row'});
         start.add_child(this._button('5 min', () => this._command('timer', 'start', 300)));
