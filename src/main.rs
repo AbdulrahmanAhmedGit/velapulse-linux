@@ -1,1 +1,217 @@
-fn main() { println!("VelaPulse bootstrap"); }
+mod capabilities;
+mod config;
+mod model;
+mod providers;
+use model::{Activity, Clock, Engine};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
+use tokio::sync::{Mutex, Notify};
+use zbus::{message::Header, object_server::SignalEmitter};
+const NAME: &str = "io.github.velapulse.Service";
+const PATH: &str = "/io/github/velapulse/Service";
+#[derive(Clone)]
+struct Service {
+    engine: Arc<Mutex<Engine>>,
+    config: Arc<Mutex<config::Config>>,
+    wake: Arc<Notify>,
+}
+fn invalid(e: impl ToString) -> zbus::fdo::Error {
+    zbus::fdo::Error::InvalidArgs(e.to_string())
+}
+impl Service {
+    async fn json(&self) -> String {
+        let config = self.config.lock().await.clone();
+        let activities = self.engine.lock().await.snapshot(Instant::now(), &config);
+        serde_json::json!({"version":1,"activities":activities,"config":config}).to_string()
+    }
+}
+#[zbus::interface(name = "io.github.velapulse.Service1")]
+impl Service {
+    async fn snapshot(&self) -> String {
+        self.json().await
+    }
+    async fn command(&self, id: &str, action: &str, seconds: u64) -> zbus::fdo::Result<()> {
+        if id.starts_with("media:") {
+            providers::control(id, action).await.map_err(invalid)?;
+            return Ok(());
+        }
+        if !["timer", "stopwatch"].contains(&id) {
+            return Err(invalid("unknown clock"));
+        }
+        let mut e = self.engine.lock().await;
+        let n = Instant::now();
+        match action {
+            "start" => {
+                if id == "timer" && !(1..=86400).contains(&seconds) {
+                    return Err(invalid("timer range 1..86400 seconds"));
+                }
+                e.clocks.insert(
+                    id.into(),
+                    Clock::new(if id == "timer" { Some(seconds) } else { None }, n),
+                );
+            }
+            "reset" => {
+                e.clocks.remove(id);
+            }
+            "pause" | "resume" => {
+                let c = e
+                    .clocks
+                    .get_mut(id)
+                    .ok_or_else(|| invalid("clock not started"))?;
+                if action == "pause" {
+                    c.pause(n)
+                } else {
+                    c.resume(n)
+                }
+            }
+            _ => return Err(invalid("unknown action")),
+        }
+        drop(e);
+        self.wake.notify_one();
+        Ok(())
+    }
+    async fn push(
+        &self,
+        json: &str,
+        #[zbus(header)] header: Header<'_>,
+    ) -> zbus::fdo::Result<String> {
+        if json.len() > 4096 {
+            return Err(invalid("payload exceeds 4096 bytes"));
+        }
+        let mut a: Activity = serde_json::from_str(json).map_err(invalid)?;
+        a.validate().map_err(invalid)?;
+        let owner = header
+            .sender()
+            .ok_or_else(|| invalid("missing sender"))?
+            .to_string();
+        let key = format!("external:{owner}:{}", a.id);
+        a.id = key.clone();
+        let mut e = self.engine.lock().await;
+        if !e.external.contains_key(&key)
+            && (e.external.len() >= 128
+                || e.external
+                    .keys()
+                    .filter(|k| k.starts_with(&format!("external:{owner}:")))
+                    .count()
+                    >= 16)
+        {
+            return Err(invalid("activity quota exceeded"));
+        }
+        let end = Instant::now() + Duration::from_secs(a.expires_in);
+        e.external.insert(key.clone(), (a, end));
+        drop(e);
+        self.wake.notify_one();
+        Ok(key)
+    }
+    async fn remove(&self, id: &str, #[zbus(header)] header: Header<'_>) -> zbus::fdo::Result<()> {
+        let owner = header.sender().ok_or_else(|| invalid("missing sender"))?;
+        if !id.starts_with(&format!("external:{owner}:")) {
+            return Err(zbus::fdo::Error::AccessDenied(
+                "activity belongs to another connection".into(),
+            ));
+        }
+        self.engine.lock().await.external.remove(id);
+        self.wake.notify_one();
+        Ok(())
+    }
+    async fn configure(&self, json: &str) -> zbus::fdo::Result<()> {
+        if json.len() > 4096 {
+            return Err(invalid("configuration too large"));
+        }
+        let c: config::Config = serde_json::from_str(json).map_err(invalid)?;
+        c.save().map_err(invalid)?;
+        *self.config.lock().await = c;
+        self.wake.notify_one();
+        Ok(())
+    }
+    #[zbus(signal)]
+    async fn changed(emitter: &SignalEmitter<'_>, json: &str) -> zbus::Result<()>;
+}
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let args: Vec<_> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some("capabilities") {
+        return capabilities::detect();
+    }
+    if args.get(1).is_some_and(|s| s != "daemon") {
+        let c = zbus::Connection::session().await?;
+        let p = zbus::Proxy::new(&c, NAME, PATH, "io.github.velapulse.Service1").await?;
+        match args[1].as_str() {
+            "snapshot" => println!("{}", p.call::<_, _, String>("Snapshot", &()).await?),
+            "timer" | "stopwatch" => {
+                let action = args.get(2).map(String::as_str).unwrap_or("start");
+                let seconds = args
+                    .get(3)
+                    .map(|s| s.parse::<u64>())
+                    .transpose()?
+                    .unwrap_or(300);
+                p.call::<_, _, ()>("Command", &(args[1].as_str(), action, seconds))
+                    .await?;
+            }
+            "push" => {
+                let json = args
+                    .get(2)
+                    .ok_or_else(|| anyhow::anyhow!("push requires JSON"))?;
+                println!("{}", p.call::<_, _, String>("Push", &(json,)).await?);
+            }
+            "configure" => {
+                let json = args
+                    .get(2)
+                    .ok_or_else(|| anyhow::anyhow!("configure requires JSON"))?;
+                p.call::<_, _, ()>("Configure", &(json,)).await?;
+            }
+            _ => anyhow::bail!(
+                "Usage: velapulse [daemon|capabilities|snapshot|timer start SECONDS|timer pause|timer resume|timer reset|stopwatch start|push JSON|configure JSON]"
+            ),
+        }
+        return Ok(());
+    }
+    let service = Service {
+        engine: Default::default(),
+        config: Arc::new(Mutex::new(config::Config::load()?)),
+        wake: Default::default(),
+    };
+    let conn = zbus::connection::Builder::session()?
+        .serve_at(PATH, service.clone())?
+        .build()
+        .await?;
+    providers::spawn(service.engine.clone(), service.wake.clone());
+    conn.request_name_with_flags(NAME, zbus::fdo::RequestNameFlags::DoNotQueue.into())
+        .await?;
+    let emitter = SignalEmitter::new(&conn, PATH)?;
+    let mut previous = String::new();
+    loop {
+        let json = service.json().await;
+        if json != previous {
+            Service::changed(&emitter, &json).await?;
+            previous = json;
+        }
+        let mut completed = false;
+        let delay = {
+            let mut e = service.engine.lock().await;
+            let n = Instant::now();
+            for c in e.clocks.values_mut() {
+                if c.done(n) && !c.notified {
+                    c.notified = true;
+                    completed = true;
+                }
+            }
+            if e.clocks.values().any(|c| c.since.is_some() && !c.done(n)) {
+                Duration::from_secs(1)
+            } else {
+                e.external
+                    .values()
+                    .map(|(_, t)| t.saturating_duration_since(n))
+                    .min()
+                    .unwrap_or(Duration::from_secs(3600))
+            }
+        };
+        if completed {
+            providers::notify(&conn).await;
+        }
+        tokio::select! {_=service.wake.notified()=>{},_=tokio::time::sleep(delay)=>{},_=tokio::signal::ctrl_c()=>break}
+    }
+    Ok(())
+}
