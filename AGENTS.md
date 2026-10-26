@@ -1,0 +1,2 @@
+# Engineering rules
+Keep the Rust activity engine independent of desktop rendering. Never replace or patch the running compositor. Use isolated session buses for automated integration tests. No shell commands supplied by activities. Bound all untrusted data, activity lifetime and count. Preserve meaningful tests and report untested desktop behavior explicitly. Run cargo fmt, cargo clippy --all-targets -- -D warnings, cargo test and scripts/integration.sh before release. Do not copy reference-project implementation or assets.

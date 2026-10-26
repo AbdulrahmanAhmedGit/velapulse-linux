@@ -1,0 +1,11 @@
+# Inspected environment — 2026-10-26
+- Ubuntu 26.04.1 LTS, x86_64, Linux 7.0.0-38-generic.
+- GNOME Shell 50.1; Mutter library 50.1-0ubuntu2.4; Wayland session.
+- GJS 1.88.0; GTK 4 introspection available, GTK development pkg-config files absent.
+- Rust/Cargo absent from PATH at inspection; workspace-local Rust toolchain provisioned for builds, no system package changes.
+- GCC and Node 24 available. Git identity already configured and used unchanged.
+- Session D-Bus and notification service available. UPower available on system bus.
+- PipeWire, pipewire-pulse, WirePlumber active; wpctl available.
+- No actual org.mpris.MediaPlayer2 service advertised at inspection.
+- Native GNOME backend selected. Mutter layer-shell support must be checked through the registry, never inferred from the desktop name.
+- GNOME supports headless virtual monitors and devkit flags; no compositor replacement authorized.
