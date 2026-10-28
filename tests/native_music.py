@@ -44,8 +44,10 @@ with (artifacts/'native-renderer.log').open('w')as log:
   def coordinates(w,fx=.5):
    frame=current();x=(1600-frame['width'])/2+w['x']+w['width']*fx;y=(1000-28-frame['height']if frame['bottom']else 28)+w['y']+w['height']/2;return round(x),round(y)
   def click(w):x,y=coordinates(w);send('click',x,y,1600,1000);time.sleep(.25)
-  wait(lambda:current().get('widgets'),'native renderer did not map')
-  click(widget(style='vela-pill-main'));wait(lambda:current()['expanded'],'pill expansion')
+  # GTK may report mapped before the first allocation and async Snapshot reply.
+  # Wait for the actual pointer target, not merely a non-empty widget inventory.
+  pill=wait(lambda:widget(style='vela-pill-main')if current()['state']['activities']and current()['width']>0 and current()['height']>0 else None,'native pill was not allocated with activity state')
+  click(pill);wait(lambda:current()['expanded'],'pill expansion')
   wait(lambda:widget(name='music-player'),'music controls missing');time.sleep(.3)
   cfg=snapshot()['config'];old=cfg['selected_player'];click(widget(name='music-player'));send('key','HOME');send('key','DOWN');send('key','DOWN');send('key','ENTER');wait(lambda:snapshot()['config']['selected_player']!=old,'native player selection');wait(lambda:current()['selected']==snapshot()['config']['selected_player'],'renderer selected player');time.sleep(.45)
   frame=current();a=next(a for a in frame['state']['activities']if a['id']==frame['selected']);status=a['status'];click(widget(name='music-PlayPause'));wait(lambda:next(a for a in snapshot()['activities']if a['id']==current()['selected'])['status']!=status,'native transport')
