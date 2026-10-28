@@ -15,6 +15,8 @@ pub struct Config {
     pub size: String,
     pub card_size: String,
     pub opacity: u8,
+    pub selected_player: String,
+    pub listening_history: bool,
 }
 impl Default for Config {
     fn default() -> Self {
@@ -38,6 +40,8 @@ impl Default for Config {
             size: "medium".into(),
             card_size: "normal".into(),
             opacity: 98,
+            selected_player: String::new(),
+            listening_history: false,
         }
     }
 }
@@ -62,6 +66,18 @@ impl Config {
         }
     }
     pub fn validate(&self) -> anyhow::Result<()> {
+        anyhow::ensure!(
+            self.selected_player.is_empty()
+                || (self
+                    .selected_player
+                    .starts_with("media:org.mpris.MediaPlayer2.")
+                    && self.selected_player.len() <= 260
+                    && self
+                        .selected_player
+                        .bytes()
+                        .all(|c| c.is_ascii_alphanumeric() || b".:_-".contains(&c))),
+            "invalid selected player"
+        );
         anyhow::ensure!(
             ["auto", "layer-shell", "gnome-extension"].contains(&self.backend.as_str()),
             "invalid backend"

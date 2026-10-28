@@ -2,7 +2,7 @@
 import json, os, subprocess, tempfile, time
 bin = os.environ['VELAPULSE_BIN']
 with tempfile.TemporaryDirectory() as config:
-    env = dict(os.environ, XDG_CONFIG_HOME=config)
+    env = dict(os.environ, XDG_CONFIG_HOME=config, XDG_DATA_HOME=config+"/data", XDG_CACHE_HOME=config+"/cache")
     daemon = subprocess.Popen([bin, 'daemon'], env=env)
     def call(*args, ok=True):
         p = subprocess.run([bin, *args], env=env, capture_output=True, text=True, timeout=5)
