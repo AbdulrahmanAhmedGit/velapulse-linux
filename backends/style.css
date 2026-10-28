@@ -109,6 +109,7 @@ window.vela-window { background: transparent; color: #f4f2f8; font-family: "Adwa
 
 /* Alpha affects the surface, keeping text and controls crisp. */
 .vela-glass .vela-pill,.vela-glass .vela-card { background:linear-gradient(135deg,rgba(220,236,255,.12),rgba(128,154,198,.02) 55%,rgba(181,144,217,.08)),rgba(24,34,53,.72); border:1px solid rgba(230,243,255,.3); border-top-color:rgba(255,255,255,.58); box-shadow:inset 0 1px rgba(255,255,255,.15),0 10px 28px rgba(7,13,29,.22); }
+.vela-glass .vela-card { background:linear-gradient(135deg,rgba(220,236,255,.12),rgba(128,154,198,.02) 55%,rgba(181,144,217,.08)),rgba(24,34,53,.56); border-color:rgba(230,243,255,.38); border-top-color:rgba(255,255,255,.72); }
 .vela-glass .vela-pill-title,.vela-glass .vela-title { color:#f5f8ff; }
 .vela-glass .vela-subtitle,.vela-glass .vela-caption,.vela-glass .vela-pill-detail,.vela-glass .vela-time-label,.vela-glass .vela-source,.vela-glass .vela-output { color:#d2ddef; }
 .vela-glass .vela-secondary,.vela-glass .vela-text-button { background:rgba(208,226,255,.14); color:#f5f8ff; box-shadow:inset 0 1px rgba(255,255,255,.26); }

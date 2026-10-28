@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory(prefix='vela-gnome-')as temp:
  this._testRecorder=GLib.timeout_add(GLib.PRIORITY_DEFAULT,100,()=>{
   if(!this._root?.get_stage())return GLib.SOURCE_CONTINUE;
   const nodes=[],buttons=[];function visit(actor){if(actor.mapped){const[x,y]=actor.get_transformed_position();const[w,h]=actor.get_transformed_size();nodes.push({x,y,width:w,height:h,classes:actor.get_style_class_name?.()??'',button:actor instanceof St.Button,text:actor instanceof St.Label?actor.text:(actor.label??''),name:actor.accessible_name??''});if(actor instanceof St.Button)buttons.push(actor);}for(const child of actor.get_children())visit(child);}visit(this._root);
-  GLib.file_set_contents(GLib.getenv('VELAPULSE_TEST_GNOME_LAYOUT'),JSON.stringify({expanded:this._expanded,selected:this._selected,nodes}));
+  GLib.file_set_contents(GLib.getenv('VELAPULSE_TEST_GNOME_LAYOUT'),JSON.stringify({expanded:this._expanded,selected:this._selected,nodes,cardAlpha:this._card.get_theme_node().get_background_color().alpha}));
   const action=Gio.File.new_for_path(GLib.getenv('VELAPULSE_TEST_ACTION'));if(action.query_exists(null)){const[,bytes]=action.load_contents(null);action.delete(null);const name=new TextDecoder().decode(bytes);const button=buttons.find(b=>b.accessible_name===name||b.label===name);if(button)button.emit('clicked',1);}
   const capture=Gio.File.new_for_path(GLib.getenv('VELAPULSE_TEST_CAPTURE'));if(capture.query_exists(null)){const[,bytes]=capture.load_contents(null);capture.delete(null);const path=new TextDecoder().decode(bytes);const output=Gio.File.new_for_path(path).replace(null,false,Gio.FileCreateFlags.NONE,null);new Shell.Screenshot().screenshot(false,output).then(()=>{output.close(null);GLib.file_set_contents(path+'.done','ok');}).catch(logError);}
   return GLib.SOURCE_CONTINUE;
@@ -55,10 +55,13 @@ with tempfile.TemporaryDirectory(prefix='vela-gnome-')as temp:
    # A fresh headless user session opens Overview. Hide it in the test copy for a clean capture.
    # This is a semantic render/activation smoke, not evidence of external pointer delivery.
    wait(lambda:layout().get('nodes'),'extension actors');time.sleep(2.5);activate('Expand live activity');wait(lambda:layout()['expanded'],'card expansion');activate('Pause')
+   call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Configure','(s)',[json.dumps({'appearance':'glass'})]);wait(lambda:any('vela-glass' in n['classes']for n in layout()['nodes'])and 0<layout()['cardAlpha']<200,'translucent glass card')
    def snapshot():return json.loads(call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Snapshot')[0])
    wait(lambda:any(a.get('music')and a['status']=='paused'for a in snapshot()['activities']),'GNOME Pause callback')
    current=next(a for a in snapshot()['activities']if a.get('music'));lrc=root/'original.lrc';lrc.write_text('[00:00]Original GNOME fixture line\n[00:05]Original GNOME active line');call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','ImportLyrics','(sss)',[current['id'],current['music']['track_id'],lrc.as_uri()]);activate('Lyrics');wait(lambda:any(n['text']=='Original GNOME active line'for n in layout()['nodes']),'GNOME local lyrics');activate('Audio output');time.sleep(.4)
-   capture=artifacts/'gnome-music-card.png';done=Path(str(capture)+'.done');done.unlink(missing_ok=True);capture.unlink(missing_ok=True);(root/'capture').write_text(str(capture));wait(done.exists,'GNOME capture');activate('Collapse');wait(lambda:not layout()['expanded'],'card collapse')
+   capture=artifacts/'gnome-glass-music-card.png';done=Path(str(capture)+'.done');done.unlink(missing_ok=True);capture.unlink(missing_ok=True);(root/'capture').write_text(str(capture));wait(done.exists,'GNOME capture');activate('Collapse');wait(lambda:not layout()['expanded'],'card collapse')
+   call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Configure','(s)',[json.dumps({'appearance':'dark'})]);wait(lambda:layout()['cardAlpha']==255,'dark card restored')
+   print('PASS card appearance: Liquid Glass has a translucent background; Dark restores an opaque background.')
    errors=call('org.gnome.Shell','/org/gnome/Shell','org.gnome.Shell.Extensions','GetExtensionErrors','(s)',[uuid])[0];assert not errors,errors
    print('PASS stock GNOME 50: extension ACTIVE; real St button activation expands/collapses, pauses fixture playback, opens lyrics/audio; no extension errors. Not a physical input test.')
   finally:

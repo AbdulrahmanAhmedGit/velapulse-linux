@@ -92,3 +92,9 @@ The installed binary remains unchanged, SHA-256 `57ab4355170bd6f78e825bbc90669e8
 Remaining acceptance work: physical pointer/key interaction in stock GNOME on the user's desktop; actual Spotify and browser MPRIS sessions; real output switching/hotplug; new-build multi-monitor/fractional-scale/fullscreen/lock/reconnect/suspend scenarios and long-duration renderer/resource testing. Existing baseline supports monitor-aware positioning and renderer supervision, but those complete live scenarios were not newly certified by this branch. Remote lyrics require a permitted provider before implementation. Glass transparency does not add compositor blur. Accessibility/localization and final distribution remain Phase 7 work.
 
 No Mutter, system compositor libraries, GDM, unrelated services or personal saved data were modified. No automatic logout/reboot or PR merge occurred. Installing this tested build into the user's environment remains a separate explicitly approved step.
+
+## Expanded Liquid Glass card refinement
+
+Expanded cards now use a more transparent surface (56% base alpha) and brighter top rim in both GNOME and GTK. The stock GNOME smoke checks the computed card alpha while Glass is selected and verifies Dark restores an opaque card; rendering and card actions passed without extension errors. GTK CSS parsing passed. The user installation received the two verified stylesheet files with a separate backup; a cached pre-update GNOME module still requires manual logout/login before it can apply the Glass class. No service or session restart was performed for this style change.
+
+![Liquid Glass expanded card in a separate stock GNOME test session](screenshots/phase-1-2-glass-card.png)
