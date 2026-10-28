@@ -69,6 +69,7 @@ export function fillPreferences(window) {
     const status=text('Connecting to your activities…','settings-status');appearance.append(status);
     const general=page('general');general.append(text('General','page-title'));general.append(text('Startup, display and motion.','muted'));
     const generalGroup=new Adw.PreferencesGroup();general.append(generalGroup);
+    const backend=new Adw.ComboRow({title:'Desktop renderer',subtitle:'Automatic prefers native layer shell when available. Panel mode uses the GNOME extension.',model:Gtk.StringList.new(['Automatic','Native layer shell','GNOME extension'])});generalGroup.add(backend);backend.connect('notify::selected',()=>{if(!syncing)save({backend:['auto','layer-shell','gnome-extension'][backend.selected]});});
     const startup=new Adw.SwitchRow({title:'Start at login',subtitle:'Keep your activities ready in the background.'});generalGroup.add(startup);startup.connect('notify::active',()=>{if(!syncing)save({autostart:startup.active});});
     const monitor=new Adw.ComboRow({title:'Display',model:Gtk.StringList.new(['Default display',...Array.from({length:Gdk.Display.get_default().get_monitors().get_n_items()},(_,i)=>`Display ${i+1}`)])});generalGroup.add(monitor);monitor.connect('notify::selected',()=>{if(!syncing)save({monitor:monitor.selected-1});});
     const providerPages=new Map();
@@ -93,7 +94,7 @@ export function fillPreferences(window) {
     inspector.append(text('Appearance','inspector-title'));
     const inspectorGroup=new Adw.PreferencesGroup();inspector.append(inspectorGroup);
     const placement=new Adw.ComboRow({title:'Placement',subtitle:'Top Bar requires GNOME',model:Gtk.StringList.new(['Floating pill','GNOME Top Bar'])});inspectorGroup.add(placement);placement.connect('notify::selected',()=>{if(!syncing)save({surface:placement.selected?'panel':'floating'});});
-    const theme=new Adw.ComboRow({title:'Appearance',model:Gtk.StringList.new(['Dark','Light'])});inspectorGroup.add(theme);theme.connect('notify::selected',()=>{if(!syncing)save({appearance:theme.selected?'light':'dark'});});
+    const theme=new Adw.ComboRow({title:'Appearance',model:Gtk.StringList.new(['Dark','Liquid Glass','Light'])});inspectorGroup.add(theme);theme.connect('notify::selected',()=>{if(!syncing)save({appearance:['dark','glass','light'][theme.selected]});});
     const position=new Adw.ComboRow({title:'Position',model:Gtk.StringList.new(['Top','Bottom'])});inspectorGroup.add(position);position.connect('notify::selected',()=>{if(!syncing)save({position:position.selected?'bottom':'top'});});
     const opacityRow=box(true,'inspector-section',10);opacityRow.append(text('Opacity','inspector-label'));
     const opacity=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,65,100,1);opacity.set_draw_value(true);opacity.set_value_pos(Gtk.PositionType.RIGHT);opacityRow.append(opacity);inspector.append(opacityRow);
@@ -125,7 +126,7 @@ export function fillPreferences(window) {
         const configKey=JSON.stringify(config);
         if(configKey!==lastConfigKey) {
             lastConfigKey=configKey;
-            placement.selected=config.surface==='panel'?1:0;position.sensitive=config.surface!=='panel';theme.selected=config.appearance==='light'?1:0;position.selected=config.position==='bottom'?1:0;opacity.set_value(config.opacity??98);motion.active=config.animations;startup.active=config.autostart;monitor.selected=config.monitor+1;
+            backend.selected=Math.max(0,['auto','layer-shell','gnome-extension'].indexOf(config.backend??'auto'));placement.selected=config.surface==='panel'?1:0;position.sensitive=config.surface!=='panel';theme.selected=Math.max(0,['dark','glass','light'].indexOf(config.appearance));position.selected=config.position==='bottom'?1:0;opacity.set_value(config.opacity??98);motion.active=config.animations;startup.active=config.autostart;monitor.selected=config.monitor+1;
             for(const [id,b] of sizeButtons)b.active=id===config.size;for(const [id,b] of cardButtons)b.active=id===(config.card_size??'normal');
             for(const [id,refs] of providerPages) {
                 toggles.get(id).active=config.enabled.includes(id);
@@ -133,7 +134,8 @@ export function fillPreferences(window) {
             }
             if(config.appearance!==lastAppearance) {
                 lastAppearance=config.appearance;
-                root.set_css_classes(['vela-settings',...(config.appearance==='light'?['settings-light']:[])]);
+                root.set_css_classes(['vela-settings',...(config.appearance==='light'?['settings-light']:config.appearance==='glass'?['settings-glass']:[])]);
+                if(config.appearance==='glass')window.add_css_class('vela-preferences-glass');else window.remove_css_class('vela-preferences-glass');
                 Adw.StyleManager.get_default().color_scheme=config.appearance==='light'?Adw.ColorScheme.FORCE_LIGHT:Adw.ColorScheme.FORCE_DARK;
             }
         }

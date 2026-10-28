@@ -20,7 +20,7 @@ impl Dispatch<wl_registry::WlRegistry, ()> for Registry {
         }
     }
 }
-pub fn detect() -> anyhow::Result<()> {
+pub fn layer_shell() -> anyhow::Result<(bool, Vec<(String, u32)>)> {
     let c = Connection::connect_to_env()?;
     let mut q = c.new_event_queue();
     c.display().get_registry(&q.handle(), ());
@@ -30,9 +30,13 @@ pub fn detect() -> anyhow::Result<()> {
         .globals
         .iter()
         .any(|(n, _)| n == "zwlr_layer_shell_v1");
+    Ok((layer, state.globals))
+}
+pub fn detect() -> anyhow::Result<()> {
+    let (layer, globals) = layer_shell()?;
     println!(
         "{}",
-        serde_json::json!({"layer_shell":layer,"recommended_backend":if layer {"layer-shell"} else {"gnome-extension"},"globals":state.globals})
+        serde_json::json!({"layer_shell":layer,"recommended_backend":if layer {"layer-shell"} else {"gnome-extension"},"globals":globals})
     );
     Ok(())
 }

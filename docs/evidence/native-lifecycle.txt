@@ -1,0 +1,3 @@
+PASS final native process stops with daemon, readiness released and extension restored
+PASS final installed activation starts one fresh native renderer
+PASS native initialization failures retain usable extension after bounded attempts

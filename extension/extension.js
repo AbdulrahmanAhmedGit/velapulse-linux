@@ -5,7 +5,7 @@ import GLib from 'gi://GLib';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
-import {present, kind, actionInfo, SIZES, drawProgress} from './presentation.js';
+import {present, kind, actionInfo, SIZES, drawProgress, drawRing} from './presentation.js';
 
 const BUS = 'io.github.velapulse.Service';
 const PATH = '/io/github/velapulse/Service';
@@ -26,10 +26,15 @@ export default class VelaPulse extends Extension {
         this._root = new St.BoxLayout({vertical: true, style_class: 'vela-root', reactive: true});
         this._pill = new St.BoxLayout({style_class: 'vela-pill', x_align: CENTER, y_align: CENTER});
         this._pillMain = new St.Button({style_class: 'vela-pill-main', x_expand: true, can_focus: true, accessible_name: 'Expand live activity'});
-        const summary = new St.BoxLayout({style_class: 'vela-pill-summary'});
-        this._pillWell = new St.Bin({style_class: 'vela-well', y_align: CENTER});
+        const summary = new St.BoxLayout({style_class: 'vela-pill-summary', x_expand: true, x_align: Clutter.ActorAlign.FILL});
+        this._pillWell = new St.Bin({style_class: 'vela-well', x_align: CENTER, y_align: CENTER});
         this._pillIcon = new St.Icon({icon_name: 'weather-clear-night-symbolic', icon_size: 17});
-        this._pillWell.set_child(this._pillIcon); summary.add_child(this._pillWell);
+        this._pillWell.set_child(this._pillIcon);
+        const indicator = new St.Widget({layout_manager:new Clutter.BinLayout(),width:32,height:32,y_align:CENTER});
+        indicator.add_child(this._pillWell);
+        this._pillRing=new St.DrawingArea({width:32,height:32});
+        this._pillRing.connect('repaint',area=>{const cr=area.get_context();const [w,h]=area.get_surface_size();const p=present(this._current());drawRing(cr,w,h,p.progress,p.accent);cr.$dispose();});
+        indicator.add_child(this._pillRing);summary.add_child(indicator);
         const lines = new St.BoxLayout({style_class: 'vela-pill-text', x_expand: true, y_align: CENTER});
         this._pillTitle = this._label('VelaPulse', 'vela-pill-title');
         this._pillDetail = this._label('Ready when you are', 'vela-pill-detail');
@@ -63,7 +68,15 @@ export default class VelaPulse extends Extension {
             this._ownerSignal = proxy.connect('notify::g-name-owner', () => this._refresh());
             this._refresh();
         });
+        this._nativeActive = false;
+        this._rendererWatch = Gio.bus_watch_name(Gio.BusType.SESSION, 'io.github.velapulse.Renderer', Gio.BusNameWatcherFlags.NONE, () => {this._nativeActive = true;this._syncRenderer();}, () => {this._nativeActive = false;this._syncRenderer();});
         this._queuePosition();
+    }
+    _syncRenderer() {
+        if (!this._alive) return;
+        if (this._nativeActive && this._expanded) this._expand(false);
+        this._root.visible = !this._nativeActive && (!this._panel || this._expanded);
+        if (this._panel) this._panel.visible = !this._nativeActive;
     }
     _label(text, style, expand = false) {
         const label = new St.Label({text, style_class: style, x_expand: expand, y_align: CENTER});
@@ -98,14 +111,21 @@ export default class VelaPulse extends Extension {
         const activities = this._state.activities;
         if ((!this._expanded && oldTop !== activities[0]?.id) || !activities.some(a => a.id === this._selected)) this._selected = activities[0]?.id;
         const a = this._current(), p = present(a), config = this._state.config;
-        const classes = `vela-root ${config.appearance === 'light' ? 'vela-light' : ''} vela-${p.type}`;
+        const classes = `vela-root ${['light','glass'].includes(config.appearance) ? `vela-${config.appearance}` : ''} vela-${p.type}`;
         if (this._root.get_style_class_name() !== classes) this._root.set_style_class_name(classes);
         this._syncSurface();
+        // Panel placement reparents the pill outside the floating root.
+        if(this._panel)for(const theme of ['light','glass']) {
+            if(config.appearance===theme)this._panel.add_style_class_name(`vela-${theme}`);
+            else this._panel.remove_style_class_name(`vela-${theme}`);
+        }
         this._root.opacity = Math.round((config.opacity ?? 98) * 2.55);
         this._pill.opacity = this._panel ? this._root.opacity : 255;
         const wellStyle = `background-color: ${p.tint}; color: #ffffff;`;
         if (this._pillWell.get_style() !== wellStyle) this._pillWell.set_style(wellStyle);
         this._pillIcon.icon_name = p.icon;
+        this._pillRing.visible = a?.progress !== null && a?.progress !== undefined;
+        if(this._pillRing.visible)this._pillRing.queue_repaint();
         this._pillTitle.text = p.compact;
         this._pillDetail.text = `${p.type === 'media' ? '· ' : ''}${p.detail}`;
         const key = JSON.stringify([a?.id, a?.controls, a?.status]);
@@ -117,7 +137,7 @@ export default class VelaPulse extends Extension {
                 this._pillControls.add_child(this._iconButton(icon, name, () => this._command(a.id, action), 'vela-inline'));
             }
         }
-        this._renderCard(); this._queuePosition();
+        this._renderCard(); this._queuePosition();this._syncRenderer();
     }
     _renderCard() {
         if (!this._expanded) return;
@@ -220,7 +240,7 @@ export default class VelaPulse extends Extension {
         if (this._wave) {this._track.queue_repaint();return;}
         if (!this._progress) return;
         const width = Math.round(Math.max(0, this._track.width) * p.progress);
-        if (this._progress.width !== width) this._progress.width = width;
+        if (this._progress.width !== width) this._progress.ease({width,duration:this._motion()?500:0,mode:Clutter.AnimationMode.LINEAR});
         const style = `background-color: ${p.accent};`;
         if (this._progress.get_style() !== style) this._progress.set_style(style);
     }
@@ -286,7 +306,7 @@ export default class VelaPulse extends Extension {
         });
     }
     _position() {
-        if (!this._alive || !this._root?.get_stage()) return;
+        if (!this._alive || this._nativeActive || !this._root?.get_stage()) return;
         if (this._expanded && !this._wave) this._setProgress(present(this._current()));
         const config = this._state.config, sizes = SIZES[config.size] ?? SIZES.medium;
         const monitor = this._panel ? Main.layoutManager.primaryMonitor : Main.layoutManager.monitors[config.monitor] ?? Main.layoutManager.primaryMonitor;
@@ -312,6 +332,8 @@ export default class VelaPulse extends Extension {
     }
     disable() {
         this._alive = false;
+        if (this._rendererWatch) Gio.bus_unwatch_name(this._rendererWatch);
+        this._rendererWatch = 0;
         this._generation++;
         if (this._layoutSource) {GLib.Source.remove(this._layoutSource);this._layoutSource = 0;}
         if (this._signal) this._proxy.disconnectSignal(this._signal);

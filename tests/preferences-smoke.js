@@ -15,7 +15,7 @@ app.connect('activate',()=>{
         try {
             const find = title => rows(window).find(r=>r.title===title);
             rows(window).find(w=>w.get_name()==='size-large').active = true;
-            find('Appearance').selected = 1;
+            find('Appearance').selected = 2;
             find('Animations').active = false;
             find('Placement').selected = 1;
             GLib.timeout_add(GLib.PRIORITY_DEFAULT,700,()=>{

@@ -1,4 +1,5 @@
 import json,os,subprocess,tempfile,time
+from pathlib import Path
 from gi.repository import Gio,GLib
 bin=os.environ['VELAPULSE_BIN']
 def connection():return Gio.DBusConnection.new_for_address_sync(os.environ['DBUS_SESSION_BUS_ADDRESS'],Gio.DBusConnectionFlags.AUTHENTICATION_CLIENT|Gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION,None,None)
@@ -28,12 +29,14 @@ with tempfile.TemporaryDirectory() as cfg:
   for i in range(16):call(a,'Push','(s)',(json.dumps({'id':f'q{i}','title':'Quota'}),))
   try:call(a,'Push','(s)',('{"id":"overflow","title":"Overflow"}',));raise AssertionError('quota bypass')
   except GLib.Error:pass
-  player=subprocess.Popen(['/usr/bin/python3','tests/mpris_fixture.py'])
+  artwork=Path('extension/assets/orbit.svg').resolve().as_uri()
+  player=subprocess.Popen(['/usr/bin/python3','tests/mpris_fixture.py'],env=dict(os.environ,VELAPULSE_TEST_ARTWORK=artwork))
   media=lambda:next((x for x in snapshot(a) if x['id'].startswith('media:')),None)
   track=wait(media)
   assert track['title']=='Fixture track' and track['description']=='Test artist'
   assert track['duration_seconds']==120 and track['position_seconds']>=10
   assert track['source']=='VelaPulseFixture'
+  assert track['icon']==artwork
   assert 'Previous' not in track['controls'] and 'Next' in track['controls']
   p=track['progress'];time.sleep(1.2);assert media()['progress']>p
   call(a,'Command','(sst)',(track['id'],'PlayPause',0))

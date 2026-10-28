@@ -8,12 +8,19 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
-      - run: sudo apt-get update && sudo apt-get install -y dbus python3-gi
+      - run: sudo apt-get update && sudo apt-get install -y dbus python3-gi gjs gir1.2-adw-1 sway
       - run: cargo fmt --check
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo test --locked
-      - run: cargo build --locked
+      - run: cargo build --locked --examples --bins
+      - run: ./scripts/test-preferences-input.sh
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: preferences-input-logs
+          path: target/preferences-input
       - run: ./scripts/integration.sh
       - run: ./scripts/test-providers.sh
+      - run: ./scripts/test-activation.sh
       - run: node --check extension/extension.js && node --check extension/preferences.js && node --check extension/prefs.js && node --check backends/layer-shell.js
       - run: node tests/presentation.mjs

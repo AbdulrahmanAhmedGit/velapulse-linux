@@ -32,8 +32,8 @@ export function present(a) {
     const progress = Math.max(0, Math.min(1, a?.progress ?? 0));
     let title = a?.title ?? 'Make room for the moment';
     let subtitle = a?.description || 'Your live activities, in one quiet place.';
-    let compact = title;
-    let detail = a?.status === 'paused' ? 'Paused' : p.label;
+    let compact = type === 'idle' ? 'VelaPulse' : title;
+    let detail = type === 'idle' ? 'Ready when you are' : a?.status === 'paused' ? 'Paused' : p.label;
     let metric = '';
     if (type === 'timer' || type === 'stopwatch') {
         metric = timeText(a.description);
@@ -72,4 +72,12 @@ export function drawProgress(cr,width,height,fraction,color='#b778a7') {
     cr.setSourceRGBA(...rgb,1);cr.moveTo(4,mid);
     for(let x=4;x<=end;x+=2)cr.lineTo(x,mid+Math.sin((x-4)/3.4)*2.6);
     cr.stroke();cr.setSourceRGBA(1,1,1,1);cr.arc(end,mid,4,0,Math.PI*2);cr.fill();
+}
+
+// One shared native Cairo ring for the compact activity in both renderers.
+export function drawRing(cr, width, height, fraction, color='#b5a4f5') {
+    const rgb=color.replace('#','').match(/../g).map(c=>parseInt(c,16)/255);
+    const r=Math.max(0,Math.min(width,height)/2-1.5),x=width/2,y=height/2;
+    cr.setLineWidth(2);cr.setSourceRGBA(...rgb,.18);cr.arc(x,y,r,0,Math.PI*2);cr.stroke();
+    if(fraction>0){cr.setSourceRGBA(...rgb,1);cr.setLineCap(1);cr.arc(x,y,r,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(0,Math.min(1,fraction)));cr.stroke();}
 }

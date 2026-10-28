@@ -1,0 +1,10 @@
+2026-10-28, local isolated application verification
+PASS release build (Rust 1.99.1), cargo fmt --check
+PASS cargo clippy --locked --all-targets -- -D warnings
+PASS cargo test --locked: 4 tests
+PASS scripts/integration.sh: clocks, commands, validation, configuration, restart recovery, external expiry, single-instance
+PASS scripts/test-providers.sh: MPRIS discovery, metadata, local artwork, progress, controls, unavailable action rejection, removal; external ownership, update, quotas
+PASS scripts/test-activation.sh: private-bus activation, reactivation and saved timer recovery
+PASS tests/presentation.mjs and modified JavaScript/shell syntax
+
+These are application checks, not a real-player, compositor-security or hardware certification. Provider fixture emits a PyGObject deprecation warning.

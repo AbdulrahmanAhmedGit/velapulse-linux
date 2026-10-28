@@ -1,0 +1,12 @@
+2026-10-28, actual disposable GNOME VM
+PASS mapped native GTK layer surface, expand, pointer timer pause, Escape collapse
+PASS native/extension backend handoff with no duplicate mapped interface
+PASS service restart and UI reconnect
+PASS second actual virtual display/top placement
+PASS native MPRIS card and pointer playback pause (controlled peer)
+PASS native settings rendering and widget regression
+PASS running timer survives systemd restart
+PASS installed D-Bus activation after explicit stop
+PASS actual 125% GTK bounds
+PASS TOP below focused fullscreen
+OBSERVED actual lock: GTK actor mapped=false, extension disabled; normal password authentication restored desktop. Initial visible-property assertion was invalid and not counted as a pass. No new input-security campaign or power transition was run.

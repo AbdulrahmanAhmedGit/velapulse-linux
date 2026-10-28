@@ -1,0 +1,18 @@
+{
+  "config_error": null,
+  "dbus_activation_installed": true,
+  "desktop": "",
+  "extension": "Extension service not running; inspect gnome-extensions info velapulse@velapulse.local in your graphical session",
+  "extension_installed": true,
+  "gnome_version": "GNOME Shell 50.1",
+  "layer_shell": true,
+  "native_renderer_mapped": true,
+  "remediation": [],
+  "renderer_files": true,
+  "service_owner": true,
+  "service_responsive": true,
+  "service_status": "active",
+  "session": "tty",
+  "wayland_display": "wayland-0",
+  "wayland_error": null
+}
