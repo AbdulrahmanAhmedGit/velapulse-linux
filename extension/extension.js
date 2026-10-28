@@ -111,9 +111,14 @@ export default class VelaPulse extends Extension {
         const activities = this._state.activities;
         if ((!this._expanded && oldTop !== activities[0]?.id) || !activities.some(a => a.id === this._selected)) this._selected = activities[0]?.id;
         const a = this._current(), p = present(a), config = this._state.config;
-        const classes = `vela-root ${config.appearance === 'light' ? 'vela-light' : ''} vela-${p.type}`;
+        const classes = `vela-root ${['light','glass'].includes(config.appearance) ? `vela-${config.appearance}` : ''} vela-${p.type}`;
         if (this._root.get_style_class_name() !== classes) this._root.set_style_class_name(classes);
         this._syncSurface();
+        // Panel placement reparents the pill outside the floating root.
+        if(this._panel)for(const theme of ['light','glass']) {
+            if(config.appearance===theme)this._panel.add_style_class_name(`vela-${theme}`);
+            else this._panel.remove_style_class_name(`vela-${theme}`);
+        }
         this._root.opacity = Math.round((config.opacity ?? 98) * 2.55);
         this._pill.opacity = this._panel ? this._root.opacity : 255;
         const wellStyle = `background-color: ${p.tint}; color: #ffffff;`;

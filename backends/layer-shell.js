@@ -68,7 +68,7 @@ function render(json) {
     if(state.config.backend==='gnome-extension' || state.config.surface==='panel'){app.quit();return;}
     if((!expanded && oldTop !== state.activities[0]?.id) || !state.activities.some(a=>a.id===selected))selected=state.activities[0]?.id;
     const a = state.activities.find(a=>a.id===selected), p = present(a);
-    root.set_css_classes(['vela-root', ...(state.config.appearance === 'light' ? ['vela-light'] : []), `vela-${p.type}`]);
+    root.set_css_classes(['vela-root', ...(['light','glass'].includes(state.config.appearance) ? [`vela-${state.config.appearance}`] : []), `vela-${p.type}`]);
     root.opacity = (state.config.opacity ?? 98)/100;
     pillRing.visible=a?.progress!==null && a?.progress!==undefined;if(pillRing.visible)pillRing.queue_draw();
     pillIcon.icon_name=p.icon;pillTitle.label=p.compact;pillDetail.label=`${p.type==='media'?'· ':''}${p.detail}`;

@@ -118,3 +118,15 @@
 
 .vela-pill-title { color:#f4f2f8; }
 .vela-light .vela-pill-title { color:#252431; }
+
+/* GNOME glass uses alpha and a bright rim; no compositor blur dependency. */
+.vela-glass .vela-pill,.vela-glass .vela-card { background-color:rgba(43,53,74,.68); border:1px solid rgba(230,243,255,.32); border-top-color:rgba(255,255,255,.62); box-shadow:0 10px 28px rgba(7,13,29,.24); }
+.vela-glass .vela-pill-title,.vela-glass .vela-title { color:#f5f8ff; }
+.vela-glass .vela-subtitle,.vela-glass .vela-caption,.vela-glass .vela-pill-detail,.vela-glass .vela-time-label,.vela-glass .vela-source,.vela-glass .vela-output { color:#d2ddef; }
+.vela-glass .vela-secondary,.vela-glass .vela-text-button { background-color:rgba(208,226,255,.16); color:#f5f8ff; }
+.vela-glass .vela-primary { background-color:#c8d8ff; color:#172337; }
+.vela-glass .vela-primary:hover { background-color:#e0eaff; }
+.vela-glass .vela-secondary:hover,.vela-glass .vela-text-button:hover,.vela-glass .vela-icon-button:hover { background-color:rgba(222,237,255,.28); }
+.vela-glass .vela-track { background-color:rgba(224,237,255,.2); }
+.vela-glass .vela-rail-selected { background-color:rgba(218,234,255,.24); color:#fff; }
+.vela-glass .vela-panel-pill { background-color:rgba(211,229,255,.12); box-shadow:none; }

@@ -41,6 +41,9 @@ with tempfile.TemporaryDirectory() as config:
         call('push', json.dumps({'id':'bad','title':'x'*300}), ok=False)
         call('configure', json.dumps({'appearance':'light','position':'bottom'}))
         assert snapshot()['config']['appearance']=='light'
+        call('configure', '{"appearance":"glass"}')
+        assert snapshot()['config']['appearance']=='glass'
+        call('configure', '{"appearance":"unknown"}', ok=False)
         call('configure', '{"autostart":true}')
         assert os.path.exists(os.path.join(config,'autostart/io.github.velapulse.desktop'))
         call('configure', '{"autostart":false}')
@@ -64,6 +67,7 @@ with tempfile.TemporaryDirectory() as config:
         call('timer','start','30')
         call('stopwatch','pause')
         paused=clock('stopwatch')['description']
+        call('configure', json.dumps({**snapshot()['config'],'appearance':'glass'}))
         daemon.terminate();daemon.wait(timeout=5)
         time.sleep(1.2)
         daemon=subprocess.Popen([bin,'daemon'],env=env)
@@ -73,6 +77,7 @@ with tempfile.TemporaryDirectory() as config:
             except (AssertionError,StopIteration):pass
             time.sleep(.1)
         else:raise AssertionError('clocks did not recover after restart')
+        assert snapshot()['config']['appearance']=='glass'
         assert clock('timer')['description'] < '00:00:30'
         assert clock('stopwatch')['status']=='paused' and clock('stopwatch')['description']==paused
         # A second daemon must fail, not silently queue behind the existing service.

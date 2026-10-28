@@ -60,3 +60,27 @@
 .settings-light .size-label { color:#625d52; }
 .settings-light .muted,.settings-light .section-title,.settings-light .inspector-note { color:#80796c; }
 .settings-light .settings-inspector row { border-bottom-color:#c7c1b5; }
+
+/* Liquid Glass: real alpha surfaces, a silver rim, and soft reflected light. */
+window.vela-preferences-glass { background:transparent; --window-bg-color:transparent; --view-bg-color:transparent; }
+.settings-glass { background:linear-gradient(130deg,rgba(216,235,255,.1),rgba(129,157,199,.02) 45%,rgba(180,145,220,.08)),rgba(19,27,43,.76); color:#f4f6ff; --accent-bg-color:#c8d8ff; --accent-fg-color:#172337; }
+.settings-glass .settings-sidebar { background:linear-gradient(145deg,rgba(233,242,255,.1),rgba(100,119,150,.06)); border-color:rgba(235,244,255,.26); border-top-color:rgba(255,255,255,.52); box-shadow:inset 0 1px rgba(255,255,255,.13),0 8px 24px rgba(7,13,29,.12); }
+.settings-glass .settings-inspector { background:rgba(22,30,46,.22); border-color:rgba(233,242,255,.16); }
+.settings-glass .settings-brand { color:#d6e3ff; }
+.settings-glass .brand-title,.settings-glass .size-label { color:#f4f6ff; }
+.settings-glass .nav-button:hover { background:rgba(224,237,255,.1); }
+.settings-glass .nav-button:checked { background:linear-gradient(120deg,rgba(232,243,255,.26),rgba(188,207,249,.12)); color:#fff; box-shadow:inset 0 1px rgba(255,255,255,.3); }
+.settings-glass .settings-search { background:rgba(16,25,43,.28); color:#f5f8ff; border-color:rgba(221,235,255,.25); box-shadow:inset 0 1px 4px rgba(9,15,30,.1); }
+.settings-glass .preview-row-selected { background:rgba(187,210,255,.12); }
+.settings-glass .pill-preview { background:linear-gradient(145deg,rgba(226,240,255,.2),rgba(35,42,60,.42)); box-shadow:inset 0 1px rgba(255,255,255,.34),0 3px 10px rgba(7,13,29,.14); }
+.settings-glass .size-choice,.settings-glass .card-choice { background:linear-gradient(145deg,rgba(226,239,255,.12),rgba(29,40,60,.2)); box-shadow:inset 0 1px rgba(255,255,255,.2); }
+.settings-glass .size-choice:hover,.settings-glass .card-choice:hover { background:rgba(214,231,255,.18); }
+.settings-glass .size-choice:checked,.settings-glass .card-choice:checked { border-color:#c8d8ff; background:rgba(187,210,255,.18); }
+.settings-glass .muted,.settings-glass .section-title,.settings-glass .inspector-note,.settings-glass .nav-section,.settings-glass .provider-detail { color:#c0cada; }
+.settings-glass .settings-status { color:#d3def2; }
+.settings-glass .settings-inspector row,.settings-glass .inspector-section { border-bottom-color:rgba(227,240,255,.13); }
+.settings-glass .settings-page list { background:rgba(23,33,51,.3); box-shadow:inset 0 1px rgba(235,246,255,.2); }
+.settings-glass .settings-page row { background:transparent; }
+.settings-glass switch:checked,.settings-glass checkbutton check:checked,.settings-glass scale highlight { background:#c8d8ff; color:#172337; border-color:#c8d8ff; }
+.settings-glass .nav-button:focus-visible,.settings-glass .size-choice:focus-visible,.settings-glass .card-choice:focus-visible { outline:2px solid #d6e5ff; outline-offset:2px; }
+.settings-glass row:focus-visible { outline-color:#c8d8ff; }

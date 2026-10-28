@@ -23,6 +23,8 @@ with tempfile.TemporaryDirectory(prefix='vela-prefs-input-')as directory:
  (base/'config').mkdir()
  (base/'config/mimeapps.list').write_text('[Default Applications]\nx-scheme-handler/https=velapulse-input-browser.desktop\n')
  env['VELAPULSE_TEST_LINK_LOG']=str(link_log)
+ if os.environ.get('VELAPULSE_TEST_GRIM'):
+  env['VELAPULSE_TEST_GLASS_IMAGE']=str(artifacts/'liquid-glass.png')
  compositor_env=dict(env,WLR_BACKENDS='headless',WLR_RENDERER='pixman',WLR_HEADLESS_OUTPUTS='1',WLR_LIBINPUT_NO_DEVICES='1')
  compositor_env.pop('WAYLAND_DISPLAY',None);compositor_env.pop('DISPLAY',None)
  if root:compositor_env['LD_LIBRARY_PATH']=str(Path(root)/'usr/lib/x86_64-linux-gnu')

@@ -75,8 +75,8 @@ impl Config {
             "position must be top or bottom"
         );
         anyhow::ensure!(
-            ["dark", "light"].contains(&self.appearance.as_str()),
-            "appearance must be dark or light"
+            ["dark", "glass", "light"].contains(&self.appearance.as_str()),
+            "appearance must be dark, glass or light"
         );
         anyhow::ensure!(
             ["normal", "large"].contains(&self.card_size.as_str()),

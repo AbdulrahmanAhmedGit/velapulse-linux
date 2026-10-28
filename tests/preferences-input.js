@@ -52,7 +52,9 @@ async function run(){
  }
  const search=walk(window).find(w=>w instanceof Gtk.SearchEntry);await type(search,'media');assert(!walk(window).find(w=>w.name==='preview-timer').visible,'Search did not filter');await type(search,'');
  print('PASS pointer+keyboard: provider checkboxes, five size selectors, search input/filter/clear');
- await dropdown(find(Adw.ComboRow,'Appearance'),1);await until(()=>config().appearance==='light','theme persistence');assert(window.get_content().has_css_class('settings-light'),'Theme did not apply');await dropdown(find(Adw.ComboRow,'Appearance'),0);
+ await dropdown(find(Adw.ComboRow,'Appearance'),2);await until(()=>config().appearance==='light','theme persistence');assert(window.get_content().has_css_class('settings-light'),'Theme did not apply');await dropdown(find(Adw.ComboRow,'Appearance'),1);await until(()=>config().appearance==='glass','Glass persistence');assert(window.get_content().has_css_class('settings-glass')&&window.has_css_class('vela-preferences-glass'),'Transparent glass surfaces did not apply');
+ if(GLib.getenv('VELAPULSE_TEST_GRIM')){await sleep(300);await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_GLASS_IMAGE')]);}
+ await dropdown(find(Adw.ComboRow,'Appearance'),0);assert(!window.has_css_class('vela-preferences-glass'),'Glass window style was not cleared');
  await dropdown(find(Adw.ComboRow,'Position'),0);await until(()=>config().position==='top','top position');await dropdown(find(Adw.ComboRow,'Position'),1);
  await dropdown(find(Adw.ComboRow,'Placement'),1);await until(()=>config().surface==='panel','panel placement');assert(!find(Adw.ComboRow,'Position').is_sensitive(),'Panel must disable floating position');await dropdown(find(Adw.ComboRow,'Placement'),0);
  await toggle(find(Adw.SwitchRow,'Animations'),'animations');await toggle(find(Adw.SwitchRow,'Animations'),'animations');

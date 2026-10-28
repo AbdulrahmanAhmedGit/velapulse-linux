@@ -94,7 +94,7 @@ export function fillPreferences(window) {
     inspector.append(text('Appearance','inspector-title'));
     const inspectorGroup=new Adw.PreferencesGroup();inspector.append(inspectorGroup);
     const placement=new Adw.ComboRow({title:'Placement',subtitle:'Top Bar requires GNOME',model:Gtk.StringList.new(['Floating pill','GNOME Top Bar'])});inspectorGroup.add(placement);placement.connect('notify::selected',()=>{if(!syncing)save({surface:placement.selected?'panel':'floating'});});
-    const theme=new Adw.ComboRow({title:'Appearance',model:Gtk.StringList.new(['Dark','Light'])});inspectorGroup.add(theme);theme.connect('notify::selected',()=>{if(!syncing)save({appearance:theme.selected?'light':'dark'});});
+    const theme=new Adw.ComboRow({title:'Appearance',model:Gtk.StringList.new(['Dark','Liquid Glass','Light'])});inspectorGroup.add(theme);theme.connect('notify::selected',()=>{if(!syncing)save({appearance:['dark','glass','light'][theme.selected]});});
     const position=new Adw.ComboRow({title:'Position',model:Gtk.StringList.new(['Top','Bottom'])});inspectorGroup.add(position);position.connect('notify::selected',()=>{if(!syncing)save({position:position.selected?'bottom':'top'});});
     const opacityRow=box(true,'inspector-section',10);opacityRow.append(text('Opacity','inspector-label'));
     const opacity=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,65,100,1);opacity.set_draw_value(true);opacity.set_value_pos(Gtk.PositionType.RIGHT);opacityRow.append(opacity);inspector.append(opacityRow);
@@ -126,7 +126,7 @@ export function fillPreferences(window) {
         const configKey=JSON.stringify(config);
         if(configKey!==lastConfigKey) {
             lastConfigKey=configKey;
-            backend.selected=Math.max(0,['auto','layer-shell','gnome-extension'].indexOf(config.backend??'auto'));placement.selected=config.surface==='panel'?1:0;position.sensitive=config.surface!=='panel';theme.selected=config.appearance==='light'?1:0;position.selected=config.position==='bottom'?1:0;opacity.set_value(config.opacity??98);motion.active=config.animations;startup.active=config.autostart;monitor.selected=config.monitor+1;
+            backend.selected=Math.max(0,['auto','layer-shell','gnome-extension'].indexOf(config.backend??'auto'));placement.selected=config.surface==='panel'?1:0;position.sensitive=config.surface!=='panel';theme.selected=Math.max(0,['dark','glass','light'].indexOf(config.appearance));position.selected=config.position==='bottom'?1:0;opacity.set_value(config.opacity??98);motion.active=config.animations;startup.active=config.autostart;monitor.selected=config.monitor+1;
             for(const [id,b] of sizeButtons)b.active=id===config.size;for(const [id,b] of cardButtons)b.active=id===(config.card_size??'normal');
             for(const [id,refs] of providerPages) {
                 toggles.get(id).active=config.enabled.includes(id);
@@ -134,7 +134,8 @@ export function fillPreferences(window) {
             }
             if(config.appearance!==lastAppearance) {
                 lastAppearance=config.appearance;
-                root.set_css_classes(['vela-settings',...(config.appearance==='light'?['settings-light']:[])]);
+                root.set_css_classes(['vela-settings',...(config.appearance==='light'?['settings-light']:config.appearance==='glass'?['settings-glass']:[])]);
+                if(config.appearance==='glass')window.add_css_class('vela-preferences-glass');else window.remove_css_class('vela-preferences-glass');
                 Adw.StyleManager.get_default().color_scheme=config.appearance==='light'?Adw.ColorScheme.FORCE_LIGHT:Adw.ColorScheme.FORCE_DARK;
             }
         }
