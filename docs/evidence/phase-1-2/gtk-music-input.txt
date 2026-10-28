@@ -1,0 +1,3 @@
+PASS actual input: player chooser, pause, pointer drag and keyboard seek
+PASS actual input: native file chooser, LRC attachment, lyric synchronization and Follow
+PASS actual input: default output, volume, mute, Next and stable selection

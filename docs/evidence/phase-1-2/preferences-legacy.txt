@@ -1,0 +1,1 @@
+PASS legacy regression: hidden modal host received 6 events; visible window received none
