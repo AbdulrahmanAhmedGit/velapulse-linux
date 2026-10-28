@@ -3,7 +3,7 @@
 Implemented and verified on 2026-10-28. Application branch:
 `integration/product-experience`. Runtime implementation starts at `469e83a`;
 `f081b47` adds the artwork-fixture regression and compact-well alignment;
-subsequent branch commits contain final evidence/documentation. Use the branch tip for delivery.
+subsequent branch commits contain final evidence/documentation and matching compact-content alignment across renderers. Use the branch tip for delivery.
 
 ## Independent integration boundary
 

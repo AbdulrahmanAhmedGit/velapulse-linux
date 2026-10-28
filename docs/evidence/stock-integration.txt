@@ -1,2 +1,3 @@
 PASS stock Ubuntu Mutter 50.1-0ubuntu2.4: fresh-login activation, automatic extension fallback, rendered card, pointer pause, service restart/reconnect and persisted clock resume
+PASS final aligned compact content matches native renderer; same fresh stock-session controls/reconnect checks passed.
 PASS final VM package audit/integrity; stock library mapped in fresh ordinary GNOME session.

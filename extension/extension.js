@@ -26,7 +26,7 @@ export default class VelaPulse extends Extension {
         this._root = new St.BoxLayout({vertical: true, style_class: 'vela-root', reactive: true});
         this._pill = new St.BoxLayout({style_class: 'vela-pill', x_align: CENTER, y_align: CENTER});
         this._pillMain = new St.Button({style_class: 'vela-pill-main', x_expand: true, can_focus: true, accessible_name: 'Expand live activity'});
-        const summary = new St.BoxLayout({style_class: 'vela-pill-summary'});
+        const summary = new St.BoxLayout({style_class: 'vela-pill-summary', x_expand: true, x_align: Clutter.ActorAlign.FILL});
         this._pillWell = new St.Bin({style_class: 'vela-well', x_align: CENTER, y_align: CENTER});
         this._pillIcon = new St.Icon({icon_name: 'weather-clear-night-symbolic', icon_size: 17});
         this._pillWell.set_child(this._pillIcon);

@@ -5,6 +5,9 @@ The extension currently declares GNOME Shell **50** support. Other GNOME version
 need compatibility work before enabling it. Native sessions need to advertise
 `zwlr_layer_shell_v1`; desktop names alone are not a capability check.
 
+The downloadable preview bundle includes an x86_64 binary built on Ubuntu
+26.04.1 and the complete source. Build from source on other distributions.
+
 Build with a stable Rust toolchain and the system Wayland development libraries:
 
 ```sh
