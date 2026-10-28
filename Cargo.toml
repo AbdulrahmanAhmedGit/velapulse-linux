@@ -20,8 +20,13 @@ lto = true
 strip = true
 
 [dev-dependencies]
+wayland-protocols-misc = { version = "0.3", features = ["client"] }
 wayland-protocols-wlr = { version = "0.3", features = ["client"] }
 
 [[example]]
 name = "test-pointer"
 path = "tests/fixtures/wayland_pointer.rs"
+
+[[example]]
+name = "test-input"
+path = "tests/fixtures/wayland_input.rs"

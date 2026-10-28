@@ -9,7 +9,7 @@ mkdir -p "$bin" "$data/gnome-shell/extensions/velapulse@velapulse.local" "$data/
 # Replace atomically so updating a running user service is safe.
 install -m 755 target/release/velapulse "$bin/velapulse.new"
 mv "$bin/velapulse.new" "$bin/velapulse"
-cp extension/metadata.json extension/extension.js extension/stylesheet.css extension/prefs.js extension/preferences.js extension/preferences.css extension/presentation.js "$data/gnome-shell/extensions/velapulse@velapulse.local/"
+cp extension/metadata.json extension/extension.js extension/stylesheet.css extension/prefs.js extension/preferences-host.js extension/preferences.js extension/preferences.css extension/presentation.js "$data/gnome-shell/extensions/velapulse@velapulse.local/"
 mkdir -p "$data/gnome-shell/extensions/velapulse@velapulse.local/assets"
 cp extension/assets/orbit.svg "$data/gnome-shell/extensions/velapulse@velapulse.local/assets/"
 rm -f "$data/velapulse/layer-shell.js"
