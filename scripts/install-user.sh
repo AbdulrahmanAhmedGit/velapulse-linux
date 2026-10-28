@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 data="${XDG_DATA_HOME:-$HOME/.local/share}"
 config="${XDG_CONFIG_HOME:-$HOME/.config}"
 bin="$HOME/.local/bin"
-mkdir -p "$bin" "$data/gnome-shell/extensions/velapulse@velapulse.local" "$data/velapulse/backends" "$data/velapulse/extension/assets" "$config/systemd/user"
+mkdir -p "$bin" "$data/gnome-shell/extensions/velapulse@velapulse.local" "$data/velapulse/backends" "$data/velapulse/extension/assets" "$config/systemd/user" "$data/dbus-1/services" "$data/applications"
 # Replace atomically so updating a running user service is safe.
 install -m 755 target/release/velapulse "$bin/velapulse.new"
 mv "$bin/velapulse.new" "$bin/velapulse"
@@ -23,6 +23,8 @@ PartOf=graphical-session.target
 After=graphical-session.target
 
 [Service]
+Type=dbus
+BusName=io.github.velapulse.Service
 ExecStart=%h/.local/bin/velapulse daemon
 Restart=on-failure
 RestartSec=3
@@ -32,6 +34,20 @@ PrivateTmp=yes
 [Install]
 WantedBy=graphical-session.target
 UNIT
+# D-Bus starts the same systemd-owned instance on demand after each login.
+# Quote Exec independently of shell syntax; paths can contain spaces.
+VELAPULSE_INSTALL_DATA="$data" VELAPULSE_INSTALL_BIN="$bin/velapulse" /usr/bin/python3 - <<'PYCODE'
+import os
+from pathlib import Path
+binary=os.environ['VELAPULSE_INSTALL_BIN']
+assert not any(c in binary for c in '\n\r')
+escaped=binary.replace('\\','\\\\').replace('"','\\"').replace('%','%%')
+data=Path(os.environ['VELAPULSE_INSTALL_DATA'])
+(data/'dbus-1/services/io.github.velapulse.Service.service').write_text(
+    '[D-BUS Service]\nName=io.github.velapulse.Service\nExec="'+escaped+'" daemon\nSystemdService=velapulse.service\n')
+(data/'applications/io.github.velapulse.Preferences.desktop').write_text(
+    '[Desktop Entry]\nType=Application\nName=VelaPulse Settings\nComment=Live activities for your desktop\nExec="'+escaped+'" preferences\nIcon=preferences-system\nCategories=Settings;Utility;\nTerminal=false\n')
+PYCODE
 systemctl --user daemon-reload
 if systemctl --user is-active --quiet velapulse.service; then
     if "$bin/velapulse" snapshot | /usr/bin/python3 -c 'import json,sys; s=json.load(sys.stdin); sys.exit(0 if any(a["id"] in ("timer","stopwatch") or a["id"].startswith("external:") for a in s["activities"]) else 1)'; then
@@ -44,6 +60,7 @@ elif busctl --user call io.github.velapulse.Service /io/github/velapulse/Service
 else
     systemctl --user start velapulse.service
 fi
+if [ "${1:-}" != "--native-only" ]; then
 if ! gnome-extensions enable velapulse@velapulse.local; then
     /usr/bin/python3 - <<'PYCODE'
 from gi.repository import Gio
@@ -54,5 +71,6 @@ if 'velapulse@velapulse.local' not in items:
 Gio.Settings.sync()
 PYCODE
     echo 'The extension is scheduled for enablement. Log out and back in for GNOME to discover it.'
+fi
 fi
 printf '%s\n' 'VelaPulse installed. Autostart remains controlled by the application setting.'

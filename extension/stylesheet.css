@@ -103,3 +103,18 @@
 .vela-panel-pill .vela-pill-title,.vela-panel-pill .vela-pill-detail { font-size:11px; }
 .vela-panel-pill .vela-inline { width:21px; height:23px; }
 .vela-panel-pill .vela-inline StIcon { icon-size:13px; }
+
+/* VelaPulse Orbit: quiet surfaces, lavender focus, and restrained activity color. */
+.vela-pill { border:1px solid rgba(205,196,235,.14); background:#15151c; }
+.vela-card { border:1px solid rgba(205,196,235,.12); background:#1b1b24; border-radius:28px; }
+.vela-media .vela-card { background:#201923; }
+.vela-primary { background:#b5a4f5; color:#201b30; }
+.vela-primary:hover { background:#c8bafb; }
+.vela-secondary { background:#34303e; }
+.vela-metric { font-feature-settings:"tnum"; }
+.vela-light .vela-pill,.vela-light .vela-card { background:#f4f1f8; border-color:rgba(60,45,80,.15); }
+.vela-light .vela-subtitle,.vela-light .vela-caption,.vela-light .vela-pill-detail { color:#625b70; }
+.vela-light .vela-primary { background:#6558d8; color:#ffffff; }
+
+.vela-pill-title { color:#f4f2f8; }
+.vela-light .vela-pill-title { color:#252431; }

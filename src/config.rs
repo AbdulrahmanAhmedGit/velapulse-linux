@@ -3,6 +3,7 @@ use std::{collections::BTreeMap, path::PathBuf};
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default, deny_unknown_fields)]
 pub struct Config {
+    pub backend: String,
     pub position: String,
     pub surface: String,
     pub appearance: String,
@@ -18,6 +19,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            backend: "auto".into(),
             position: "bottom".into(),
             surface: "floating".into(),
             appearance: "dark".into(),
@@ -60,6 +62,10 @@ impl Config {
         }
     }
     pub fn validate(&self) -> anyhow::Result<()> {
+        anyhow::ensure!(
+            ["auto", "layer-shell", "gnome-extension"].contains(&self.backend.as_str()),
+            "invalid backend"
+        );
         anyhow::ensure!(
             ["floating", "panel"].contains(&self.surface.as_str()),
             "surface must be floating or panel"
@@ -134,7 +140,7 @@ impl Config {
             std::fs::write(
                 path,
                 format!(
-                    "[Desktop Entry]\nType=Application\nName=VelaPulse\nExec=\"{escaped}\" daemon\nX-GNOME-Autostart-enabled=true\n"
+                    "[Desktop Entry]\nType=Application\nName=VelaPulse\nExec=\"{escaped}\" snapshot\nX-GNOME-Autostart-enabled=true\n"
                 ),
             )?;
         } else if path.exists() {

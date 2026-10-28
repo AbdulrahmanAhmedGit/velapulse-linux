@@ -266,38 +266,39 @@ pub fn spawn(e: Shared, w: Arc<Notify>) {
     // wpctl is an optional, fixed-argument fallback; bounded 15-second sampling.
     tokio::spawn(async move {
         loop {
-            if let Ok(Ok(out)) = tokio::time::timeout(
+            let result = tokio::time::timeout(
                 Duration::from_secs(2),
                 tokio::process::Command::new("wpctl")
                     .args(["get-volume", "@DEFAULT_AUDIO_SINK@"])
                     .kill_on_drop(true)
                     .output(),
             )
-            .await
+            .await;
+            let mut engine = e.lock().await;
+            engine.providers.remove("volume");
+            if let Ok(Ok(out)) = result
+                && out.status.success()
             {
-                let mut engine = e.lock().await;
-                engine.providers.remove("volume");
-                if out.status.success() {
-                    let mut a = Activity::new("volume", "Audio");
-                    a.description = String::from_utf8_lossy(&out.stdout)
-                        .trim()
-                        .chars()
-                        .take(80)
-                        .collect();
-                    a.progress = a
-                        .description
-                        .split_whitespace()
-                        .nth(1)
-                        .and_then(|s| s.parse::<f64>().ok())
-                        .filter(|v| v.is_finite())
-                        .map(|v| v.clamp(0.0, 1.0));
-                    if a.description.contains("MUTED") {
-                        a.status = "paused".into();
-                    }
-                    engine.providers.insert(a.id.clone(), a);
+                let mut a = Activity::new("volume", "Audio");
+                a.description = String::from_utf8_lossy(&out.stdout)
+                    .trim()
+                    .chars()
+                    .take(80)
+                    .collect();
+                a.progress = a
+                    .description
+                    .split_whitespace()
+                    .nth(1)
+                    .and_then(|s| s.parse::<f64>().ok())
+                    .filter(|v| v.is_finite())
+                    .map(|v| v.clamp(0.0, 1.0));
+                if a.description.contains("MUTED") {
+                    a.status = "paused".into();
                 }
-                w.notify_one();
+                engine.providers.insert(a.id.clone(), a);
             }
+            drop(engine);
+            w.notify_one();
             tokio::time::sleep(Duration::from_secs(15)).await;
         }
     });

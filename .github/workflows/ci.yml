@@ -15,5 +15,6 @@ jobs:
       - run: cargo build --locked
       - run: ./scripts/integration.sh
       - run: ./scripts/test-providers.sh
+      - run: ./scripts/test-activation.sh
       - run: node --check extension/extension.js && node --check extension/preferences.js && node --check extension/prefs.js && node --check backends/layer-shell.js
       - run: node tests/presentation.mjs

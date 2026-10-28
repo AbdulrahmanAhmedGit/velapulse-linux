@@ -46,6 +46,7 @@ with tempfile.TemporaryDirectory() as config:
         call('configure', '{"autostart":false}')
         assert not os.path.exists(os.path.join(config,'autostart/io.github.velapulse.desktop'))
         assert os.path.exists(os.path.join(config,'velapulse/config.json'))
+        call('configure', '{"backend":"invalid"}', ok=False)
         call('configure', '{"position":"sideways"}', ok=False)
         call('configure', '{"opacity":1}', ok=False)
         call('configure', '{"size":"giant"}', ok=False)
@@ -54,6 +55,26 @@ with tempfile.TemporaryDirectory() as config:
         call('configure', '{"surface":"panel","card_size":"large"}')
         assert snapshot()['config']['surface'] == 'panel'
         call('push', '{"id":"spoof","title":"Spoof","source":"player"}', ok=False)
+        call('run', 'Local build', '--', '/usr/bin/true')
+        assert any(a['title']=='Local build' and a['status']=='completed' for a in snapshot()['activities'])
+        call('run', 'Failed build', '--', '/usr/bin/false', ok=False)
+        assert any(a['title']=='Failed build' and a['status']=='warning' for a in snapshot()['activities'])
+        report=json.loads(call('doctor'))
+        assert report['service_responsive'] and not report['native_renderer_mapped']
+        call('timer','start','30')
+        call('stopwatch','pause')
+        paused=clock('stopwatch')['description']
+        daemon.terminate();daemon.wait(timeout=5)
+        time.sleep(1.2)
+        daemon=subprocess.Popen([bin,'daemon'],env=env)
+        for _ in range(50):
+            try:
+                if clock('timer')['status']=='active':break
+            except (AssertionError,StopIteration):pass
+            time.sleep(.1)
+        else:raise AssertionError('clocks did not recover after restart')
+        assert clock('timer')['description'] < '00:00:30'
+        assert clock('stopwatch')['status']=='paused' and clock('stopwatch')['description']==paused
         # A second daemon must fail, not silently queue behind the existing service.
         second = subprocess.run([bin,'daemon'], env=env,capture_output=True,timeout=5)
         assert second.returncode != 0

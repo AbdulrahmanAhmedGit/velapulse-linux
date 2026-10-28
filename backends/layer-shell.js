@@ -5,7 +5,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Layer from 'gi://Gtk4LayerShell';
 import GObject from 'gi://GObject';
-import {present, actionInfo, SIZES, drawProgress} from '../extension/presentation.js';
+import {present, actionInfo, SIZES, drawProgress, drawRing} from '../extension/presentation.js';
 
 // An artwork's intrinsic pixel size must never dictate the surface width.
 const CoverArtwork = GObject.registerClass(class CoverArtwork extends Gtk.Widget {
@@ -24,9 +24,9 @@ const CoverArtwork = GObject.registerClass(class CoverArtwork extends Gtk.Widget
 const BUS = 'io.github.velapulse.Service', PATH = '/io/github/velapulse/Service', IFACE = 'io.github.velapulse.Service1';
 const here = Gio.File.new_for_uri(import.meta.url).get_parent();
 const app = new Gtk.Application({application_id: 'io.github.velapulse.LayerShell'});
-let window, proxy, root, pill, pillIcon, pillTitle, pillDetail, pillControls, revealer, card;
+let window, proxy, root, pill, pillIcon, pillTitle, pillDetail, pillControls, revealer, card, pillRing;
 let state = {activities: [], config: {}}, selected, expanded = false, launcherOpen = false;
-let lastMonitor, lastPosition, cardKey, pillKey, refs = {}, signal = 0, ownerSignal = 0, monitorSignal = 0;
+let lastMonitor, lastPosition, cardKey, pillKey, refs = {}, signal = 0, ownerSignal = 0, preferencesWatch = 0, monitorSignal = 0, rendererOwner = 0;
 function call(method, signature, args, done = () => {}) {
     proxy?.call(method, new GLib.Variant(signature, args), Gio.DBusCallFlags.NONE, 3000, null, (p,r) => {
         try {done(p.call_finish(r).deep_unpack());} catch {pillDetail.label = 'This control is unavailable';}
@@ -65,10 +65,12 @@ function setExpanded(open) {
 function render(json) {
     const oldTop = state.activities[0]?.id;
     try {state = JSON.parse(json);} catch {return;}
+    if(state.config.backend==='gnome-extension' || state.config.surface==='panel'){app.quit();return;}
     if((!expanded && oldTop !== state.activities[0]?.id) || !state.activities.some(a=>a.id===selected))selected=state.activities[0]?.id;
     const a = state.activities.find(a=>a.id===selected), p = present(a);
     root.set_css_classes(['vela-root', ...(state.config.appearance === 'light' ? ['vela-light'] : []), `vela-${p.type}`]);
     root.opacity = (state.config.opacity ?? 98)/100;
+    pillRing.visible=a?.progress!==null && a?.progress!==undefined;if(pillRing.visible)pillRing.queue_draw();
     pillIcon.icon_name=p.icon;pillTitle.label=p.compact;pillDetail.label=`${p.type==='media'?'· ':''}${p.detail}`;
     const key = JSON.stringify([a?.id,a?.controls,a?.status]);
     if(key !== pillKey) {
@@ -137,14 +139,19 @@ function renderCard() {
     }
 }
 app.connect('activate',()=>{
-    if(!Layer.is_supported()){printerr('This compositor does not advertise zwlr_layer_shell_v1. Use the GNOME extension.');app.quit();return;}
+    if(!Layer.is_supported())throw new Error('Layer shell unavailable; GNOME extension will remain visible');
     window=new Gtk.ApplicationWindow({application:app,title:'VelaPulse',decorated:false,resizable:false,css_classes:['vela-window']});
     Layer.init_for_window(window);Layer.set_namespace(window,'velapulse');Layer.set_layer(window,Layer.Layer.TOP);Layer.set_exclusive_zone(window,0);Layer.set_keyboard_mode(window,Layer.KeyboardMode.NONE);
     root=box(true,'vela-root',10);window.set_child(root);
     pill=box(false,'vela-pill',3);pill.halign=Gtk.Align.CENTER;
     const main=new Gtk.Button({css_classes:['vela-pill-main'],hexpand:true});main.connect('clicked',()=>setExpanded(!expanded));
     const summary=box(false,'vela-pill-summary',10),well=new Gtk.CenterBox({css_classes:['vela-well'],valign:Gtk.Align.CENTER});
-    pillIcon=new Gtk.Image({icon_name:'weather-clear-night-symbolic',pixel_size:17,halign:Gtk.Align.CENTER,valign:Gtk.Align.CENTER});well.set_center_widget(pillIcon);summary.append(well);
+    pillIcon=new Gtk.Image({icon_name:'weather-clear-night-symbolic',pixel_size:17,halign:Gtk.Align.CENTER,valign:Gtk.Align.CENTER});well.set_center_widget(pillIcon);
+    const indicator=new Gtk.Overlay({width_request:32,height_request:32,valign:Gtk.Align.CENTER});
+    well.halign=Gtk.Align.CENTER;well.valign=Gtk.Align.CENTER;indicator.set_child(well);
+    pillRing=new Gtk.DrawingArea({width_request:32,height_request:32,can_target:false});
+    pillRing.set_draw_func((_,cr,w,h)=>{const p=present(state.activities.find(a=>a.id===selected));drawRing(cr,w,h,p.progress,p.accent);});
+    indicator.add_overlay(pillRing);summary.append(indicator);
     const lines=box(false,'',5);lines.hexpand=true;lines.valign=Gtk.Align.CENTER;
     pillTitle=label('VelaPulse','vela-pill-title');pillDetail=label('Ready when you are','vela-pill-detail');lines.append(pillTitle);lines.append(pillDetail);summary.append(lines);main.set_child(summary);pill.append(main);
     pillControls=box(false,'vela-inline-controls',1);pillControls.valign=Gtk.Align.CENTER;pill.append(pillControls);root.append(pill);
@@ -154,9 +161,14 @@ app.connect('activate',()=>{
     const focus=new Gtk.EventControllerFocus();focus.connect('leave',()=>setExpanded(false));window.add_controller(focus);
     monitorSignal=Gdk.Display.get_default().get_monitors().connect('items-changed',position);
     proxy=Gio.DBusProxy.new_for_bus_sync(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,BUS,PATH,IFACE,null);
-    const refresh=()=>{if(proxy.g_name_owner)call('Snapshot','()',[],([json])=>render(json));else {state.activities=[];render(JSON.stringify(state));pillDetail.label='Start the VelaPulse service';}};
+    const refresh=()=>{if(proxy.g_name_owner)call('Snapshot','()',[],([json])=>render(json));else {app.quit();}};
     signal=proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')render(args.deep_unpack()[0]);});ownerSignal=proxy.connect('notify::g-name-owner',refresh);
-    refresh();position();window.present();
+    preferencesWatch=Gio.bus_watch_name(Gio.BusType.SESSION,'io.github.velapulse.Preferences',Gio.BusNameWatcherFlags.NONE,()=>setExpanded(false),()=>{});
+    refresh();position();
+    // Claim readiness only once GTK has mapped a layer surface. The extension
+    // follows this name, so a failed initialization never hides the fallback.
+    window.connect('map',()=>{if(!rendererOwner)rendererOwner=Gio.bus_own_name_on_connection(Gio.DBus.session,'io.github.velapulse.Renderer',Gio.BusNameOwnerFlags.DO_NOT_QUEUE,null,()=>app.quit());});
+    window.present();
 });
-app.connect('shutdown',()=>{refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
+app.connect('shutdown',()=>{if(preferencesWatch)Gio.bus_unwatch_name(preferencesWatch);if(rendererOwner)Gio.bus_unown_name(rendererOwner);refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
 app.run([]);

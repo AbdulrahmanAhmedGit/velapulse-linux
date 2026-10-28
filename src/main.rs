@@ -1,7 +1,9 @@
 mod capabilities;
 mod config;
+mod desktop;
 mod model;
 mod providers;
+use futures_util::StreamExt;
 use model::{Activity, Clock, Engine};
 use std::{
     sync::Arc,
@@ -41,7 +43,7 @@ impl Service {
             return Err(invalid("unknown clock"));
         }
         let mut e = self.engine.lock().await;
-        let n = Instant::now();
+        let n = model::clock_now();
         match action {
             "start" => {
                 if id == "timer" && !(1..=86400).contains(&seconds) {
@@ -68,6 +70,7 @@ impl Service {
             }
             _ => return Err(invalid("unknown action")),
         }
+        e.save_clocks().map_err(invalid)?;
         drop(e);
         self.wake.notify_one();
         Ok(())
@@ -134,6 +137,15 @@ impl Service {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let args: Vec<_> = std::env::args().collect();
+    if args.get(1).map(String::as_str) == Some("doctor") {
+        return desktop::doctor().await;
+    }
+    if args.get(1).map(String::as_str) == Some("run") {
+        return desktop::run_task(&args[2..]).await;
+    }
+    if args.get(1).map(String::as_str) == Some("preferences") {
+        return desktop::preferences().await;
+    }
     if args.get(1).map(String::as_str) == Some("capabilities") {
         return capabilities::detect();
     }
@@ -170,8 +182,12 @@ async fn main() -> anyhow::Result<()> {
         }
         return Ok(());
     }
+    let mut engine = Engine::default();
+    if let Err(error) = engine.load_clocks() {
+        eprintln!("Clock state could not be restored: {error}");
+    }
     let service = Service {
-        engine: Default::default(),
+        engine: Arc::new(Mutex::new(engine)),
         config: Arc::new(Mutex::new(config::Config::load()?)),
         wake: Default::default(),
     };
@@ -182,7 +198,12 @@ async fn main() -> anyhow::Result<()> {
     providers::spawn(service.engine.clone(), service.wake.clone());
     conn.request_name_with_flags(NAME, zbus::fdo::RequestNameFlags::DoNotQueue.into())
         .await?;
+    let renderer = tokio::spawn(desktop::supervise(service.config.clone()));
     let emitter = SignalEmitter::new(&conn, PATH)?;
+    let mut disconnected = zbus::MessageStream::from(&conn);
+    let connection_end = async move { while disconnected.next().await.is_some() {} };
+    tokio::pin!(connection_end);
+    let mut terminate = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())?;
     let mut previous = String::new();
     loop {
         let json = service.json().await;
@@ -195,12 +216,18 @@ async fn main() -> anyhow::Result<()> {
             let mut e = service.engine.lock().await;
             let n = Instant::now();
             for c in e.clocks.values_mut() {
-                if c.done(n) && !c.notified {
+                if c.done(model::clock_now()) && !c.notified {
                     c.notified = true;
                     completed = true;
                 }
             }
-            if e.clocks.values().any(|c| c.since.is_some() && !c.done(n)) {
+            if completed && let Err(error) = e.save_clocks() {
+                eprintln!("Clock state could not be saved: {error}");
+            }
+            if e.clocks
+                .values()
+                .any(|c| c.since.is_some() && !c.done(model::clock_now()))
+            {
                 Duration::from_secs(1)
             } else {
                 e.external
@@ -213,7 +240,9 @@ async fn main() -> anyhow::Result<()> {
         if completed {
             providers::notify(&conn).await;
         }
-        tokio::select! {_=service.wake.notified()=>{},_=tokio::time::sleep(delay)=>{},_=tokio::signal::ctrl_c()=>break}
+        tokio::select! {_=service.wake.notified()=>{},_=tokio::time::sleep(delay)=>{},_=tokio::signal::ctrl_c()=>break,_=&mut connection_end=>break,_=terminate.recv()=>break}
     }
+    renderer.abort();
+    let _ = renderer.await;
     Ok(())
 }
