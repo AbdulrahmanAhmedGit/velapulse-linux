@@ -1,0 +1,2 @@
+PASS VM uninstall removed the binary and D-Bus activation file, retained configuration, then reinstalled.
+PASS final VM rollback to stock Mutter 50.1-0ubuntu2.4; dpkg audit and library integrity clean; fresh session maps stock library.

@@ -1,0 +1,1 @@
+PASS: queued settings persist; live clock updates preserve slider edits and search results

@@ -1,0 +1,16 @@
+{
+  "seconds": 15.0,
+  "mode": "idle compact; 4-vCPU KVM guest, software rendering",
+  "processes": [
+    {
+      "process": "velapulse",
+      "cpu_percent_one_core": 0.0,
+      "rss_mib": 6.22
+    },
+    {
+      "process": "gjs",
+      "cpu_percent_one_core": 0.0,
+      "rss_mib": 171.87
+    }
+  ]
+}
