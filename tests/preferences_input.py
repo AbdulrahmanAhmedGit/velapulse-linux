@@ -10,11 +10,13 @@ root=os.environ.get('VELAPULSE_TEST_COMPOSITOR_ROOT')
 sway=str(Path(root)/'usr/bin/sway')if root else shutil.which('sway')
 swaymsg=str(Path(root)/'usr/bin/swaymsg')if root else shutil.which('swaymsg')
 if not sway or not swaymsg:raise SystemExit('Install Sway in the test environment or set VELAPULSE_TEST_COMPOSITOR_ROOT; no host packages are installed by this test.')
+suite=os.environ.get('VELAPULSE_TEST_SUITE','preferences')
+music=suite in ['music','native']
 artifacts=Path(os.environ.get('VELAPULSE_TEST_ARTIFACTS',repo/'target/preferences-input'));artifacts.mkdir(parents=True,exist_ok=True)
 with tempfile.TemporaryDirectory(prefix='vela-prefs-input-')as directory:
  base=Path(directory);runtime=base/'runtime';runtime.mkdir(mode=0o700);(runtime/'velapulse-test-session').touch()
  cfg=base/'sway.conf';cfg.write_text('output HEADLESS-1 mode 1600x1000\ndefault_border none\ndefault_floating_border none\nseat * hide_cursor 1000\nfor_window [app_id="io.github.velapulse.PreferencesInputTest"] floating enable\n')
- env=dict(os.environ,XDG_RUNTIME_DIR=str(runtime),XDG_CONFIG_HOME=str(base/'config'),XDG_DATA_HOME=str(base/'data'),VELAPULSE_ISOLATED_TEST='1',GDK_BACKEND='wayland',GSK_RENDERER='cairo',GTK_A11Y='none',GSETTINGS_BACKEND='memory')
+ env=dict(os.environ,XDG_RUNTIME_DIR=str(runtime),XDG_CONFIG_HOME=str(base/'config'),XDG_DATA_HOME=str(base/'data'),XDG_CACHE_HOME=str(base/'cache'),VELAPULSE_ISOLATED_TEST='1',GDK_BACKEND='wayland',GSK_RENDERER='cairo',GTK_A11Y='none',GSETTINGS_BACKEND='memory',GIO_USE_VFS='local',GIO_USE_VOLUME_MONITOR='unix')
  # A private URI handler records the About button without opening a host browser.
  apps=base/'data/applications';apps.mkdir(parents=True)
  recorder=base/'record-uri.py';link_log=base/'opened-uri'
@@ -23,8 +25,15 @@ with tempfile.TemporaryDirectory(prefix='vela-prefs-input-')as directory:
  (base/'config').mkdir()
  (base/'config/mimeapps.list').write_text('[Default Applications]\nx-scheme-handler/https=velapulse-input-browser.desktop\n')
  env['VELAPULSE_TEST_LINK_LOG']=str(link_log)
+ env['VELAPULSE_TEST_REPO']=str(repo)
+ env['VELAPULSE_TEST_MUSIC_IMAGE']=str(artifacts/'music-card.png')
  if os.environ.get('VELAPULSE_TEST_GRIM'):
   env['VELAPULSE_TEST_GLASS_IMAGE']=str(artifacts/'liquid-glass.png')
+ if music:
+  tools=base/'bin';tools.mkdir();audio=base/'audio.json';audio.write_text(json.dumps({'default':'fixture-speakers','volume':.5,'muted':False}))
+  for tool in ['pw-dump','wpctl']:(tools/tool).symlink_to(repo/'tests/fixtures/audio_tools.py')
+  env.update(PATH=str(tools)+':'+env['PATH'],VELAPULSE_TEST_AUDIO_STATE=str(audio))
+  lrc=base/'original.lrc';lrc.write_text('[00:00]Original fixture opening\n[00:45]Original fixture chorus\n[01:10]Original fixture ending');env['VELAPULSE_TEST_LRC']=str(lrc)
  compositor_env=dict(env,WLR_BACKENDS='headless',WLR_RENDERER='pixman',WLR_HEADLESS_OUTPUTS='1',WLR_LIBINPUT_NO_DEVICES='1')
  compositor_env.pop('WAYLAND_DISPLAY',None);compositor_env.pop('DISPLAY',None)
  if root:compositor_env['LD_LIBRARY_PATH']=str(Path(root)/'usr/lib/x86_64-linux-gnu')
@@ -48,12 +57,17 @@ with tempfile.TemporaryDirectory(prefix='vela-prefs-input-')as directory:
      if response.returncode==0:break
      time.sleep(.05)
     else:raise RuntimeError('Private D-Bus service failed to start')
-    for mode in ['legacy','standalone','fixed']:
+    if music:
+     for name in ['VelaPulseFixture','BrowserFixture']:
+      player=subprocess.Popen(['/usr/bin/python3',str(repo/'tests/mpris_fixture.py')],env=dict(env,VELAPULSE_TEST_PLAYER=name,VELAPULSE_TEST_ARTWORK=(repo/'tests/fixtures/music-cover.png').as_uri()),stdout=daemon_log,stderr=daemon_log);processes.append(player)
+    for mode in ([] if suite=='native' else ['music'] if music else ['legacy','standalone','fixed']):
      print('Running real input mode:',mode,flush=True)
      with (artifacts/(mode+'.log')).open('w')as test_log:
-      result=subprocess.run(['gjs','-m',str(repo/'tests/preferences-input.js'),mode],env=env,stdout=test_log,stderr=subprocess.STDOUT,timeout=150)
+      result=subprocess.run(['gjs','-m',str(repo/('tests/music-input.js' if music else 'tests/preferences-input.js')),mode],env=env,stdout=test_log,stderr=subprocess.STDOUT,timeout=150)
      print((artifacts/(mode+'.log')).read_text(),flush=True)
      if result.returncode:raise RuntimeError(mode+' input regression failed')
+    if music and os.environ.get('VELAPULSE_TEST_NATIVE')=='1':
+     subprocess.run(['/usr/bin/python3',str(repo/'tests/native_music.py')],env=env,check=True,timeout=60)
     persisted=json.loads((base/'config/velapulse/config.json').read_text());assert persisted['backend']=='auto'
     daemon.terminate();daemon.wait(timeout=5)
     restarted=subprocess.Popen([str(repo/'target/debug/velapulse'),'daemon'],env=daemon_env,stdout=daemon_log,stderr=daemon_log);processes.append(restarted)

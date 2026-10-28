@@ -1,3 +1,4 @@
+import {addMusicPreferences} from './music-preferences.js';
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
 import Gdk from 'gi://Gdk';
@@ -86,6 +87,8 @@ export function fillPreferences(window) {
         }
         providerPages.set(id,{description,visible,priority});
     }
+    const request=(method,signature,args)=>new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});
+    const musicSettings=addMusicPreferences(stack.get_child_by_name('media'),window,{request,save,getConfig:()=>config,getActivities:()=>activities});
     const about=page('about');about.append(text('VelaPulse','page-title'));about.append(text('Live activities for your Linux desktop.','muted'));about.append(text('Independent implementation · MIT licensed','muted'));about.append(button('Project and source',()=>Gio.AppInfo.launch_default_for_uri_async('https://github.com/AbdulrahmanAhmedGit/velapulse-linux',null,null,()=>{})));
     nav('Appearance','preferences-desktop-appearance-symbolic','appearance','Settings').active=true;
     nav('General','emblem-system-symbolic','general');
@@ -154,7 +157,7 @@ export function fillPreferences(window) {
             const description=a?`${a.title} · ${a.description}`:'No activity right now.';
             const refs=providerPages.get(id);if(refs.description.label!==description)refs.description.label=description;
         }
-        applySearch();syncing=false;
+        musicSettings.update();applySearch();syncing=false;
     }
     function refresh() {if(!proxy?.g_name_owner){status.label='Activity service unavailable';return;}proxy.call('Snapshot',null,Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{update(p.call_finish(r).deep_unpack()[0]);}catch{status.label='Activity service unavailable';}});}
     Gio.DBusProxy.new_for_bus(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,'io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',null,(_,result)=>{if(closed)return;try{proxy=Gio.DBusProxy.new_for_bus_finish(result);}catch{status.label='Activity service unavailable';return;}signal=proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')update(args.deep_unpack()[0]);});ownerSignal=proxy.connect('notify::g-name-owner',refresh);refresh();});

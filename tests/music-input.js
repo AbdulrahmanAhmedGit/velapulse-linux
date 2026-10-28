@@ -1,0 +1,47 @@
+import Gtk from 'gi://Gtk?version=4.0';
+import Adw from 'gi://Adw?version=1';
+import Gdk from 'gi://Gdk?version=4.0';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import {createMusicControls} from '../extension/music-controls.js';
+import {activePlayer} from '../extension/music-state.js';
+const app=new Adw.Application({application_id:'io.github.velapulse.PreferencesInputTest'});
+if(GLib.getenv('VELAPULSE_ISOLATED_TEST')!=='1'||!GLib.file_test(`${GLib.getenv('XDG_RUNTIME_DIR')}/velapulse-test-session`,GLib.FileTest.IS_REGULAR))throw Error('Private test runtime required');
+let failed=false,window,tools,state,selected,driver,reader,writer;
+const sleep=ms=>new Promise(resolve=>GLib.timeout_add(GLib.PRIORITY_DEFAULT,ms,()=>{resolve();return GLib.SOURCE_REMOVE;}));
+function assert(value,message){if(!value)throw Error(message);}
+async function until(fn,message){for(let i=0;i<70;i++){if(fn())return;await sleep(100);}throw Error(message);}
+function walk(w,result=[]){result.push(w);for(let c=w.get_first_child();c;c=c.get_next_sibling())walk(c,result);return result;}
+function find(name){return walk(window).find(w=>w.name===name&&w.get_mapped());}
+function request(method,sig,args){return new Promise((resolve,reject)=>Gio.DBus.session.call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',method,new GLib.Variant(sig,args),null,Gio.DBusCallFlags.NONE,6000,null,(c,r)=>{try{resolve(c.call_finish(r).deep_unpack());}catch(e){reject(e);}}));}
+function snapshot(){return JSON.parse(Gio.DBus.session.call_sync('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Snapshot',null,null,Gio.DBusCallFlags.NONE,3000,null).deep_unpack()[0]);}
+const activity=()=>state?.activities.find(a=>a.id===selected);
+function refresh(){state=snapshot();if(!state.activities.some(a=>a.id===selected))selected=activePlayer(state.activities,state.config.selected_player)?.id;tools?.update();}
+async function process(args){const p=Gio.Subprocess.new(args,Gio.SubprocessFlags.STDOUT_PIPE|Gio.SubprocessFlags.STDERR_PIPE);return new Promise((resolve,reject)=>p.communicate_utf8_async(null,null,(p,r)=>{try{const[,out,err]=p.communicate_utf8_finish(r);if(!p.get_successful())throw Error(err);resolve(out);}catch(e){reject(e);}}));}
+function read(){return new Promise((resolve,reject)=>reader.read_line_async(GLib.PRIORITY_DEFAULT,null,(r,x)=>{try{resolve(r.read_line_finish_utf8(x)[0]);}catch(e){reject(e);}}));}
+async function input(...args){writer.put_string(args.join(' ')+'\n',null);assert(await read()==='OK','input client failed');}
+async function key(k){await input('key',k);await sleep(70);}
+async function offset(){const tree=JSON.parse(await process([GLib.getenv('VELAPULSE_TEST_SWAYMSG'),'-r','-t','get_tree']));function locate(n){if(n.name==='VelaPulse Preferences Input Test')return n;for(const c of [...(n.nodes??[]),...(n.floating_nodes??[])]){const r=locate(c);if(r)return r;}return null;}const n=locate(tree);assert(n,'mapped card missing');return{x:n.rect.x+n.window_rect.x,y:n.rect.y+n.window_rect.y};}
+async function geometry(w){assert(w,'control missing');const[ok,b]=w.compute_bounds(window);assert(ok&&w.get_mapped(),'control unmapped');const o=await offset();return{x:o.x+b.origin.x,y:o.y+b.origin.y,w:b.size.width,h:b.size.height};}
+async function click(w,fx=.5,fy=.5){const b=await geometry(w);await input('click',Math.round(b.x+b.w*fx),Math.round(b.y+b.h*fy),1600,1000);await sleep(180);}
+async function drag(w,from,to){const b=await geometry(w);await input('drag',Math.round(b.x+b.w*from),Math.round(b.y+b.h/2),Math.round(b.x+b.w*to),Math.round(b.y+b.h/2),1600,1000);await sleep(350);}
+async function dropdown(w,index){await click(w);await key('HOME');for(let i=0;i<index;i++)await key('DOWN');await key('ENTER');await sleep(250);}
+async function run(){
+ driver=Gio.Subprocess.new([GLib.getenv('VELAPULSE_TEST_INPUT')],Gio.SubprocessFlags.STDIN_PIPE|Gio.SubprocessFlags.STDOUT_PIPE);reader=new Gio.DataInputStream({base_stream:driver.get_stdout_pipe()});writer=new Gio.DataOutputStream({base_stream:driver.get_stdin_pipe()});assert(await read()==='READY','driver not ready');
+ await until(()=>{refresh();return state.activities.filter(a=>a.music).length===2;},'two players not discovered');
+ const root=new Gtk.Box({orientation:Gtk.Orientation.VERTICAL,spacing:10,margin_top:18,margin_bottom:18,margin_start:18,margin_end:18,css_classes:['vela-root','vela-media','vela-card']});
+ const hero=new Gtk.Overlay({height_request:150,css_classes:['vela-artwork'],overflow:Gtk.Overflow.HIDDEN});const picture=new Gtk.Picture({file:Gio.File.new_for_path(`${GLib.getenv('VELAPULSE_TEST_REPO')}/tests/fixtures/music-cover.png`),content_fit:Gtk.ContentFit.COVER,can_shrink:true});const crop=new Gtk.ScrolledWindow({height_request:150,hscrollbar_policy:Gtk.PolicyType.NEVER,vscrollbar_policy:Gtk.PolicyType.NEVER});crop.set_child(picture);hero.set_child(crop);const caption=new Gtk.Label({label:'VelaPulse · Native music controls',xalign:0,valign:Gtk.Align.END,margin_start:16,margin_bottom:14,css_classes:['vela-title']});hero.add_overlay(caption);root.append(hero);
+ tools=createMusicControls({request,getActivity:activity,getActivities:()=>state.activities,getConfig:()=>state.config,onSelect:id=>{selected=id||activePlayer(state.activities)?.id;refresh();},window});root.append(tools.widget);window.set_content(root);window.present();await sleep(500);
+ const signal=Gio.DBus.session.signal_subscribe('io.github.velapulse.Service','io.github.velapulse.Service1','Changed','/io/github/velapulse/Service',null,Gio.DBusSignalFlags.NONE,()=>refresh());
+ await dropdown(find('music-player'),1);await until(()=>{refresh();return !!state.config.selected_player;},'player selection did not persist');const id=state.config.selected_player;assert(activity().id===id,'manual player did not apply');
+ await click(find('music-PlayPause'));await until(()=>{refresh();return activity().status==='paused';},'pause button');const position=activity().position_seconds;await sleep(1100);refresh();assert(Math.abs(position-activity().position_seconds)<.1,'paused playback progressed');
+ await drag(find('music-seek'),.2,.7);await until(()=>{refresh();return activity().position_seconds>60;},'drag seek');
+ await click(find('music-seek'));await key('HOME');for(let i=0;i<5;i++)await key('RIGHT');await until(()=>{refresh();return activity().position_seconds<5;},'keyboard seek');print('PASS actual input: player chooser, pause, pointer drag and keyboard seek');
+ await click(find('music-attach'));await sleep(450);await key('CTRL+L');await input('type',GLib.getenv('VELAPULSE_TEST_LRC'));await key('ENTER');await sleep(300);
+ await until(()=>walk(window).some(w=>w instanceof Gtk.Label&&w.label==='Original fixture opening'),'LRC chooser/import');await sleep(350);await drag(find('music-seek'),.1,.45);await until(()=>walk(window).some(w=>w instanceof Gtk.Label&&w.label==='Original fixture chorus'&&w.has_css_class('vela-lyric-active')),'lyrics synchronization after seek');await click(find('music-follow'));print('PASS actual input: native file chooser, LRC attachment, lyric synchronization and Follow');
+ if(GLib.getenv('VELAPULSE_TEST_GRIM')){await sleep(350);await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_MUSIC_IMAGE')]);}
+ await click(find('music-lyrics'));await click(find('music-audio'),.2,.1);await until(()=>find('music-output')?.sensitive,'audio expander');await dropdown(find('music-output'),1);
+ await until(()=>JSON.parse(new TextDecoder().decode(GLib.file_get_contents(GLib.getenv('VELAPULSE_TEST_AUDIO_STATE'))[1])).default==='fixture-headphones','output selection');await click(find('music-volume'));await key('HOME');for(let i=0;i<7;i++)await key('RIGHT');await until(()=>JSON.parse(new TextDecoder().decode(GLib.file_get_contents(GLib.getenv('VELAPULSE_TEST_AUDIO_STATE'))[1])).volume<.15,'volume keyboard');await click(find('music-mute'));await until(()=>JSON.parse(new TextDecoder().decode(GLib.file_get_contents(GLib.getenv('VELAPULSE_TEST_AUDIO_STATE'))[1])).muted,'mute click');
+ await click(find('music-Next'));await until(()=>{refresh();return activity().title==='Next fixture track';},'next button');assert(state.config.selected_player===id,'track change lost player selection');print('PASS actual input: default output, volume, mute, Next and stable selection');Gio.DBus.session.signal_unsubscribe(signal);
+}
+app.connect('activate',()=>{app.hold();window=new Adw.ApplicationWindow({application:app,title:'VelaPulse Preferences Input Test',decorated:false,default_width:540,default_height:900,css_classes:['vela-window']});const css=new Gtk.CssProvider();css.load_from_path(`${GLib.getenv('VELAPULSE_TEST_REPO')}/backends/style.css`);Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);run().catch(async e=>{if(GLib.getenv('VELAPULSE_TEST_GRIM'))await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_MUSIC_IMAGE')]);printerr(JSON.stringify({selected,activity:activity(),lyrics:walk(window).filter(w=>w instanceof Gtk.Label&&w.label.startsWith('Original')).map(w=>[w.label,w.get_css_classes()])}));printerr(e.message);printerr(e.stack);failed=true;}).finally(()=>{tools?.dispose();driver?.force_exit();window.close();app.release();app.quit();});});app.run([]);if(failed)throw Error('Music input regression failed');

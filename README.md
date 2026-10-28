@@ -4,7 +4,8 @@ Native Linux live activities with quiet floating pills and expressive activity c
 
 ## What works
 - Countdown timers and stopwatches: start, pause, resume, reset, completion notification, suspend-aware boot time and restart recovery.
-- MPRIS discovery, metadata, local artwork, extrapolated progress, capability-checked controls and player removal.
+- Multiple MPRIS players, stable manual selection, capability-checked playback/seek, bounded artwork caching and dynamic colors.
+- Optional local synchronized LRC lyrics, opt-in listening history and supported WirePlumber output/volume controls.
 - UPower battery status and optional PipeWire/WirePlumber volume via `wpctl`.
 - Priority-ordered activities; bounded, connection-owned external activities over session D-Bus.
 - XDG configuration, themes, top/bottom placement, monitor selection, motion preference and daemon autostart.
@@ -85,8 +86,11 @@ Actual VM screenshots are in [docs/screenshots](docs/screenshots).
 
 ![Native music card with deterministic MPRIS test peer](docs/screenshots/product-native-music.png)
 
-Audio uses bounded 15-second sampling. Only local artwork is loaded; remote
-artwork uses the original fallback. Spotify/browser compatibility, physical
+The compact audio activity uses bounded 15-second sampling; expanded music audio
+controls refresh only while open. Artwork is normalized locally from bounded
+files or anonymous public HTTPS requests (private destinations/redirects denied).
+See [Phase 1–2 report](docs/PHASE_1_2_REPORT.md) and [music guide](docs/MUSIC.md).
+Real mpv/MPRIS is tested; Spotify/browser compatibility, physical
 hotplug, hardware wake and long-duration operation remain unverified. The GNOME
 extension declares Shell 50 support. The VM's compositor uses software rendering;
 its short resource sample is not a hardware performance certification.

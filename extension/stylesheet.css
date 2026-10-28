@@ -130,3 +130,17 @@
 .vela-glass .vela-track { background-color:rgba(224,237,255,.2); }
 .vela-glass .vela-rail-selected { background-color:rgba(218,234,255,.24); color:#fff; }
 .vela-glass .vela-panel-pill { background-color:rgba(211,229,255,.12); box-shadow:none; }
+
+.vela-music-tools { spacing:9px; }
+.vela-music-actions { spacing:7px; }
+.vela-music-tools .vela-text-button { padding:8px 12px; }
+.vela-music-tools .slider { height:18px; color:#b5a4f5; -barlevel-background-color:rgba(180,170,200,.25); -barlevel-active-background-color:#b5a4f5; -slider-handle-radius:6px; }
+.vela-lyrics { padding:12px; spacing:9px; border-radius:16px; background-color:rgba(127,112,157,.1); }
+.vela-lyric-line { color:#aaa4b8; font-size:14px; padding:5px 0; }
+.vela-lyric-active { color:#f8f5ff; font-weight:700; font-size:17px; }
+.vela-control-status { font-size:11px; color:#b5afc0; }
+.vela-audio-controls { spacing:8px; }
+.vela-light .vela-lyric-line,.vela-light .vela-control-status { color:#625b70; }
+.vela-light .vela-lyric-active { color:#332547; }
+.vela-pill-main:hover { background-color:rgba(202,189,237,.08); }
+.vela-pill-main:active { background-color:rgba(202,189,237,.16); }

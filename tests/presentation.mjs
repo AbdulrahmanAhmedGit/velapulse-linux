@@ -13,3 +13,11 @@ assert.equal(track.subtitle, 'Artist');
 assert.equal(present({id:'external::1:job',title:'Build',description:'Compiling',status:'warning'}).type,'external');
 assert.equal(present(null).state,'idle');
 console.log('PASS: native presentation formatting, pause controls, media timing, external and empty states');
+
+const {activePlayer,lyricIndex,musicColor,pillWidth}=await import('../extension/music-state.js');
+const peers=[{id:'media:paused',status:'paused'},{id:'media:playing',status:'active'}];
+assert.equal(activePlayer(peers).id,'media:playing');assert.equal(activePlayer(peers,'media:paused').id,'media:paused');assert.equal(activePlayer(peers,'media:gone').id,'media:playing');
+assert.equal(lyricIndex([{seconds:0},{seconds:12.5},{seconds:20}],13),1);assert.equal(lyricIndex([{seconds:3}],1),-1);
+assert.equal(musicColor({music:{color:'url(malicious)'}}),'#b5a4f5');assert.match(musicColor({music:{color:'#102030'}}),/^#[0-9a-f]{6}$/);
+assert.ok(pillWidth({title:'Long title '.repeat(100),controls:['PlayPause','Next']},310)<=310);
+console.log('PASS: shared player preference, lyric synchronization, safe palette and bounded pill width');

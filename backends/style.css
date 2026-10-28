@@ -117,3 +117,25 @@ window.vela-window { background: transparent; color: #f4f2f8; font-family: "Adwa
 .vela-glass .vela-secondary:hover,.vela-glass .vela-text-button:hover,.vela-glass .vela-icon-button:hover { background:rgba(222,237,255,.26); }
 .vela-glass .vela-progress trough { background:rgba(224,237,255,.18); }
 .vela-glass .vela-rail-selected { background:rgba(218,234,255,.24); color:#fff; }
+
+/* Shared music card controls: larger pointer targets, clear disabled state. */
+.vela-music-tools { margin-top:4px; }
+.vela-music-tools dropdown { border-radius:12px; }
+.vela-music-tools scale { padding:8px 2px; }
+.vela-music-tools scale trough { min-height:4px; background:rgba(180,170,200,.25); }
+.vela-music-tools scale highlight { background:#b5a4f5; }
+.vela-music-tools scale slider { min-width:16px; min-height:16px; margin:0; border:none; padding:0; }
+.vela-music-tools button:not(.vela-icon-button) { border-radius:12px; padding:6px 10px; }
+.vela-lyrics { padding:12px; border-radius:16px; background:rgba(127,112,157,.1); }
+.vela-lyric-line { color:#aaa4b8; font-size:14px; padding:5px 0; }
+.vela-lyric-active { color:#f8f5ff; font-weight:700; font-size:17px; }
+.vela-control-status { font-size:11px; color:#b5afc0; }
+.vela-light .vela-lyric-line,.vela-light .vela-control-status { color:#625b70; }
+.vela-light .vela-lyric-active { color:#332547; }
+.vela-pill-main:hover { background:rgba(202,189,237,.08); }
+.vela-pill-main:active { background:rgba(202,189,237,.16); }
+.vela-music-tools button:disabled { opacity:.45; }
+.vela-music-tools button:not(.vela-icon-button) { background:rgba(180,165,205,.14); color:#f4f2f8; border:1px solid rgba(205,196,235,.12); }
+.vela-music-tools button:not(.vela-icon-button):hover { background:rgba(200,183,229,.24); }
+.vela-music-tools scale:focus-visible { outline-color:#c8bafb; }
+.vela-light .vela-music-tools button:not(.vela-icon-button) { background:#e2ddeb; color:#3a314e; }

@@ -85,7 +85,10 @@ fn code(c: char) -> anyhow::Result<u32> {
         '1'..='9' => 2 + c as u32 - '1' as u32,
         '0' => 11,
         ' ' => 57,
-        '-' => 12,
+        '-' | '_' => 12,
+        '/' => 53,
+        '.' => 52,
+        ':' => 39,
         _ => anyhow::bail!("unsupported test character"),
     })
 }
@@ -182,11 +185,15 @@ fn main() -> anyhow::Result<()> {
                     .split_once(' ')
                     .map(|(_, t)| t)
                     .ok_or_else(|| anyhow::anyhow!("key or text required"))?;
-                let (mods, codes) = if a[0] == "type" {
-                    (
-                        0,
-                        text.chars().map(code).collect::<anyhow::Result<Vec<_>>>()?,
-                    )
+                let codes = if a[0] == "type" {
+                    text.chars()
+                        .map(|c| {
+                            Ok((
+                                u32::from(c.is_ascii_uppercase() || c == '_' || c == ':'),
+                                code(c.to_ascii_lowercase())?,
+                            ))
+                        })
+                        .collect::<anyhow::Result<Vec<_>>>()?
                 } else {
                     let (mods, key) = match text {
                         "ENTER" => (0, 28),
@@ -195,6 +202,8 @@ fn main() -> anyhow::Result<()> {
                         "TAB" => (0, 15),
                         "SHIFT+TAB" => (1, 15),
                         "CTRL+A" => (4, 30),
+                        "CTRL+L" => (4, 38),
+                        "ALT+O" => (8, 24),
                         "SPACE" => (0, 57),
                         "DOWN" => (0, 108),
                         "UP" => (0, 103),
@@ -204,10 +213,10 @@ fn main() -> anyhow::Result<()> {
                         "END" => (0, 107),
                         _ => anyhow::bail!("unknown test key"),
                     };
-                    (mods, vec![key])
+                    vec![(mods, key)]
                 };
-                keyboard.modifiers(mods, 0, 0, 0);
-                for key in codes {
+                for (mods, key) in codes {
+                    keyboard.modifiers(mods, 0, 0, 0);
                     time = time
                         .saturating_add(1)
                         .max(start.elapsed().as_millis() as u32);

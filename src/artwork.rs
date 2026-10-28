@@ -236,4 +236,16 @@ mod tests {
             assert!(load(value).await.is_err());
         }
     }
+    #[tokio::test]
+    #[ignore = "requires an explicitly chosen public HTTPS test image"]
+    async fn public_https_artwork() {
+        let uri = std::env::var("VELAPULSE_TEST_REMOTE_ART").expect("Choose a public HTTPS image");
+        let (path, color) = load(&uri)
+            .await
+            .expect("Remote image fetch and normalization");
+        assert!(path.starts_with("file://") && path.ends_with(".png"));
+        assert_eq!(color.len(), 7);
+        let cached = load(&uri).await.unwrap();
+        assert_eq!(cached, (path, color));
+    }
 }

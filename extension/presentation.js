@@ -1,3 +1,4 @@
+import {musicColor} from './music-state.js';
 // Pure presentation rules shared by the two native renderers.
 export const PALETTE = {
     media: {accent: '#b778a7', tint: '#4a2539', icon: 'audio-x-generic-symbolic', label: 'Now playing'},
@@ -29,6 +30,7 @@ export function actionInfo(action, status) {
 export function present(a) {
     const type = kind(a), p = {...PALETTE[type]};
     if (a?.status === 'warning') {p.accent = '#f0bd7e'; p.tint = '#392e23';}
+    if(type==='media'&&a.music){p.accent=musicColor(a);p.tint=a.music.color||p.tint;}
     const progress = Math.max(0, Math.min(1, a?.progress ?? 0));
     let title = a?.title ?? 'Make room for the moment';
     let subtitle = a?.description || 'Your live activities, in one quiet place.';

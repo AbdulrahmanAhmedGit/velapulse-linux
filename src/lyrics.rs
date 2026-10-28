@@ -59,6 +59,7 @@ pub async fn get(key: &str) -> Vec<Line> {
     }
     serde_json::from_slice(&bytes).unwrap_or_default()
 }
+static IMPORT_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 pub async fn import(key: &str, uri: &str) -> Result<()> {
     use tokio::io::AsyncReadExt;
     ensure!(uri.len() <= 4096, "LRC URI too long");
@@ -84,6 +85,7 @@ pub async fn import(key: &str, uri: &str) -> Result<()> {
     let lines = parse(std::str::from_utf8(&bytes)?)?;
     tokio::fs::create_dir_all(dir()).await?;
     let file = dir().join(format!("{key}.json"));
+    let _write = IMPORT_LOCK.lock().await;
     let temp = file.with_extension("tmp");
     use tokio::io::AsyncWriteExt;
     let mut output = tokio::fs::OpenOptions::new()

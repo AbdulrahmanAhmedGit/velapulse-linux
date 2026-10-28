@@ -144,13 +144,32 @@ async fn read(c: &Connection, name: String) -> Option<(Activity, String)> {
         rate,
         color: "#7665b8".into(),
     });
-    let art = text(metadata.get("mpris:artUrl"));
+    let art = metadata
+        .get("mpris:artUrl")
+        .and_then(|v| <&str>::try_from(v).ok())
+        .filter(|s| s.len() <= 2048)
+        .unwrap_or("")
+        .to_string();
     Some((a, art))
+}
+struct ArtJob {
+    token: String,
+    task: tokio::task::JoinHandle<()>,
+    started: Instant,
+    attempts: u8,
+}
+impl ArtJob {
+    fn retry_due(&self, missing: bool) -> bool {
+        missing
+            && self.attempts < 3
+            && self.task.is_finished()
+            && self.started.elapsed() >= Duration::from_secs(30)
+    }
 }
 async fn refresh(
     c: &Connection,
     e: &Arc<Mutex<Engine>>,
-    jobs: &mut HashMap<String, (String, tokio::task::JoinHandle<()>)>,
+    jobs: &mut HashMap<String, ArtJob>,
     wake: &Arc<Notify>,
 ) {
     let Ok(bus) = zbus::fdo::DBusProxy::new(c).await else {
@@ -180,10 +199,10 @@ async fn refresh(
     let mut engine = e.lock().await;
     let old = engine.providers.clone();
     engine.providers.retain(|id, _| !id.starts_with("media:"));
-    jobs.retain(|id, (_, job)| {
+    jobs.retain(|id, job| {
         let keep = peers.iter().any(|(a, _)| &a.id == id);
         if !keep {
-            job.abort();
+            job.task.abort();
         }
         keep
     });
@@ -191,15 +210,27 @@ async fn refresh(
         let token = format!("{}\n{uri}", a.music.as_ref().unwrap().key);
         if let Some(old) = old.get(&a.id)
             && old.music.as_ref().map(|m| &m.key) == a.music.as_ref().map(|m| &m.key)
-            && jobs.get(&a.id).is_some_and(|(old, _)| old == &token)
+            && jobs.get(&a.id).is_some_and(|old| old.token == token)
         {
             a.icon = old.icon.clone();
             a.music.as_mut().unwrap().color = old.music.as_ref().unwrap().color.clone();
         }
-        if !uri.is_empty() && jobs.get(&a.id).is_none_or(|(old, _)| old != &token) {
-            if let Some((_, old)) = jobs.remove(&a.id) {
-                old.abort();
-            }
+        let retry = jobs
+            .get(&a.id)
+            .is_some_and(|job| job.retry_due(a.icon.is_empty()));
+        if !uri.is_empty() && (retry || jobs.get(&a.id).is_none_or(|old| old.token != token)) {
+            let attempts = jobs
+                .remove(&a.id)
+                .map(|old| {
+                    let attempts = if old.token == token {
+                        old.attempts + 1
+                    } else {
+                        1
+                    };
+                    old.task.abort();
+                    attempts
+                })
+                .unwrap_or(1);
             let (id, key, uri_copy, e, w) = (
                 a.id.clone(),
                 a.music.as_ref().unwrap().key.clone(),
@@ -220,11 +251,19 @@ async fn refresh(
                     }
                 }
             });
-            jobs.insert(a.id.clone(), (token, job));
+            jobs.insert(
+                a.id.clone(),
+                ArtJob {
+                    token,
+                    task: job,
+                    started: Instant::now(),
+                    attempts,
+                },
+            );
         } else if uri.is_empty()
-            && let Some((_, job)) = jobs.remove(&a.id)
+            && let Some(job) = jobs.remove(&a.id)
         {
-            job.abort();
+            job.task.abort();
         }
         engine.providers.insert(a.id.clone(), a);
     }
@@ -324,7 +363,7 @@ pub fn spawn(
                 for interface in [
                     "org.freedesktop.DBus.Properties",
                     "org.freedesktop.DBus",
-                    "org.mpris.MediaPlayer2.Player",
+                    PLAYER,
                 ] {
                     let _ = bus
                         .add_match_rule(
@@ -346,22 +385,72 @@ pub fn spawn(
                 interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
                 loop {
                     tokio::select! {
-                            msg=stream.next()=>{let Some(Ok(msg))=msg else{break};let h=msg.header();let relevant=h.path().is_some_and(|p|p.as_str()==PATH)||(h.member().is_some_and(|m|m.as_str()=="NameOwnerChanged")&&msg.body().deserialize::<(String,String,String)>().is_ok_and(|(n,_,_)|n.starts_with("org.mpris.MediaPlayer2.")));if relevant{refresh(&c,&e,&mut jobs,&wake).await;at=Instant::now();refreshed=at;}},
-                            _=interval.tick()=>{
-                                let delta=at.elapsed().as_secs_f64().min(2.0);at=Instant::now();let cfg=config.lock().await.clone();let mut engine=e.lock().await;let mut active=false;
-                                for a in engine.providers.values_mut().filter(|a|a.id.starts_with("media:")&&a.status=="active") {active=true;let rate=a.music.as_ref().map(|m|m.rate).unwrap_or(1.0);let pos=(a.position_seconds.unwrap_or(0.0)+delta*rate).min(a.duration_seconds.unwrap_or(f64::MAX));a.position_seconds=Some(pos);a.progress=a.duration_seconds.map(|d|(pos/d).clamp(0.0,1.0));}
-                                let selected=engine.providers.get(&cfg.selected_player).or_else(||engine.providers.values().find(|a|a.id.starts_with("media:")&&a.status=="active")).cloned();drop(engine);
-                                history.lock().await.sample(selected.as_ref(),cfg.listening_history,at);if saved.elapsed()>=Duration::from_secs(30){let _=history.lock().await.flush();saved=at;}
-                                if active{wake.notify_one();}
-                    if active&&refreshed.elapsed()>=Duration::from_secs(15){refresh(&c,&e,&mut jobs,&wake).await;refreshed=Instant::now();at=refreshed;}
+                        msg = stream.next() => {
+                            let Some(Ok(msg)) = msg else {break};
+                            let header = msg.header();
+                            let relevant = header.path().is_some_and(|p| p.as_str() == PATH)
+                                || (header.member().is_some_and(|m|m.as_str()=="NameOwnerChanged")
+                                    && msg.body().deserialize::<(String,String,String)>()
+                                        .is_ok_and(|(name,_,_)|name.starts_with("org.mpris.MediaPlayer2.")));
+                            if relevant {
+                                refresh(&c,&e,&mut jobs,&wake).await;
+                                at=Instant::now();refreshed=at;
+                            }
+                        },
+                        _ = interval.tick() => {
+                            let delta=at.elapsed().as_secs_f64().min(2.0);at=Instant::now();
+                            let cfg=config.lock().await.clone();
+                            let mut engine=e.lock().await;
+                            let mut active=false;
+                            for a in engine.providers.values_mut().filter(|a|a.id.starts_with("media:")&&a.status=="active") {
+                                active=true;
+                                let rate=a.music.as_ref().map(|m|m.rate).unwrap_or(1.0);
+                                let pos=(a.position_seconds.unwrap_or(0.0)+delta*rate).min(a.duration_seconds.unwrap_or(f64::MAX));
+                                a.position_seconds=Some(pos);a.progress=a.duration_seconds.map(|d|(pos/d).clamp(0.0,1.0));
+                            }
+                            let selected=engine.providers.get(&cfg.selected_player)
+                                .or_else(||engine.providers.values().find(|a|a.id.starts_with("media:")&&a.status=="active")).cloned();
+                            let retry=jobs.iter().any(|(id,job)|job.retry_due(engine.providers.get(id).is_some_and(|a|a.icon.is_empty())));
+                            drop(engine);
+                            history.lock().await.sample(selected.as_ref(),cfg.listening_history,at);
+                            if saved.elapsed()>=Duration::from_secs(30) {
+                                let _=history.lock().await.flush();saved=at;
+                            }
+                            if active {wake.notify_one();}
+                            if (active||retry)&&refreshed.elapsed()>=Duration::from_secs(15) {
+                                refresh(&c,&e,&mut jobs,&wake).await;refreshed=Instant::now();at=refreshed;
                             }
                         }
+                    }
                 }
-                for (_, (_, job)) in jobs {
-                    job.abort();
+                for (_, job) in jobs {
+                    job.task.abort();
                 }
             }
             tokio::time::sleep(Duration::from_secs(5)).await;
         }
     });
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[tokio::test]
+    async fn artwork_failure_retry_is_bounded_and_backed_off() {
+        let task = tokio::spawn(async {});
+        task.await.unwrap();
+        let task = tokio::spawn(async {});
+        tokio::task::yield_now().await;
+        let mut job = ArtJob {
+            token: String::new(),
+            task,
+            started: Instant::now(),
+            attempts: 1,
+        };
+        assert!(!job.retry_due(true));
+        job.started = Instant::now() - Duration::from_secs(31);
+        assert!(job.retry_due(true));
+        assert!(!job.retry_due(false));
+        job.attempts = 3;
+        assert!(!job.retry_due(true));
+    }
 }

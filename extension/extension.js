@@ -1,3 +1,5 @@
+import {createMusicControls} from './music-shell.js';
+import {activePlayer,pillWidth} from './music-state.js';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
@@ -44,7 +46,8 @@ export default class VelaPulse extends Extension {
         this._pill.add_child(this._pillControls);
         this._root.add_child(this._pill);
         this._card = new St.BoxLayout({vertical: true, style_class: 'vela-card'});
-        this._root.add_child(this._card); this._card.hide();
+        this._card.connect('notify::allocation',()=>this._queuePosition());
+        this._cardScroll=new St.ScrollView({visible:false});this._cardScroll.set_policy(St.PolicyType.NEVER,St.PolicyType.AUTOMATIC);this._cardScroll.set_child(this._card);this._root.add_child(this._cardScroll);this._card.hide();
         this._pill.connect('notify::allocation', () => this._queuePosition());
         this._pillMain.connect('clicked', () => this._expand(!this._expanded));
         this._root.connect('key-press-event', (_, event) => {
@@ -54,6 +57,8 @@ export default class VelaPulse extends Extension {
         Main.layoutManager.addChrome(this._root, {affectsStruts: false, trackFullscreen: true});
         this._monitorSignal = Main.layoutManager.connect('monitors-changed', () => this._queuePosition());
         this._root.connect('notify::allocation', () => this._queuePosition());
+        this._overviewShowing=Main.overview.connect('showing',()=>{this._expand(false);this._syncRenderer();});
+        this._overviewHidden=Main.overview.connect('hidden',()=>this._syncRenderer());
         this._outsideSignal = global.stage.connect('captured-event', (_, event) => {
             if (this._expanded && event.type() === Clutter.EventType.BUTTON_PRESS) {
                 const actor = global.stage.get_actor_at_pos(Clutter.PickMode.REACTIVE, ...event.get_coords());
@@ -75,8 +80,8 @@ export default class VelaPulse extends Extension {
     _syncRenderer() {
         if (!this._alive) return;
         if (this._nativeActive && this._expanded) this._expand(false);
-        this._root.visible = !this._nativeActive && (!this._panel || this._expanded);
-        if (this._panel) this._panel.visible = !this._nativeActive;
+        this._root.visible = !this._nativeActive && !Main.overview.visible && (!this._panel || this._expanded);
+        if (this._panel) this._panel.visible = !this._nativeActive&&!Main.overview.visible;
     }
     _label(text, style, expand = false) {
         const label = new St.Label({text, style_class: style, x_expand: expand, y_align: CENTER});
@@ -101,6 +106,7 @@ export default class VelaPulse extends Extension {
         }
         this._proxy.SnapshotRemote((result, error) => {if (this._alive && !error) this._update(result[0]);});
     }
+    _musicRequest(method,signature,args){return new Promise((resolve,reject)=>{if(!this._proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}this._proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});}
     _command(id, action, seconds = 0) {
         if (action === 'start') {this._selected = id; this._launcherOpen = false;}
         this._proxy?.CommandRemote(id, action, seconds, (_, error) => {if (error) this._error('This control is unavailable');});
@@ -123,7 +129,7 @@ export default class VelaPulse extends Extension {
         this._pill.opacity = this._panel ? this._root.opacity : 255;
         const wellStyle = `background-color: ${p.tint}; color: #ffffff;`;
         if (this._pillWell.get_style() !== wellStyle) this._pillWell.set_style(wellStyle);
-        this._pillIcon.icon_name = p.icon;
+        const artUri=p.type==='media'&&a.icon?.startsWith('file://')?a.icon:p.icon;if(this._pillArtUri!==artUri){this._pillArtUri=artUri;if(artUri.startsWith('file://')&&Gio.File.new_for_uri(artUri).query_exists(null))this._pillIcon.gicon=new Gio.FileIcon({file:Gio.File.new_for_uri(artUri)});else this._pillIcon.icon_name=p.icon;}
         this._pillRing.visible = a?.progress !== null && a?.progress !== undefined;
         if(this._pillRing.visible)this._pillRing.queue_repaint();
         this._pillTitle.text = p.compact;
@@ -142,13 +148,13 @@ export default class VelaPulse extends Extension {
     _renderCard() {
         if (!this._expanded) return;
         const a = this._current(), p = present(a);
-        const key = JSON.stringify([a?.id, a?.controls, a?.status, this._state.activities.map(a => a.id), this._launcherOpen]);
+        const key = JSON.stringify([a?.id, a?.controls, this._state.activities.map(a => a.id), this._launcherOpen]);
         if (key !== this._cardKey) {
-            this._cardKey = key;
+            this._cardKey = key;this._musicTools?.dispose();this._musicTools=null;this._transportButtons=[];
             this._title = this._detail = this._metricLabel = this._hero = null;
             this._track = this._progress = this._sourceLabel = this._elapsedLabel = this._durationLabel = null;
             this._card.destroy_all_children();
-            this._artUri = null;
+            this._artUri = null;this._oldCover=null;
             const header = new St.BoxLayout({style_class: 'vela-card-header'});
             const tag = new St.BoxLayout({style_class: 'vela-tag', x_expand: true, y_align: CENTER});
             tag.add_child(new St.Icon({icon_name: p.icon, icon_size: 13, style: `color: ${p.accent};`}));
@@ -160,13 +166,13 @@ export default class VelaPulse extends Extension {
             if (p.type === 'media') this._buildMedia(p);
             else if (['timer', 'stopwatch', 'battery', 'volume'].includes(p.type)) this._buildMetric(p);
             else this._buildSummary(p);
-            if (a?.controls?.length) {
+            if (a?.controls?.length&&p.type!=='media') {
                 const transport = new St.BoxLayout({style_class: 'vela-transport', x_align: CENTER});
                 const ordered = p.type === 'timer' || p.type === 'stopwatch' ? [...a.controls].reverse() : a.controls;
                 for (const action of ordered) {
                     const [icon, name] = actionInfo(action, a.status);
                     const primary = ['PlayPause', 'pause', 'resume'].includes(action);
-                    transport.add_child(this._iconButton(icon, name, () => this._command(a.id, action), primary ? 'vela-primary' : 'vela-secondary'));
+                    const b=this._iconButton(icon,name,()=>this._command(a.id,action),primary?'vela-primary':'vela-secondary');transport.add_child(b);this._transportButtons.push({button:b,action});
                 }
                 this._card.add_child(transport);
             }
@@ -187,6 +193,7 @@ export default class VelaPulse extends Extension {
         if (id === this._selected) return;
         this._card.remove_all_transitions();
         this._selected = id;this._launcherOpen = false;
+        if(id.startsWith('media:'))this._musicRequest('SelectPlayer','(s)',[id]).catch(()=>this._error('Player selection unavailable'));
         this._update(JSON.stringify(this._state));
         this._card.opacity = this._motion() ? 180 : 255;
         this._card.ease({opacity:255,duration:this._motion()?120:0,mode:Clutter.AnimationMode.EASE_OUT_CUBIC});
@@ -205,10 +212,8 @@ export default class VelaPulse extends Extension {
         this._sourceLabel = this._label(p.source, 'vela-source', true);source.add_child(this._sourceLabel);
         const volume = this._state.activities.find(a => a.id === 'volume');
         if (volume) {source.add_child(new St.Icon({icon_name: 'audio-headphones-symbolic', icon_size: 15}));source.add_child(this._label('System audio', 'vela-output'));}
-        this._card.add_child(source);this._buildProgress(true);
-        const times = new St.BoxLayout({style_class: 'vela-times'});
-        this._elapsedLabel = this._label(p.elapsed, 'vela-time-label', true);this._durationLabel = this._label(p.duration, 'vela-time-label');
-        times.add_child(this._elapsedLabel);times.add_child(this._durationLabel);this._card.add_child(times);
+        this._card.add_child(source);
+        this._musicTools=createMusicControls({request:(...args)=>this._musicRequest(...args),getActivity:()=>this._current(),getActivities:()=>this._state.activities,getConfig:()=>this._state.config,onSelect:id=>{this._state.config.selected_player=id;this._selected=id||activePlayer(this._state.activities)?.id;this._cardKey=null;this._renderCard();},attachLyrics:()=>{const a=this._current();if(a?.music)Gio.Subprocess.new(['gjs','-m',this.dir.get_child('lyrics-picker.js').get_path(),a.id,a.music.track_id],Gio.SubprocessFlags.NONE);}});this._card.add_child(this._musicTools.actor);
     }
     _buildMetric(p) {
         const panel = new St.BoxLayout({vertical: true, style_class: 'vela-metric-panel'});
@@ -237,6 +242,7 @@ export default class VelaPulse extends Extension {
         this._track.connect('notify::allocation', () => this._queuePosition());
     }
     _setProgress(p) {
+        if(!this._track)return;
         if (this._wave) {this._track.queue_repaint();return;}
         if (!this._progress) return;
         const width = Math.round(Math.max(0, this._track.width) * p.progress);
@@ -258,12 +264,13 @@ export default class VelaPulse extends Extension {
         if (this._detail) this._detail.text = p.subtitle;
         if (this._metricLabel && ['timer','stopwatch','battery','volume'].includes(p.type)) this._metricLabel.text = p.metric;
         this._setProgress(p);
-        this._track.visible = a?.progress !== null && a?.progress !== undefined;
+        if(this._track)this._track.visible = a?.progress !== null && a?.progress !== undefined;
+        this._musicTools?.update();for(const {button,action}of this._transportButtons??[]){const[icon,name]=actionInfo(action,a?.status);button.get_child().icon_name=icon;button.accessible_name=name;}
         if (p.type === 'media') {
-            const uri = a?.icon?.startsWith('file://') ? Gio.File.new_for_uri(a.icon).get_uri() : this.dir.get_child('assets').get_child('orbit.svg').get_uri();
-            if (uri !== this._artUri) {this._artUri = uri;this._hero.set_style(`background-image: url("${uri.replace(/["\\\n\r]/g, c => `\\${c}`)}");`);}
+            const uri = a?.icon?.startsWith('file://')&&Gio.File.new_for_uri(a.icon).query_exists(null) ? Gio.File.new_for_uri(a.icon).get_uri() : this.dir.get_child('assets').get_child('orbit.svg').get_uri();
+            if (uri !== this._artUri) {if(this._oldCover){this._oldCover.destroy();this._oldCover=null;}if(this._artUri&&this._motion()){const faded=new St.Widget({x_expand:true,y_expand:true,style_class:'vela-cover-image',style:this._hero.get_style()});this._hero.insert_child_at_index(faded,0);this._oldCover=faded;faded.ease({opacity:0,duration:180,onComplete:()=>{if(this._oldCover===faded){this._oldCover=null;faded.destroy();}}});}this._artUri=uri;this._hero.set_style(`background-image: url("${uri.replace(/["\\\n\r]/g, c => `\\${c}`)}");`);}
             this._sourceLabel.text = p.source;
-            this._elapsedLabel.text = p.elapsed; this._durationLabel.text = p.duration;
+
         } else this._artUri = null;
     }
     _syncSurface() {
@@ -289,11 +296,11 @@ export default class VelaPulse extends Extension {
     _expand(open) {
         this._expanded = open; if (open) this._root.show();this._card.remove_all_transitions();
         if (open) {
-            this._card.show(); this._renderCard(); this._card.opacity = 0; this._card.translation_y = this._state.config.position === 'bottom' ? 10 : -10;
+            this._cardScroll.show();this._card.show(); this._renderCard(); this._card.opacity = 0; this._card.translation_y = this._state.config.position === 'bottom' ? 10 : -10;
             this._card.ease({opacity: 255, translation_y: 0, duration: this._motion() ? 240 : 0, mode: Clutter.AnimationMode.EASE_OUT_CUBIC});
         } else {
-            this._launcherOpen = false;
-            this._card.ease({opacity: 0, duration: this._motion() ? 150 : 0, onComplete: () => {if (!this._expanded && this._alive) {this._card.hide();this._queuePosition();}}});
+            this._launcherOpen = false;this._musicTools?.dispose();this._musicTools=null;this._cardKey=null;
+            this._card.ease({opacity: 0, duration: this._motion() ? 150 : 0, onComplete: () => {if (!this._expanded && this._alive) {this._card.hide();this._cardScroll.hide();this._queuePosition();}}});
         }
         this._queuePosition();
     }
@@ -311,8 +318,9 @@ export default class VelaPulse extends Extension {
         const config = this._state.config, sizes = SIZES[config.size] ?? SIZES.medium;
         const monitor = this._panel ? Main.layoutManager.primaryMonitor : Main.layoutManager.monitors[config.monitor] ?? Main.layoutManager.primaryMonitor;
         if (!monitor) return;
-        const width = Math.min(this._expanded ? (config.card_size === 'large' ? 520 : sizes.card) : sizes.pill, monitor.width - 32);
+        const width = Math.min(this._expanded ? (config.card_size === 'large' ? 520 : sizes.card) : pillWidth(this._current(),sizes.pill), monitor.width - 32);
         if (this._root.width !== width) this._root.width = width;
+        if(this._expanded){const natural=this._card.get_preferred_height(width)[1];const height=Math.min(natural,Math.max(180,monitor.height-130));if(this._cardScroll.height!==height)this._cardScroll.height=height;}
         if (this._panel) {
             const panelWidth = Math.min(sizes.pill, 280);
             if (this._pill.width !== panelWidth) this._pill.width = panelWidth;
@@ -322,16 +330,16 @@ export default class VelaPulse extends Extension {
             if (this._root.x !== x || this._root.y !== y) this._root.set_position(x,y);
             this._root.visible = this._expanded;return;
         }
-        const pillWidth = Math.min(sizes.pill, width);
-        if (this._pill.width !== pillWidth) this._pill.width = pillWidth;
+        const compactWidth = Math.min(pillWidth(this._current(),sizes.pill),width);
+        if (this._pill.width !== compactWidth) this._pill.width = compactWidth;
         const bottom = config.position === 'bottom';
-        if (this._bottom !== bottom) {this._bottom = bottom;this._root.set_child_at_index(this._card, bottom ? 0 : 1);}
+        if (this._bottom !== bottom) {this._bottom = bottom;this._root.set_child_at_index(this._cardScroll, bottom ? 0 : 1);}
         const x = Math.round(monitor.x + (monitor.width - width) / 2);
         const y = bottom ? Math.round(monitor.y + monitor.height - this._root.height - 28) : monitor.y + 46;
         if (this._root.x !== x || this._root.y !== y) this._root.set_position(x, y);
     }
     disable() {
-        this._alive = false;
+        this._alive = false;this._musicTools?.dispose();this._musicTools=null;
         if (this._rendererWatch) Gio.bus_unwatch_name(this._rendererWatch);
         this._rendererWatch = 0;
         this._generation++;
@@ -339,12 +347,13 @@ export default class VelaPulse extends Extension {
         if (this._signal) this._proxy.disconnectSignal(this._signal);
         if (this._ownerSignal) this._proxy.disconnect(this._ownerSignal);
         if (this._monitorSignal) Main.layoutManager.disconnect(this._monitorSignal);
+        if(this._overviewShowing)Main.overview.disconnect(this._overviewShowing);if(this._overviewHidden)Main.overview.disconnect(this._overviewHidden);this._overviewShowing=this._overviewHidden=0;
         if (this._outsideSignal) global.stage.disconnect(this._outsideSignal);
         if (this._panel) {this._pill.get_parent()?.remove_child(this._pill);this._root.add_child(this._pill);this._panel.destroy();this._panel = null;}
         if (this._root) {Main.layoutManager.removeChrome(this._root);this._root.destroy();}
         this._root = this._proxy = null;
         this._signal = this._ownerSignal = this._monitorSignal = this._outsideSignal = null;
-        this._cardKey = this._pillKey = this._artUri = null;
+        this._cardKey = this._pillKey = this._artUri = this._pillArtUri = null;
         this._title = this._detail = this._metricLabel = this._hero = this._progress = null;
     }
 }
