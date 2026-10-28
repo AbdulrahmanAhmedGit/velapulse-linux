@@ -16,7 +16,7 @@ iface='org.mpris.MediaPlayer2.Player'
 path='/org/mpris/MediaPlayer2'
 values={'Metadata':GLib.Variant('a{sv}',{'xesam:title':GLib.Variant('s','Fixture track'),'xesam:artist':GLib.Variant('as',['Test artist']),'mpris:length':GLib.Variant('x',120000000)}),'PlaybackStatus':GLib.Variant('s','Playing'),'Position':GLib.Variant('x',10000000),'CanControl':GLib.Variant('b',True),'CanPlay':GLib.Variant('b',True),'CanPause':GLib.Variant('b',True),'CanGoNext':GLib.Variant('b',True),'CanGoPrevious':GLib.Variant('b',os.environ.get('VELAPULSE_TEST_PREVIOUS')=='1')}
 if os.environ.get('VELAPULSE_TEST_ARTWORK'):
-    values['Metadata']=GLib.Variant('a{sv}',{**values['Metadata'].unpack(),'mpris:artUrl':GLib.Variant('s',os.environ['VELAPULSE_TEST_ARTWORK'])})
+    values['Metadata']=GLib.Variant('a{sv}',{**{key:values['Metadata'].lookup_value(key,None) for key in values['Metadata'].unpack()},'mpris:artUrl':GLib.Variant('s',os.environ['VELAPULSE_TEST_ARTWORK'])})
 
 def method(c,sender,p,i,m,args,inv):
     if m=='PlayPause': values['PlaybackStatus']=GLib.Variant('s','Paused' if values['PlaybackStatus'].unpack()=='Playing' else 'Playing')
