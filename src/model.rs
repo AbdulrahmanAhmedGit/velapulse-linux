@@ -26,6 +26,8 @@ pub struct Activity {
     pub duration_seconds: Option<f64>,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub source: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub music: Option<crate::music::Details>,
 }
 fn active() -> String {
     "active".into()
@@ -47,6 +49,7 @@ impl Activity {
             position_seconds: None,
             duration_seconds: None,
             source: String::new(),
+            music: None,
         }
     }
     pub fn validate(&self) -> Result<(), String> {
@@ -79,6 +82,7 @@ impl Activity {
         }
         if self.position_seconds.is_some()
             || self.duration_seconds.is_some()
+            || self.music.is_some()
             || !self.source.is_empty()
         {
             return Err("provider metadata cannot be supplied externally".into());
@@ -207,6 +211,17 @@ impl Engine {
                         .get(a.id.split(':').next().unwrap_or(""))
                         .unwrap_or(&50)
                 }),
+                if a.id.starts_with("media:") {
+                    if a.id == config.selected_player {
+                        0
+                    } else if a.status == "active" {
+                        1
+                    } else {
+                        2
+                    }
+                } else {
+                    0
+                },
                 a.id.clone(),
             )
         });

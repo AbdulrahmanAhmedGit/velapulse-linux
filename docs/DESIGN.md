@@ -8,7 +8,7 @@ Preferences follow the supplied three-column reference: navigation, live activit
 
 GNOME supports either a floating pill at the top/bottom or a compact activity in the Top Bar. Panel mode keeps the card anchored beneath its panel control without reserving desktop space. The layer-shell renderer remains floating because GNOME panel integration belongs to the extension.
 
-Native St/Clutter and GTK4 implementations share presentation rules. Only supported actions are displayed. Weather, sports, device controls and lyrics are not fabricated. Controlled test peers shown in validation screenshots are fixtures, not release providers.
+Native St/Clutter and GTK4 implementations share presentation rules. Only supported actions are displayed. Weather, sports and device-specific controls are not fabricated. Optional lyrics come only from user-selected local LRC files. Controlled test peers shown in validation screenshots are fixtures, not release providers.
 
 The St and GTK ring use the same Cairo function. Progress updates are event/second driven, with no permanent animation loop. Shell respects desktop animation settings; GTK reveal motion also checks its system reduced-motion preference.
 

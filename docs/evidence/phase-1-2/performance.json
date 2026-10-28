@@ -1,0 +1,16 @@
+{
+  "idle": {
+    "cpu_percent": 0.67,
+    "rss_kib": 17564,
+    "snapshot_median_ms": 0.93,
+    "snapshot_max_ms": 1.28,
+    "sample_seconds": 3.0
+  },
+  "active_two_players": {
+    "cpu_percent": 0.67,
+    "rss_kib": 20380,
+    "snapshot_median_ms": 1.02,
+    "snapshot_max_ms": 1.42,
+    "sample_seconds": 3.0
+  }
+}

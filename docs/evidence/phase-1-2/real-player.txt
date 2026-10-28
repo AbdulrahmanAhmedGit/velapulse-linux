@@ -1,0 +1,1 @@
+PASS real mpv with distribution mpv-mpris: discovery, duration, capability, pause, seek, resume, progress and removal; null audio output

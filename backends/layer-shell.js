@@ -1,4 +1,6 @@
 #!/usr/bin/gjs -m
+import {createMusicControls} from '../extension/music-controls.js';
+import {activePlayer,pillWidth} from '../extension/music-state.js';
 import Gtk from 'gi://Gtk?version=4.0';
 import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio';
@@ -11,27 +13,27 @@ import {present, actionInfo, SIZES, drawProgress, drawRing} from '../extension/p
 const CoverArtwork = GObject.registerClass(class CoverArtwork extends Gtk.Widget {
     _init() {
         super._init({hexpand:true, vexpand:true});
-        this._picture = new Gtk.Picture({content_fit:Gtk.ContentFit.COVER, can_shrink:true});
-        this._picture.set_parent(this);
+        this._stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:180});this._pictures=[0,1].map(i=>{const picture=new Gtk.Picture({content_fit:Gtk.ContentFit.COVER,can_shrink:true});this._stack.add_named(picture,String(i));return picture;});this._index=0;this._stack.set_parent(this);
     }
     vfunc_measure(orientation, _forSize) {return orientation === Gtk.Orientation.HORIZONTAL ? [0,0,-1,-1] : [220,220,-1,-1];}
-    vfunc_size_allocate(width, height, baseline) {this._picture?.allocate(width,height,baseline,null);}
-    vfunc_snapshot(snapshot) {if(this._picture)this.snapshot_child(this._picture,snapshot);}
-    set_file(file) {this._picture?.set_file(file);}
-    release() {this._picture?.unparent();this._picture=null;}
+    vfunc_size_allocate(width, height, baseline) {this._stack?.allocate(width,height,baseline,null);}
+    vfunc_snapshot(snapshot) {if(this._stack)this.snapshot_child(this._stack,snapshot);}
+    set_file(file,motion=true) {if(!this._stack)return;this._index=1-this._index;this._stack.transition_duration=motion?180:0;this._pictures[this._index].set_file(file);this._stack.visible_child_name=String(this._index);}
+    release() {this._stack?.unparent();this._stack=null;this._pictures=[];}
 });
 
 const BUS = 'io.github.velapulse.Service', PATH = '/io/github/velapulse/Service', IFACE = 'io.github.velapulse.Service1';
 const here = Gio.File.new_for_uri(import.meta.url).get_parent();
 const app = new Gtk.Application({application_id: 'io.github.velapulse.LayerShell'});
-let window, proxy, root, pill, pillIcon, pillTitle, pillDetail, pillControls, revealer, card, pillRing;
+let window, cardScroll, proxy, root, pill, pillIcon, pillTitle, pillDetail, pillControls, revealer, card, pillRing;
 let state = {activities: [], config: {}}, selected, expanded = false, launcherOpen = false;
-let lastMonitor, lastPosition, cardKey, pillKey, refs = {}, signal = 0, ownerSignal = 0, preferencesWatch = 0, monitorSignal = 0, rendererOwner = 0;
+let pillArtUri,lastMonitor, lastPosition, cardKey, pillKey, refs = {}, signal = 0, ownerSignal = 0, preferencesWatch = 0, monitorSignal = 0, rendererOwner = 0;
 function call(method, signature, args, done = () => {}) {
     proxy?.call(method, new GLib.Variant(signature, args), Gio.DBusCallFlags.NONE, 3000, null, (p,r) => {
         try {done(p.call_finish(r).deep_unpack());} catch {pillDetail.label = 'This control is unavailable';}
     });
 }
+function request(method,signature,args){return new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});}
 function command(id, action, seconds = 0) {if(action === 'start') {selected = id;launcherOpen = false;}call('Command', '(sst)', [id, action, seconds]);}
 function label(text, style, expand = false) {return new Gtk.Label({label:text, xalign:0, ellipsize:3, max_width_chars:style==='vela-pill-title'?14:style==='vela-pill-detail'?16:style==='vela-title'?25:42, hexpand:expand, css_classes:[style]});}
 function box(vertical = false, style = '', spacing = 0) {return new Gtk.Box({orientation:vertical ? Gtk.Orientation.VERTICAL : Gtk.Orientation.HORIZONTAL, spacing, css_classes:style ? [style] : []});}
@@ -54,12 +56,13 @@ function position() {
         root.reorder_child_after(pill,bottom ? revealer : null);
         revealer.transition_type = bottom ? Gtk.RevealerTransitionType.SLIDE_UP : Gtk.RevealerTransitionType.SLIDE_DOWN;
     }
+    if(cardScroll)cardScroll.max_content_height=Math.max(180,(Layer.get_monitor(window)?.get_geometry().height??900)-130);
     const sizes = SIZES[state.config.size] ?? SIZES.medium;
     const m = Layer.get_monitor(window), width = m ? m.get_geometry().width - 32 : sizes.card;
-    pill.set_size_request(Math.min(sizes.pill,width), -1);card.set_size_request(Math.min(state.config.card_size==='large'?520:sizes.card,width),-1);
+    pill.set_size_request(Math.min(pillWidth(state.activities.find(a=>a.id===selected),sizes.pill),width), -1);card.set_size_request(Math.min(state.config.card_size==='large'?520:sizes.card,width),-1);
 }
 function setExpanded(open) {
-    expanded = open;renderCard();revealer.reveal_child = open;
+    expanded = open;if(open)revealer.visible=true;if(!open){refs.music?.dispose();cardKey=null;}renderCard();revealer.reveal_child = open;
     Layer.set_keyboard_mode(window,open ? Layer.KeyboardMode.ON_DEMAND : Layer.KeyboardMode.NONE);
 }
 function render(json) {
@@ -67,11 +70,13 @@ function render(json) {
     try {state = JSON.parse(json);} catch {return;}
     if(state.config.backend==='gnome-extension' || state.config.surface==='panel'){app.quit();return;}
     if((!expanded && oldTop !== state.activities[0]?.id) || !state.activities.some(a=>a.id===selected))selected=state.activities[0]?.id;
+    if(selected?.startsWith('media:')||!selected)selected=activePlayer(state.activities,state.config.selected_player)?.id??selected;
     const a = state.activities.find(a=>a.id===selected), p = present(a);
     root.set_css_classes(['vela-root', ...(['light','glass'].includes(state.config.appearance) ? [`vela-${state.config.appearance}`] : []), `vela-${p.type}`]);
+    Gtk.Settings.get_default().gtk_application_prefer_dark_theme=state.config.appearance!=='light';
     root.opacity = (state.config.opacity ?? 98)/100;
     pillRing.visible=a?.progress!==null && a?.progress!==undefined;if(pillRing.visible)pillRing.queue_draw();
-    pillIcon.icon_name=p.icon;pillTitle.label=p.compact;pillDetail.label=`${p.type==='media'?'· ':''}${p.detail}`;
+    const artUri=p.type==='media'&&a.icon?.startsWith('file://')?a.icon:p.icon;if(pillArtUri!==artUri){pillArtUri=artUri;if(artUri.startsWith('file://')&&Gio.File.new_for_uri(artUri).query_exists(null))pillIcon.gicon=new Gio.FileIcon({file:Gio.File.new_for_uri(artUri)});else pillIcon.icon_name=p.icon;}pillTitle.label=p.compact;pillDetail.label=`${p.type==='media'?'· ':''}${p.detail}`;
     const key = JSON.stringify([a?.id,a?.controls,a?.status]);
     if(key !== pillKey) {
         pillKey=key;clear(pillControls);
@@ -89,9 +94,9 @@ function buildProgress(wave=false) {
 function renderCard() {
     if(!expanded)return;
     const a=state.activities.find(a=>a.id===selected),p=present(a);
-    const key=JSON.stringify([a?.id,a?.controls,a?.status,state.activities.map(a=>a.id),launcherOpen]);
+    const key=JSON.stringify([a?.id,a?.controls,state.activities.map(a=>a.id),launcherOpen]);
     if(key !== cardKey) {
-        cardKey=key;refs.art?.release();clear(card);refs={};
+        cardKey=key;refs.music?.dispose();refs.art?.release();clear(card);refs={};
         const header=box(false,'vela-card-header',6),tag=box(false,'vela-tag',7);
         tag.hexpand=true;tag.valign=Gtk.Align.CENTER;tag.append(new Gtk.Image({icon_name:p.icon,pixel_size:13}));tag.append(label(p.label,'vela-caption'));
         header.append(tag);header.append(iconButton('emblem-system-symbolic','Preferences',preferences,'vela-quiet'));header.append(iconButton('window-close-symbolic','Collapse activity',()=>setExpanded(false),'vela-quiet'));if(p.type!=='media')card.append(header);
@@ -103,8 +108,8 @@ function renderCard() {
             const corners=box(false,'vela-cover-corners');corners.valign=Gtk.Align.START;
             corners.append(iconButton('emblem-system-symbolic','Preferences',preferences,'vela-cover-button'));const spacer=box();spacer.hexpand=true;corners.append(spacer);corners.append(iconButton('window-close-symbolic','Collapse',()=>setExpanded(false),'vela-cover-button'));hero.add_overlay(corners);card.append(hero);
             const source=box(false,'vela-provider-row',8);source.append(new Gtk.Image({icon_name:p.icon,pixel_size:18,css_classes:['vela-provider-icon']}));refs.source=label(p.source,'vela-source',true);source.append(refs.source);
-            if(state.activities.some(a=>a.id==='volume')) {source.append(new Gtk.Image({icon_name:'audio-headphones-symbolic',pixel_size:15}));source.append(label('System audio','vela-output'));}card.append(source);buildProgress(true);
-            const times=box(false,'vela-times');refs.elapsed=label(p.elapsed,'vela-time-label',true);refs.duration=label(p.duration,'vela-time-label');times.append(refs.elapsed);times.append(refs.duration);card.append(times);
+            if(state.activities.some(a=>a.id==='volume')) {source.append(new Gtk.Image({icon_name:'audio-headphones-symbolic',pixel_size:15}));source.append(label('System audio','vela-output'));}card.append(source);
+            refs.music=createMusicControls({request,getActivity:()=>state.activities.find(a=>a.id===selected),getActivities:()=>state.activities,getConfig:()=>state.config,onSelect:id=>{state.config.selected_player=id;selected=id||activePlayer(state.activities)?.id;cardKey=null;render(JSON.stringify(state));},window});card.append(refs.music.widget);
         } else if(['timer','stopwatch','battery','volume'].includes(p.type)) {
             const panel=box(true,'vela-metric-panel',9);refs.metric=label(p.metric,'vela-metric');panel.append(refs.metric);
             refs.title=label(p.title,'vela-metric-title');panel.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');panel.append(refs.detail);card.append(panel);buildProgress();
@@ -112,14 +117,14 @@ function renderCard() {
             const panel=box(true,'vela-summary-panel',15);panel.append(new Gtk.Image({icon_name:p.icon,pixel_size:34,halign:Gtk.Align.START}));
             refs.title=label(p.title,'vela-title');panel.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');panel.append(refs.detail);card.append(panel);buildProgress();
         }
-        if(a?.controls.length) {
+        if(a?.controls.length&&p.type!=='media') {
             const controls=box(false,'vela-transport',17);controls.halign=Gtk.Align.CENTER;
             const ordered=['timer','stopwatch'].includes(p.type) ? [...a.controls].reverse() : a.controls;
-            for(const action of ordered) {const [icon,name]=actionInfo(action,a.status);controls.append(iconButton(icon,name,()=>command(a.id,action),['PlayPause','pause','resume'].includes(action)?'vela-primary':'vela-secondary'));}card.append(controls);
+            refs.transport=[];for(const action of ordered) {const [icon,name]=actionInfo(action,a.status);const b=iconButton(icon,name,()=>command(a.id,action),['PlayPause','pause','resume'].includes(action)?'vela-primary':'vela-secondary');controls.append(b);refs.transport.push({button:b,action});}card.append(controls);
         }
         if(state.activities.length>1) {
             const rail=box(false,'vela-activity-rail',6);rail.halign=Gtk.Align.CENTER;
-            for(const activity of state.activities.slice(0,5))rail.append(iconButton(present(activity).icon,`Show ${activity.title}`,()=>{selected=activity.id;launcherOpen=false;render(JSON.stringify(state));},activity.id===a?.id?'vela-rail-selected':'vela-rail-item'));
+            for(const activity of state.activities.slice(0,5))rail.append(iconButton(present(activity).icon,`Show ${activity.title}`,()=>{selected=activity.id;launcherOpen=false;if(activity.music)request('SelectPlayer','(s)',[activity.id]).then(()=>render(JSON.stringify(state))).catch(()=>{});else render(JSON.stringify(state));},activity.id===a?.id?'vela-rail-selected':'vela-rail-item'));
             card.append(rail);
         }
         if(!a || launcherOpen) {
@@ -129,13 +134,14 @@ function renderCard() {
             launcher.append(presets);launcher.append(textButton('Start a stopwatch',()=>command('stopwatch','start'),'vela-stopwatch-launch'));card.append(launcher);
         } else card.append(textButton('+  New activity',()=>{launcherOpen=!launcherOpen;renderCard();},'vela-new-activity'));
     }
+    for(const {button,action}of refs.transport??[]){const[icon,name]=actionInfo(action,a?.status);button.icon_name=icon;button.tooltip_text=name;button.update_property([Gtk.AccessibleProperty.LABEL],[name]);}
     refs.title.label=p.type==='timer' ? (p.state==='completed'?'A moment well spent':'Time to focus') : p.title;
     refs.detail.label=p.subtitle;if(refs.metric)refs.metric.label=p.metric;
-    if(refs.wave)refs.progress.queue_draw();else refs.progress.fraction=p.progress;refs.progress.visible=a?.progress!==null && a?.progress!==undefined;
+    if(refs.progress){if(refs.wave)refs.progress.queue_draw();else refs.progress.fraction=p.progress;refs.progress.visible=a?.progress!==null && a?.progress!==undefined;}refs.music?.update();
     if(refs.art) {
-        const uri=a?.icon?.startsWith('file://') ? a.icon : here.get_parent().get_child('extension/assets/orbit.svg').get_uri();
-        if(refs.artUri!==uri) {refs.artUri=uri;refs.art.set_file(Gio.File.new_for_uri(uri));}
-        refs.source.label=p.source;refs.elapsed.label=p.elapsed;refs.duration.label=p.duration;
+        const uri=a?.icon?.startsWith('file://')&&Gio.File.new_for_uri(a.icon).query_exists(null) ? a.icon : here.get_parent().get_child('extension/assets/orbit.svg').get_uri();
+        if(refs.artUri!==uri) {refs.artUri=uri;refs.art.set_file(Gio.File.new_for_uri(uri),state.config.animations!==false&&Gtk.Settings.get_default().gtk_enable_animations);}
+        refs.source.label=p.source;
     }
 }
 app.connect('activate',()=>{
@@ -155,10 +161,10 @@ app.connect('activate',()=>{
     const lines=box(false,'',5);lines.hexpand=true;lines.valign=Gtk.Align.CENTER;
     pillTitle=label('VelaPulse','vela-pill-title');pillDetail=label('Ready when you are','vela-pill-detail');lines.append(pillTitle);lines.append(pillDetail);summary.append(lines);main.set_child(summary);pill.append(main);
     pillControls=box(false,'vela-inline-controls',1);pillControls.valign=Gtk.Align.CENTER;pill.append(pillControls);root.append(pill);
-    revealer=new Gtk.Revealer({transition_type:Gtk.RevealerTransitionType.SLIDE_DOWN});card=box(true,'vela-card',12);revealer.set_child(card);root.append(revealer);
+    revealer=new Gtk.Revealer({transition_type:Gtk.RevealerTransitionType.SLIDE_DOWN,visible:false});revealer.connect('notify::child-revealed',()=>{if(!revealer.child_revealed&&!expanded)revealer.visible=false;});card=box(true,'vela-card',12);cardScroll=new Gtk.ScrolledWindow({hscrollbar_policy:Gtk.PolicyType.NEVER,propagate_natural_height:true,max_content_height:760});cardScroll.set_child(card);revealer.set_child(cardScroll);root.append(revealer);
     const css=new Gtk.CssProvider();css.load_from_file(here.get_child('style.css'));Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     const keys=new Gtk.EventControllerKey();keys.connect('key-pressed',(_,key)=>{if(key===Gdk.KEY_Escape){setExpanded(false);return true;}return false;});window.add_controller(keys);
-    const focus=new Gtk.EventControllerFocus();focus.connect('leave',()=>setExpanded(false));window.add_controller(focus);
+    const focus=new Gtk.EventControllerFocus();focus.connect('leave',()=>{if(!window._velaModalInput)setExpanded(false);});window.add_controller(focus);
     monitorSignal=Gdk.Display.get_default().get_monitors().connect('items-changed',position);
     proxy=Gio.DBusProxy.new_for_bus_sync(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,BUS,PATH,IFACE,null);
     const refresh=()=>{if(proxy.g_name_owner)call('Snapshot','()',[],([json])=>render(json));else {app.quit();}};
@@ -170,5 +176,5 @@ app.connect('activate',()=>{
     window.connect('map',()=>{if(!rendererOwner)rendererOwner=Gio.bus_own_name_on_connection(Gio.DBus.session,'io.github.velapulse.Renderer',Gio.BusNameOwnerFlags.DO_NOT_QUEUE,null,()=>app.quit());});
     window.present();
 });
-app.connect('shutdown',()=>{if(preferencesWatch)Gio.bus_unwatch_name(preferencesWatch);if(rendererOwner)Gio.bus_unown_name(rendererOwner);refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
+app.connect('shutdown',()=>{if(preferencesWatch)Gio.bus_unwatch_name(preferencesWatch);if(rendererOwner)Gio.bus_unown_name(rendererOwner);refs.music?.dispose();refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
 app.run([]);
