@@ -138,6 +138,8 @@ function renderCard() {
         } else card.append(textButton('+  New activity',()=>{launcherOpen=!launcherOpen;renderCard();},'vela-new-activity'));
     }
     for(const {button,action}of refs.transport??[]){const[icon,name]=actionInfo(action,a?.status);button.icon_name=icon;button.tooltip_text=name;button.update_property([Gtk.AccessibleProperty.LABEL],[name]);}
+    // A removed action must not leave the active window without a keyboard target.
+    if(expanded&&window.is_active&&!window.get_focus())pill.get_first_child().grab_focus();
     refs.title.label=p.type==='timer' ? (p.state==='completed'?'A moment well spent':'Time to focus') : p.title;
     if(refs.context)refs.context.label=activityLines(a).join('\n');
     refs.detail.label=p.subtitle;if(refs.metric)refs.metric.label=p.metric;
@@ -171,6 +173,7 @@ app.connect('activate',()=>{
     const focus=new Gtk.EventControllerFocus();focus.connect('leave',()=>{GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE,()=>{
         // Rebuilding a card can remove its focused child without leaving this window.
         if(!window._velaModalInput&&!window.is_active)setExpanded(false);
+        else if(expanded&&window.is_active&&!window.get_focus())pill.get_first_child().grab_focus();
         return GLib.SOURCE_REMOVE;
     });});window.add_controller(focus);
     monitorSignal=Gdk.Display.get_default().get_monitors().connect('items-changed',position);

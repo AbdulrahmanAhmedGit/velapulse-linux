@@ -268,7 +268,7 @@ impl Store {
                 let mut a = Activity::new(id, &r.title);
                 a.status = match r.view.state.as_str() {
                     "completed" => "completed",
-                    "failed" | "waiting" | "disconnected" => "warning",
+                    "failed" | "waiting" | "disconnected" | "cancelled" => "warning",
                     _ => "active",
                 }
                 .into();

@@ -44,6 +44,10 @@ export function present(a) {
     let subtitle = a?.description || 'Your live activities, in one quiet place.';
     let compact = type === 'idle' ? 'VelaPulse' : title;
     let detail = type === 'idle' ? 'Ready when you are' : a?.status === 'paused' ? 'Paused' : p.label;
+    if(type==='developer'&&a?.developer){const d=a.developer;detail=`${d.state} · ${clock(d.elapsed)}`;const symbols={waiting:'dialog-warning-symbolic',failed:'dialog-error-symbolic',completed:'emblem-ok-symbolic',cancelled:'process-stop-symbolic',disconnected:'network-offline-symbolic'};p.icon=symbols[d.state]??p.icon;}
+    if(type==='clock'){const parts=subtitle.split(' · ');detail=parts.length>1?`${parts.at(-1)} · ${parts[0]}`:subtitle;}
+    if(type==='weather'&&a?.weather)detail=`${a.weather.stale?'Cached · ':''}${a.weather.location.name}`;
+    if(type==='brief')detail='Daily overview';
     let metric = '';
     if (type === 'timer' || type === 'stopwatch') {
         metric = timeText(a.description);

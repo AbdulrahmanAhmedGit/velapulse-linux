@@ -11,12 +11,12 @@ def normalize(v):
  if not state or not isinstance(v.get('session_id'),str):return None
  tool=v.get('tool_name','')
  if not isinstance(tool,str):tool=''
- tool=''.join(c for c in tool if c.isalnum()or c in '_-.')[:60]
+ tool=''.join(c for c in tool if c.isascii()and(c.isalnum()or c in '_-.'))[:60]
  message=('Return to Claude Code to review this request'+(' · Tool: '+tool if tool else ''))if state=='waiting'else name+(' · '+tool if tool else '')
  # Intentionally omit prompt, tool_input, message, last_assistant_message and transcript_path.
  session=hashlib.sha256(v['session_id'].encode()).hexdigest()[:32]
  project=Path(str(v.get('cwd',''))).name[:60]
- project=''.join(c for c in project if c.isprintable())
+ project=''.join(c for c in project if c.isprintable()).encode()[:120].decode('utf-8','ignore')
  nonce=v.get('tool_use_id',v.get('prompt_id',''))
  event_id=hashlib.sha256((name+str(nonce)+state).encode()).hexdigest()[:32]if nonce else ''
  return {'provider':'claude','session':session,'state':state,'title':'Claude Code','project':project,'message':message,'event_id':event_id}

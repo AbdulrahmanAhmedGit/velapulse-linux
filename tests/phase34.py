@@ -50,6 +50,10 @@ with tempfile.TemporaryDirectory(prefix='vela-phase34-')as directory:
   d.terminate();d.wait(timeout=5);assert restart_task.wait(timeout=15)!=0;d=daemon();wait(lambda:any(a.get('developer',{}).get('state')=='disconnected'for a in snapshot()['activities']),'recovered developer state')
   spec=importlib.util.spec_from_file_location('hook',repo/'integrations/claude-hook.py');hook=importlib.util.module_from_spec(spec);spec.loader.exec_module(hook)
   v=hook.normalize({'hook_event_name':'PermissionRequest','session_id':'abc','cwd':'/tmp/test','tool_name':'Bash','tool_input':{'command':'SECRET'},'transcript_path':'SECRET','prompt':'SECRET'});assert 'SECRET'not in json.dumps(v)and v['state']=='waiting'
+  for name,state in hook.STATES.items():
+   normalized=hook.normalize({'hook_event_name':name,'session_id':'test','cwd':'/tmp/project','tool_name':'Bash','prompt':'PRIVATE','tool_input':{'command':'PRIVATE'}});assert normalized['state']==state and'PRIVATE'not in json.dumps(normalized)
+  assert hook.normalize({'hook_event_name':'Unknown','session_id':'test'})is None
+  assert hook.normalize({'hook_event_name':'Notification','notification_type':'permission_prompt','session_id':'test'})['state']=='waiting'
   spec=importlib.util.spec_from_file_location('setup',repo/'integrations/claude-setup.py');setup=importlib.util.module_from_spec(spec);spec.loader.exec_module(setup)
   old={'other':True,'hooks':{'Stop':[{'hooks':[{'type':'command','command':'other-hook'}]}]}};new=setup.merge(old,'vela-hook');assert setup.merge(new,'vela-hook')==new;assert setup.merge(new,'vela-hook',True)==old
   settings=base/'merge-settings.json';settings.write_text(json.dumps(old));setup_command=['/usr/bin/python3',str(repo/'integrations/claude-setup.py'),'--settings',str(settings),'--apply']

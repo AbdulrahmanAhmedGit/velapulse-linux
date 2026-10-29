@@ -28,3 +28,7 @@ assert.equal(merged.weather.enabled,true);assert.equal(merged.weather.units,'fah
 assert.equal(present({id:'weather',title:'Weather',icon:'weather-snow-symbolic'}).icon,'weather-snow-symbolic');
 assert.match(activityLines({developer:{project:'Test',state:'waiting',elapsed:65,message:'Review',events:[]}}).join(' '),/cannot approve or reject/);
 console.log('PASS: nested settings patches, weather presentation and safe permission guidance');
+
+assert.equal(present({id:'developer:task:test',title:'Build',description:'task',status:'warning',developer:{state:'cancelled',elapsed:65}}).detail,'cancelled · 1:05');
+assert.equal(present({id:'clock',title:'12:00',description:'Thursday · 8°C',status:'active'}).detail,'8°C · Thursday');
+assert.equal(present({id:'weather',title:'8°C',weather:{stale:true,location:{name:'Berlin'}}}).detail,'Cached · Berlin');

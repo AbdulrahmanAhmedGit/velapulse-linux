@@ -19,7 +19,7 @@ const originalExpand=setExpanded;setExpanded=open=>{print('EXPAND',open);origina
 GLib.timeout_add(GLib.PRIORITY_DEFAULT,100,()=>{
  if(!window?.get_mapped())return GLib.SOURCE_CONTINUE;
  const widgets=[];function visit(w){if(w.get_mapped()){const[ok,b]=w.compute_bounds(window);if(ok)widgets.push({name:w.name,classes:w.get_css_classes(),label:w.label??'',button:w instanceof Gtk.Button,tooltip:w.tooltip_text??'',sensitive:w.is_sensitive(),x:b.origin.x,y:b.origin.y,width:b.size.width,height:b.size.height});}for(let c=w.get_first_child();c;c=c.get_next_sibling())visit(c);}visit(window);
- GLib.file_set_contents(GLib.getenv('VELAPULSE_TEST_LAYOUT'),JSON.stringify({width:window.get_width(),height:window.get_height(),bottom:state.config.position==='bottom',topAnchor:Layer.get_anchor(window,Layer.Edge.TOP),bottomAnchor:Layer.get_anchor(window,Layer.Edge.BOTTOM),expanded,selected,state,widgets}));return GLib.SOURCE_CONTINUE;
+ GLib.file_set_contents(GLib.getenv('VELAPULSE_TEST_LAYOUT'),JSON.stringify({width:window.get_width(),height:window.get_height(),bottom:state.config.position==='bottom',topAnchor:Layer.get_anchor(window,Layer.Edge.TOP),bottomAnchor:Layer.get_anchor(window,Layer.Edge.BOTTOM),expanded,selected,state,active:window.is_active,focus:window.get_focus()?.name??'',widgets}));return GLib.SOURCE_CONTINUE;
 });
 '''
 fd,path=tempfile.mkstemp(prefix='_input-',suffix='.js',dir=repo/'backends');os.close(fd);path=Path(path);path.write_text(source.replace('app.run([]);',recorder+'\napp.run([]);'))
@@ -61,6 +61,7 @@ with (artifacts/'native-renderer.log').open('w')as log:
    wait(lambda:any(a['title']=='Pointer task'for a in snapshot()['activities']),'owned pointer task');rail=wait(lambda:next((w for w in current()['widgets']if w['tooltip']=='Show Pointer task'and w['height']>0),None),'owned task rail');time.sleep(.35);assert current()['expanded'],'Card collapsed when task list changed';rail=next(w for w in current()['widgets']if w['tooltip']=='Show Pointer task'and w['height']>0);click(rail);wait(lambda:current()['selected'].startswith('developer:'),'native owned task selection');cancel=wait(lambda:next((w for w in current()['widgets']if w['tooltip']=='Cancel owned task'and w['height']>0),None),'owned cancel target');click(cancel);assert task.wait(timeout=10)!=0
   finally:
    if task.poll()is None:task.terminate();task.wait(timeout=5)
+  wait(lambda:next(a for a in current()['state']['activities']if a['id']==current()['selected'])['developer']['state']=='cancelled','cancelled card update');time.sleep(.25)
   print('PASS actual native pointer: Now Brief open and owned-task selection/cancellation',flush=True)
   send('key','ESC');wait(lambda:not current()['expanded']and current()['height']<100,'Escape collapse')
   if env.get('VELAPULSE_TEST_GRIM'):subprocess.run([env['VELAPULSE_TEST_GRIM'],str(artifacts/'native-pill.png')],env=env,check=True)
