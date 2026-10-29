@@ -1,0 +1,2 @@
+Error: Activity service disconnected; owned command stopped
+PASS Phase 3/4: opt-in defaults, idle clock, brief, real command success/failure/concurrency/cancel, hook state/dedup/privacy, permission limits, persistence/restart, hook merge/removal
