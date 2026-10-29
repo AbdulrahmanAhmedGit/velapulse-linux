@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {contextTree,createContextCard,temperature} from '../extension/context-cards.js';
+import {contextTree,createContextCard,temperature,weatherCondition,weatherSymbol} from '../extension/context-cards.js';
 const weather=JSON.parse(fs.readFileSync(new URL('fixtures/weather-view.json',import.meta.url)));
 function flatten(n){return [n,...(n.children??[]).flatMap(flatten)];}
 let tree=contextTree({id:'weather',weather});let nodes=flatten(tree);
@@ -9,7 +9,7 @@ assert.equal(nodes.filter(n=>n.style==='vela-day-row').length,5);
 assert.equal(nodes.filter(n=>n.type==='range').length,5);
 assert.equal(nodes.filter(n=>n.style==='vela-condition-cell').length,3);
 assert.ok(nodes.every(n=>!n.text?.includes('\n')),'Forecasts must be individual components');
-assert.equal(temperature(0,'fahrenheit',true),'32°F');assert.equal(temperature(null,'celsius'),'—');
+assert.equal(temperature(0,'fahrenheit',true),'32°F');assert.equal(temperature(null,'celsius'),'—');assert.equal(weatherCondition(4),'Conditions unavailable');assert.equal(weatherSymbol(0),'weather-clear-symbolic');
 assert.ok(flatten(contextTree({id:'weather'})).some(n=>n.text==='Weather unavailable'));
 assert.ok(flatten(contextTree({id:'weather',weather:{...weather,stale:true,error:'sensitive transport error'}})).some(n=>n.text?.includes('Offline')));
 assert.ok(!JSON.stringify(contextTree({id:'weather',weather:{...weather,error:'sensitive transport error'}})).includes('sensitive transport error'));

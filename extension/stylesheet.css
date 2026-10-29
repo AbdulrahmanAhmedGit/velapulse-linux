@@ -211,3 +211,10 @@
 .vela-light .vela-context-button:focus { border-color:#6558d8; }
 
 .vela-hour-scroll:focus { outline:1px solid #b5a4f5; border-radius:12px; }
+
+/* Focus must remain legible on a light surface, including the compact pill. */
+.vela-light .vela-pill-main:focus,.vela-light .vela-pill-main:hover { background-color:rgba(100,85,145,.1); }
+.vela-light .vela-icon-button:focus,.vela-light .vela-text-button:focus { background-color:rgba(100,85,145,.12); color:#383847; border-color:#6558d8; }
+.vela-light .vela-agent-state StIcon { color:#23654e; }
+.vela-light .vela-state-waiting StIcon { color:#85521c; }
+.vela-light .vela-state-failed StIcon { color:#a13c46; }

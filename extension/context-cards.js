@@ -13,7 +13,7 @@ function zone(w){try{new Intl.DateTimeFormat('en',{timeZone:w.timezone});return 
 const elapsed=n=>{const s=Math.max(0,Math.floor(n||0));return s>=3600?`${Math.floor(s/3600)}h ${Math.floor(s/60)%60}m`:`${Math.floor(s/60)}m ${s%60}s`;};
 const stateNames={starting:'Starting',running:'Running',waiting:'Needs your attention',completed:'Completed',failed:'Failed',cancelled:'Cancelled',disconnected:'Disconnected'};
 const stateIcons={starting:'content-loading-symbolic',running:'system-run-symbolic',waiting:'dialog-warning-symbolic',completed:'emblem-ok-symbolic',failed:'dialog-error-symbolic',cancelled:'process-stop-symbolic',disconnected:'network-offline-symbolic'};
-function friendlyActivity(value){return String(value??'').replace(/^(starting|running|waiting|completed|failed|cancelled|disconnected) · /,'').replace(/SessionStart/g,'Session started').replace(/UserPromptSubmit/g,'Working on your request').replace(/PreToolUse/g,'Using tool').replace(/PostToolUseFailure/g,'Tool failed').replace(/PostToolUse/g,'Tool finished').replace(/StopFailure/g,'Agent stopped with an error').replace(/SessionEnd/g,'Session ended').replace(/PermissionRequest/g,'Permission requested').replace(/Notification/g,'Agent update').replace(/^Stop$/,'Response completed');}
+function friendlyActivity(value){return String(value??'').replace(/^(starting|running|waiting|completed|failed|cancelled|disconnected) · /,'').replace(/SessionStart/g,'Session started').replace(/UserPromptSubmit/g,'Working on your request').replace(/PreToolUse/g,'Using tool').replace(/PostToolUseFailure/g,'Tool failed').replace(/PostToolUse/g,'Tool finished').replace(/StopFailure/g,'Agent stopped with an error').replace(/SessionEnd/g,'Session ended').replace(/PermissionRequest/g,'Permission requested').replace(/Notification/g,'Agent update').replace(/^Stop$/,'Response completed').replace(/Codex exec structured events/g,'Session connected').replace(/Codex structured lifecycle event/g,'Agent status updated').replace(/^Exit status: 0$/,'Task finished successfully').replace(/^Exit status: (\d+)$/,'Task exited with code $1');}
 export function contextTree(a){
  if(a?.id==='weather'){
   const w=a.weather;
@@ -34,7 +34,7 @@ export function contextTree(a){
   ],'vela-context-card');
  }
  if(a?.developer){
-  const d=a.developer,state=d.state,waiting=state==='waiting',events=[...new Set(d.events??[])].filter(e=>e!==d.message&&e!==`${d.state} · ${d.message}`).slice(-3);
+  const d=a.developer,state=d.state,waiting=state==='waiting',events=[...new Set((d.events??[]).map(friendlyActivity))].filter(e=>e!==friendlyActivity(d.message)).slice(-3);
   return col('developer',[
    row('identity',[icon('agent-icon','utilities-terminal-symbolic',32),col('identity-copy',[...(a.title!==({'codex':'Codex','claude':'Claude Code','task':'Local command'}[d.provider])?[text('provider',({'codex':'Codex','claude':'Claude Code','task':'Local command'}[d.provider])||'Developer activity','vela-context-muted')]:[]),text('agent',a.title,'vela-context-heading',true),text('project',d.project||'Local session','vela-context-muted',true)])],'vela-agent-identity'),
    row('state',[icon('state-icon',stateIcons[state]||stateIcons.running,18),{...text('state-label',stateNames[state]||state,'vela-state-label'),expand:true},text('elapsed',elapsed(d.elapsed),'vela-agent-elapsed')],`vela-agent-state vela-state-${state}`),

@@ -48,7 +48,7 @@ export default class VelaPulse extends Extension {
         this._root.add_child(this._pill);
         this._card = new St.BoxLayout({vertical: true, style_class: 'vela-card'});
         this._card.connect('notify::allocation',()=>this._queuePosition());
-        this._cardScroll=new St.ScrollView({visible:false});this._cardScroll.set_policy(St.PolicyType.NEVER,St.PolicyType.AUTOMATIC);this._cardScroll.set_child(this._card);this._root.add_child(this._cardScroll);this._card.hide();
+        this._cardScroll=new St.ScrollView({visible:false,reactive:true});this._cardScroll.set_policy(St.PolicyType.NEVER,St.PolicyType.AUTOMATIC);this._cardScroll.set_child(this._card);this._root.add_child(this._cardScroll);this._card.hide();
         this._pill.connect('notify::allocation', () => this._queuePosition());
         this._pillMain.connect('clicked', () => this._expand(!this._expanded));
         this._root.connect('key-press-event', (_, event) => {
@@ -271,6 +271,7 @@ export default class VelaPulse extends Extension {
         if (this._detail) this._detail.text = p.subtitle;
         if (this._metricLabel && ['timer','stopwatch','battery','volume'].includes(p.type)) this._metricLabel.text = p.metric;
         this._contextCard?.update(a);
+        if(this._expanded&&!global.stage.get_key_focus())this._pillMain.grab_key_focus();
         this._setProgress(p);
         if(this._track)this._track.visible = a?.progress !== null && a?.progress !== undefined;
         this._musicTools?.update();for(const {button,action}of this._transportButtons??[]){const[icon,name]=actionInfo(action,a?.status);button.get_child().icon_name=icon;button.accessible_name=name;}
@@ -304,9 +305,10 @@ export default class VelaPulse extends Extension {
     _expand(open) {
         this._expanded = open; if (open) this._root.show();this._card.remove_all_transitions();
         if (open) {
-            this._cardScroll.show();this._card.show(); this._renderCard(); this._card.opacity = 0; this._card.translation_y = this._state.config.position === 'bottom' ? 10 : -10;
+            this._cardScroll.show();this._card.show(); this._renderCard();this._pillMain.grab_key_focus(); this._card.opacity = 0; this._card.translation_y = this._state.config.position === 'bottom' ? 10 : -10;
             this._card.ease({opacity: 255, translation_y: 0, duration: this._motion() ? 240 : 0, mode: Clutter.AnimationMode.EASE_OUT_CUBIC});
         } else {
+            const focus=global.stage.get_key_focus();if(focus&&(this._root.contains(focus)||this._pill.contains(focus)))global.stage.set_key_focus(null);
             this._launcherOpen = false;this._musicTools?.dispose();this._musicTools=null;this._cardKey=null;
             this._card.ease({opacity: 0, duration: this._motion() ? 150 : 0, onComplete: () => {if (!this._expanded && this._alive) {this._card.hide();this._cardScroll.hide();this._queuePosition();}}});
         }
