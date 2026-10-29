@@ -23,4 +23,3 @@ test weather::transport_tests::offline_fallback_marks_cache_stale ... ok
 test weather::transport_tests::bounded_http_success_failure_and_invalid_json ... ok
 
 test result: ok. 18 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
-
