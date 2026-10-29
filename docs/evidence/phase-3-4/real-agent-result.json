@@ -1,0 +1,12 @@
+[
+  {
+    "provider": "claude",
+    "state": "disconnected",
+    "event_count": 3
+  },
+  {
+    "provider": "codex",
+    "state": "completed",
+    "event_count": 5
+  }
+]

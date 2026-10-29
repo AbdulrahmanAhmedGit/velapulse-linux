@@ -1,0 +1,16 @@
+{
+  "disabled_idle": {
+    "cpu_percent": 0.0,
+    "rss_kib": 18072.0,
+    "snapshot_median_ms": 0.96,
+    "snapshot_max_ms": 1.51,
+    "sample_seconds": 2
+  },
+  "two_running_tasks": {
+    "cpu_percent": 0.0,
+    "rss_kib": 18412.0,
+    "snapshot_median_ms": 1.17,
+    "snapshot_max_ms": 1.67,
+    "sample_seconds": 2
+  }
+}
