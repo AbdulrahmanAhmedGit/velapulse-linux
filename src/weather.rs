@@ -111,6 +111,12 @@ pub struct View {
     pub units: String,
     pub attribution: String,
 }
+pub fn today(days: &[Day], now: u64) -> Option<&Day> {
+    days.iter()
+        .rev()
+        .find(|d| d.at <= now)
+        .filter(|d| now.saturating_sub(d.at) < 90000)
+}
 pub fn condition(c: u16) -> &'static str {
     match c {
         0 => "Clear",
@@ -648,5 +654,32 @@ mod transport_tests {
         assert!(!s.accept(Err(anyhow::anyhow!("offline")), &Settings::default()));
         assert!(s.view.as_ref().unwrap().stale);
         assert_eq!(s.view.as_ref().unwrap().temperature, 10.);
+    }
+}
+
+#[cfg(test)]
+mod daily_boundary_tests {
+    use super::*;
+    #[test]
+    fn cached_today_uses_correct_local_day() {
+        let days = vec![
+            Day {
+                at: 1000,
+                low: 1.,
+                high: 10.,
+                rain: 0.,
+                code: 0,
+            },
+            Day {
+                at: 87400,
+                low: 2.,
+                high: 11.,
+                rain: 0.,
+                code: 0,
+            },
+        ];
+        assert_eq!(today(&days, 90000).unwrap().low, 2.);
+        assert!(today(&days, 200000).is_none());
+        assert!(today(&days, 999).is_none());
     }
 }

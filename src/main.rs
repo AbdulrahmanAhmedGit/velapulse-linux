@@ -85,12 +85,13 @@ impl Service {
             if cfg.weather.enabled
                 && let Some(w) = forecast.as_ref()
             {
-                if let Some(day) = w.days.first() {
+                if let Some(day) = weather::today(&w.days, history::now()) {
                     a.summary.push(format!(
-                        "Today: {:.0}° – {:.0}° · rain {:.0}%",
+                        "Today: {:.0}° – {:.0}° · rain {:.0}%{}",
                         weather::temp(day.low, &cfg.weather.units),
                         weather::temp(day.high, &cfg.weather.units),
-                        day.rain
+                        day.rain,
+                        if w.stale { " · Cached forecast" } else { "" }
                     ));
                 }
                 a.summary.extend(w.notices.iter().cloned());
