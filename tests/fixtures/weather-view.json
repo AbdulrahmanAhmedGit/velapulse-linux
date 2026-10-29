@@ -1,0 +1,130 @@
+{
+  "attribution": "Weather data: Open-Meteo \u00b7 CC BY 4.0 \u00b7 temperatures converted when requested",
+  "code": 3,
+  "days": [
+    {
+      "at": 1793228400,
+      "code": 53,
+      "high": 11.6,
+      "low": 4.1,
+      "rain": 8.0
+    },
+    {
+      "at": 1793314800,
+      "code": 61,
+      "high": 10.5,
+      "low": 6.6,
+      "rain": 0.0
+    },
+    {
+      "at": 1793401200,
+      "code": 3,
+      "high": 11.8,
+      "low": 6.2,
+      "rain": 0.0
+    },
+    {
+      "at": 1793487600,
+      "code": 3,
+      "high": 9.7,
+      "low": 5.0,
+      "rain": 7.0
+    },
+    {
+      "at": 1793574000,
+      "code": 61,
+      "high": 7.3,
+      "low": 5.4,
+      "rain": 23.0
+    }
+  ],
+  "error": "",
+  "feels_like": 9.2,
+  "hours": [
+    {
+      "at": 1793300400,
+      "code": 3,
+      "rain": 0.0,
+      "temperature": 9.9
+    },
+    {
+      "at": 1793304000,
+      "code": 3,
+      "rain": 0.0,
+      "temperature": 10.0
+    },
+    {
+      "at": 1793307600,
+      "code": 2,
+      "rain": 0.0,
+      "temperature": 9.9
+    },
+    {
+      "at": 1793311200,
+      "code": 3,
+      "rain": 0.0,
+      "temperature": 9.4
+    },
+    {
+      "at": 1793314800,
+      "code": 3,
+      "rain": 0.0,
+      "temperature": 8.7
+    },
+    {
+      "at": 1793318400,
+      "code": 3,
+      "rain": 0.0,
+      "temperature": 8.4
+    },
+    {
+      "at": 1793322000,
+      "code": 3,
+      "rain": 0.0,
+      "temperature": 8.0
+    },
+    {
+      "at": 1793325600,
+      "code": 45,
+      "rain": 0.0,
+      "temperature": 7.9
+    },
+    {
+      "at": 1793329200,
+      "code": 51,
+      "rain": 0.0,
+      "temperature": 7.6
+    },
+    {
+      "at": 1793332800,
+      "code": 51,
+      "rain": 0.0,
+      "temperature": 7.3
+    },
+    {
+      "at": 1793336400,
+      "code": 51,
+      "rain": 0.0,
+      "temperature": 7.0
+    },
+    {
+      "at": 1793340000,
+      "code": 45,
+      "rain": 0.0,
+      "temperature": 6.9
+    }
+  ],
+  "humidity": 94.0,
+  "location": {
+    "latitude": 52.52437,
+    "longitude": 13.41053,
+    "name": "Berlin \u00b7 UI fixture"
+  },
+  "notices": [],
+  "stale": false,
+  "temperature": 10.0,
+  "timezone": "Europe/Berlin",
+  "units": "celsius",
+  "updated": 1793303100,
+  "wind": 4.1
+}

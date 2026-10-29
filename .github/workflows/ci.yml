@@ -14,6 +14,10 @@ jobs:
       - run: cargo test --locked
       - run: cargo build --locked --examples --bins
       - run: ./scripts/test-preferences-input.sh
+      - run: ./scripts/test-context-ui.sh
+        env:
+          VELAPULSE_TEST_GRIM: grim
+      - run: node tests/context-cards.mjs
       - run: ./scripts/test-phase34.sh
       - run: ./scripts/test-music.sh
       - run: ./scripts/test-music-input.sh
@@ -29,6 +33,7 @@ jobs:
             target/music-input
             target/phase-1-2
             target/phase-3-4
+            target/context-ui
       - run: ./scripts/integration.sh
       - run: ./scripts/test-providers.sh
       - run: ./scripts/test-activation.sh

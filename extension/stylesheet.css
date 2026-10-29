@@ -151,3 +151,63 @@
 
 .vela-context-action { width:36px; height:36px; border-radius:18px; background-color:rgba(200,215,245,.16); }
 .vela-context-action StIcon { icon-size:18px; }
+
+/* Structured context cards: typography and surfaces follow the Orbit palette. */
+.vela-context-card { color:#f4f2f8; }
+.vela-weather-hero { padding:0 0 4px; }
+.vela-weather-location { font-size:17px; font-weight:600; }
+.vela-weather-temperature { font-size:48px; font-weight:500; letter-spacing:-2px; }
+.vela-context-heading { font-size:24px; font-weight:700; }
+.vela-context-muted { color:#b3b5c7; font-size:12px; }
+.vela-context-body { font-size:13px; color:#e2e4ee; }
+.vela-context-section { font-size:12px; font-weight:700; color:#d5daeb; }
+.vela-context-footnote { font-size:10px; color:#a7adbf; }
+.vela-condition-grid { border-radius:16px; background-color:rgba(161,179,212,.08); padding:12px; }
+.vela-condition-value { font-size:16px; font-weight:600; }
+.vela-hour-tile { min-width:54px; padding:10px 6px; border-radius:13px; background-color:rgba(161,179,212,.08); }
+.vela-hour-time { font-size:11px; color:#b3b5c7; }
+.vela-hour-temperature { font-size:16px; font-weight:600; }
+.vela-hour-rain { font-size:10px; color:#88cafa; }
+.vela-day-row { padding:2px 0; }
+.vela-day-name { min-width:42px; font-size:12px; font-weight:600; }
+.vela-day-rain { min-width:28px; font-size:10px; color:#88cafa; }
+.vela-day-low { min-width:28px; font-size:12px; color:#b3b5c7; }
+.vela-day-high { min-width:28px; font-size:12px; font-weight:600; }
+.vela-context-footer { padding-top:9px; border-top:1px solid rgba(174,187,216,.14); }
+.vela-forecast-notice,.vela-agent-attention { padding:12px; border-radius:14px; background-color:rgba(240,189,126,.11); border:1px solid rgba(240,189,126,.2); }
+.vela-notice-title { font-size:12px; font-weight:600; color:#f0ce9b; }
+.vela-agent-identity { padding:6px 0; }
+.vela-agent-state { border-radius:12px; padding:12px; background-color:rgba(137,221,188,.09); color:#89ddbc; }
+.vela-state-waiting { background-color:rgba(240,189,126,.12); color:#f0ce9b; }
+.vela-state-failed { background-color:rgba(238,128,139,.12); color:#f09da5; }
+.vela-state-disconnected,.vela-state-cancelled { color:#b3b5c7; background-color:rgba(170,175,195,.09); }
+.vela-state-label { font-size:13px; font-weight:600; }
+.vela-agent-elapsed { font-size:12px; }
+.vela-agent-status,.vela-agent-history { padding:8px 0; }
+.vela-agent-event { padding:3px 0; }
+.vela-brief-item { padding:12px; border-radius:13px; background-color:rgba(161,179,212,.08); }
+.vela-context-empty { padding:20px 0; }
+.vela-context-button { padding:9px 14px; min-height:18px; border-radius:12px; background-color:rgba(161,179,212,.12); color:#e2e8f7; font-size:12px; font-weight:600; }
+.vela-context-button:hover { background-color:rgba(161,179,212,.22); }
+.vela-context-button:focus { border:1px solid #b5a4f5; }
+.vela-light .vela-context-card { color:#252431; }
+.vela-light .vela-context-body,.vela-light .vela-context-section { color:#383847; }
+.vela-light .vela-context-muted,.vela-light .vela-context-footnote,.vela-light .vela-hour-time,.vela-light .vela-day-low { color:#626779; }
+.vela-light .vela-hour-rain,.vela-light .vela-day-rain { color:#28618c; }
+.vela-light .vela-context-button { color:#383847; background-color:rgba(70,86,130,.1); }
+.vela-light .vela-agent-state { color:#23654e; }
+.vela-light .vela-state-waiting,.vela-light .vela-notice-title { color:#85521c; }
+.vela-light .vela-state-failed { color:#a13c46; }
+.vela-light .vela-state-disconnected,.vela-light .vela-state-cancelled { color:#626779; }
+
+.vela-context-card { spacing:14px; }
+.vela-weather-hero,.vela-condition-grid,.vela-day-row,.vela-agent-identity,.vela-agent-state,.vela-agent-event,.vela-brief-item,.vela-forecast-notice { spacing:10px; }
+.vela-context-card StBoxLayout { spacing:6px; }
+.vela-hour-strip { spacing:6px; }
+.vela-hour-scroll { height:126px; }
+.vela-context-footer { spacing:4px; }
+
+.vela-brief-heading { font-size:14px; font-weight:600; }
+.vela-light .vela-context-button:focus { border-color:#6558d8; }
+
+.vela-hour-scroll:focus { outline:1px solid #b5a4f5; border-radius:12px; }

@@ -1,5 +1,5 @@
 #!/usr/bin/gjs -m
-import {activityLines} from '../extension/context-state.js';
+import {createGtkContextCard} from '../extension/context-gtk.js';
 import {createMusicControls} from '../extension/music-controls.js';
 import {activePlayer,pillWidth} from '../extension/music-state.js';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -100,8 +100,9 @@ function renderCard() {
         cardKey=key;refs.music?.dispose();refs.art?.release();clear(card);refs={};
         const header=box(false,'vela-card-header',6),tag=box(false,'vela-tag',7);
         tag.hexpand=true;tag.valign=Gtk.Align.CENTER;tag.append(new Gtk.Image({icon_name:p.icon,pixel_size:13}));tag.append(label(p.label,'vela-caption'));
-        header.append(tag);header.append(iconButton('emblem-system-symbolic','Preferences',preferences,'vela-quiet'));header.append(iconButton('window-close-symbolic','Collapse activity',()=>setExpanded(false),'vela-quiet'));if(p.type!=='media')card.append(header);
-        if(p.type==='media') {
+        header.append(tag);header.append(iconButton('emblem-system-symbolic','Preferences',preferences,'vela-quiet'));header.append(iconButton('window-close-symbolic','Collapse activity',()=>setExpanded(false),'vela-quiet'));if(['weather','brief'].includes(p.type))header.insert_child_after(iconButton('view-refresh-symbolic','Refresh',()=>command(a.id,'refresh'),'vela-quiet'),tag);if(p.type!=='media')card.append(header);
+        if(['weather','developer','brief'].includes(p.type)){refs.context=createGtkContextCard(a,action=>command(a.id,action));card.append(refs.context.widget);}
+        else if(p.type==='media') {
             const hero=new Gtk.Overlay({css_classes:['vela-artwork'],overflow:Gtk.Overflow.HIDDEN,height_request:220});
             refs.art=new CoverArtwork();hero.set_child(refs.art);
             const caption=box(true,'vela-cover-caption',5);caption.valign=Gtk.Align.END;
@@ -118,31 +119,31 @@ function renderCard() {
             const panel=box(true,'vela-summary-panel',15);if(!['weather','developer','brief'].includes(p.type))panel.append(new Gtk.Image({icon_name:p.icon,pixel_size:34,halign:Gtk.Align.START}));
             refs.title=label(p.title,'vela-title');panel.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');panel.append(refs.detail);card.append(panel);buildProgress();
         }
-        if(['weather','developer','brief'].includes(p.type)){refs.context=new Gtk.Label({wrap:true,xalign:0,selectable:true,css_classes:['vela-context-lines']});card.append(refs.context);}
-        if(a?.controls.length&&p.type!=='media') {
+
+        if(a?.controls.length&&!['media','weather','developer','brief'].includes(p.type)) {
             const controls=box(false,'vela-transport',17);controls.halign=Gtk.Align.CENTER;
             const ordered=['timer','stopwatch'].includes(p.type) ? [...a.controls].reverse() : a.controls;
             refs.transport=[];for(const action of ordered) {const [icon,name]=actionInfo(action,a.status);const b=iconButton(icon,name,()=>command(a.id,action),['PlayPause','pause','resume'].includes(action)?'vela-primary':'vela-secondary');controls.append(b);refs.transport.push({button:b,action});}card.append(controls);
         }
-        card.append(textButton('Now Brief',()=>{selected='brief';command('brief','open');}));
-        if(state.activities.length>1) {
+        if(p.type!=='brief')card.append(textButton('Now Brief',()=>{selected='brief';command('brief','open');}));
+        if(state.activities.length>1&&!['weather','developer'].includes(p.type)) {
             const rail=box(false,'vela-activity-rail',6);rail.halign=Gtk.Align.CENTER;
             for(const activity of state.activities.slice(0,5))rail.append(iconButton(present(activity).icon,`Show ${activity.title}`,()=>{selected=activity.id;launcherOpen=false;if(activity.music)request('SelectPlayer','(s)',[activity.id]).then(()=>render(JSON.stringify(state))).catch(()=>{});else render(JSON.stringify(state));},activity.id===a?.id?'vela-rail-selected':'vela-rail-item'));
             card.append(rail);
         }
-        if(!a || launcherOpen) {
+        if(!['weather','developer','brief'].includes(p.type)&&(!a || launcherOpen)) {
             const launcher=box(true,'vela-launcher',10);launcher.append(label('Start something','vela-caption'));
             const presets=box(false,'vela-presets',8);
             for(const minutes of [5,15,25])presets.append(textButton(`${minutes} min`,()=>command('timer','start',minutes*60),'vela-preset'));
             launcher.append(presets);launcher.append(textButton('Start a stopwatch',()=>command('stopwatch','start'),'vela-stopwatch-launch'));card.append(launcher);
-        } else card.append(textButton('+  New activity',()=>{launcherOpen=!launcherOpen;renderCard();},'vela-new-activity'));
+        } else if(!['weather','developer','brief'].includes(p.type))card.append(textButton('+  New activity',()=>{launcherOpen=!launcherOpen;renderCard();},'vela-new-activity'));
     }
     for(const {button,action}of refs.transport??[]){const[icon,name]=actionInfo(action,a?.status);button.icon_name=icon;button.tooltip_text=name;button.update_property([Gtk.AccessibleProperty.LABEL],[name]);}
     // A removed action must not leave the active window without a keyboard target.
     if(expanded&&window.is_active&&!window.get_focus())pill.get_first_child().grab_focus();
-    refs.title.label=p.type==='timer' ? (p.state==='completed'?'A moment well spent':'Time to focus') : p.title;
-    if(refs.context)refs.context.label=activityLines(a).join('\n');
-    refs.detail.label=p.subtitle;if(refs.metric)refs.metric.label=p.metric;
+    if(refs.title)refs.title.label=p.type==='timer' ? (p.state==='completed'?'A moment well spent':'Time to focus') : p.title;
+    refs.context?.update(a);
+    if(refs.detail)refs.detail.label=p.subtitle;if(refs.metric)refs.metric.label=p.metric;
     if(refs.progress){if(refs.wave)refs.progress.queue_draw();else refs.progress.fraction=p.progress;refs.progress.visible=a?.progress!==null && a?.progress!==undefined;}refs.music?.update();
     if(refs.art) {
         const uri=a?.icon?.startsWith('file://')&&Gio.File.new_for_uri(a.icon).query_exists(null) ? a.icon : here.get_parent().get_child('extension/assets/orbit.svg').get_uri();
