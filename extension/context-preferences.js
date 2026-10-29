@@ -22,6 +22,27 @@ export function addContextPreferences(weatherPage,developerPage,window,{request,
  for(const [key,title,program]of [['codex','Codex CLI','codex'],['claude','Claude Code','claude'],['tasks','Local tasks',null],['codex_notifications','Codex notifications',null],['claude_notifications','Claude notifications',null],['task_notifications','Task notifications',null]]){const row=new Adw.SwitchRow({title,subtitle:program?(GLib.find_program_in_path(program)?`${program} detected · integration still requires setup`:`${program} not found`):''});dev.add(row);toggles.push([key,row]);row.connect('notify::active',()=>{if(!syncing)save({developer:{[key]:row.active}});});}
  developerPage.append(new Gtk.Label({label:'Codex: launch with velapulse codex "Task label" [codex exec options]. Interactive desktop/CLI sessions are not monitored.\nLocal commands: velapulse run "Build" -- cargo build\nClaude: install observer hooks into a settings file you choose. Approvals remain in Claude Code.',wrap:true,xalign:0,selectable:true}));
  const hookStatus=new Gtk.Label({wrap:true,xalign:0});developerPage.append(hookStatus);
- for(const remove of [false,true]){const b=new Gtk.Button({label:remove?'Remove VelaPulse Claude hooks…':'Install Claude observer hooks…'});developerPage.append(b);b.connect('clicked',()=>{const picker=new Gtk.FileChooserNative({title:'Choose Claude settings JSON',transient_for:window,modal:true,action:Gtk.FileChooserAction.OPEN,accept_label:'Review'});picker.connect('response',(_,response)=>{const path=picker.get_file()?.get_path();picker.destroy();if(response!==Gtk.ResponseType.ACCEPT||!path)return;const dialog=new Adw.MessageDialog({transient_for:window,modal:true,heading:remove?'Remove VelaPulse hooks?':'Install observer hooks?',body:`${path}\n\nExisting settings and other hooks are preserved and backed up. This only observes agent states; it never approves or rejects requests.`});dialog.add_response('cancel','Cancel');dialog.add_response('apply',remove?'Remove':'Install');dialog.connect('response',(_,reply)=>{if(reply!=='apply')return;try{const here=Gio.File.new_for_uri(import.meta.url).get_parent();let directory=here.get_child('integrations');if(!directory.query_exists(null))directory=here.get_parent().get_child('integrations');const setup=directory.get_child('claude-setup.py').get_path();const argv=['/usr/bin/python3',setup,'--settings',path,'--apply',...(remove?['--remove']:[])];const process=Gio.Subprocess.new(argv,Gio.SubprocessFlags.STDOUT_PIPE|Gio.SubprocessFlags.STDERR_PIPE);process.communicate_utf8_async(null,null,(p,r)=>{try{const[,out,err]=p.communicate_utf8_finish(r);hookStatus.label=p.get_successful()?out:err;}catch(e){hookStatus.label=e.message;}});}catch(e){hookStatus.label=e.message;}});dialog.present();});picker.show();});}
+ const hookGroup=new Adw.PreferencesGroup({title:'Claude settings file',description:'Enter the absolute path to an existing Claude JSON settings file. Review and confirm each change.'});developerPage.append(hookGroup);
+ let hookBusy=false;const hookPath=new Adw.EntryRow({title:'Settings JSON path'});hookGroup.add(hookPath);
+ for(const remove of [false,true]){
+  const button=new Gtk.Button({label:remove?'Remove VelaPulse Claude hooks…':'Install Claude observer hooks…'});developerPage.append(button);
+  button.connect('clicked',()=>{
+   if(hookBusy)return;const path=hookPath.text.trim();
+   if(!GLib.path_is_absolute(path)||!GLib.file_test(path,GLib.FileTest.IS_REGULAR)){hookStatus.label='Enter the absolute path to an existing JSON settings file.';hookPath.grab_focus();return;}
+   const dialog=new Adw.MessageDialog({transient_for:window,modal:true,heading:remove?'Remove VelaPulse hooks?':'Install observer hooks?',body:`${path}\n\nExisting settings and other hooks are preserved and backed up. This only observes agent states; it never approves or rejects requests.`});
+   dialog.add_response('cancel','Cancel');dialog.add_response('apply',remove?'Remove':'Install');
+   dialog.connect('response',(_,reply)=>{
+    dialog.destroy();if(reply!=='apply')return;
+    try{
+     const here=Gio.File.new_for_uri(import.meta.url).get_parent();let directory=here.get_child('integrations');if(!directory.query_exists(null))directory=here.get_parent().get_child('integrations');
+     const setup=directory.get_child('claude-setup.py').get_path();
+     const argv=['/usr/bin/python3',setup,'--settings',path,'--apply',...(remove?['--remove']:[])];
+     hookBusy=true;button.sensitive=false;const process=Gio.Subprocess.new(argv,Gio.SubprocessFlags.STDOUT_PIPE|Gio.SubprocessFlags.STDERR_PIPE);
+     process.communicate_utf8_async(null,null,(p,r)=>{try{const[,out,err]=p.communicate_utf8_finish(r);hookStatus.label=p.get_successful()?out:err;}catch(e){hookStatus.label=e.message;}finally{hookBusy=false;button.sensitive=true;}});
+    }catch(e){hookBusy=false;button.sensitive=true;hookStatus.label=e.message;}
+   });dialog.present();
+  });
+ }
+
  return {update(){syncing=true;const c=getConfig(),w=c.weather??{};enabled.active=w.enabled===true;current.subtitle=w.location?.name??'No location selected';units.selected=w.units==='fahrenheit'?1:0;refresh.value=w.refresh_minutes??30;rain.active=w.rain_notices!==false;change.active=w.change_notices===true;clock.active=c.idle_clock===true;format.active=c.clock_24h!==false;temperature.active=c.clock_temperature!==false;for(const[key,row]of toggles)row.active=(c.developer??{})[key]===true;syncing=false;}};
 }

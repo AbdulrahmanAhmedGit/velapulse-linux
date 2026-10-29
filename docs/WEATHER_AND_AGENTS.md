@@ -40,7 +40,7 @@ Existing interactive Codex CLI or Codex desktop sessions are not monitored. The 
 
 ## Claude Code observer hooks
 
-Enable **Developer integrations → Claude Code**. Preferences can install/remove observer hooks into an existing JSON settings file you choose, after an explicit confirmation. It backs up changed settings, preserves unrelated options/hooks and records the managed file locally for clean removal. Dependencies and setup instructions appear in the page. It never silently edits the user's or a project's Claude settings.
+Enable **Developer integrations → Claude Code**. Preferences can install/remove observer hooks into an existing JSON settings file whose absolute path you enter, after an explicit confirmation. It backs up changed settings, preserves unrelated options/hooks and records the managed file locally for clean removal. Dependencies and setup instructions appear in the page. It never silently edits the user's or a project's Claude settings.
 
 Equivalent command-line setup from this source checkout (review the printed merge first):
 

@@ -26,7 +26,7 @@ function nav(title){return walk(window).find(w=>w instanceof Gtk.ToggleButton&&w
 function bounds(w){const[ok,r]=w.compute_bounds(window);assert(ok&&w.get_mapped()&&r.size.width>0&&r.size.height>0,`Unmapped control ${w.title??w.name} visible=${w.visible} mapped=${w.get_mapped()}`);return {x:r.origin.x,y:r.origin.y,w:r.size.width,h:r.size.height};}
 async function offset(){const tree=JSON.parse(await process([GLib.getenv('VELAPULSE_TEST_SWAYMSG'),'-r','-t','get_tree']));function findNode(n){if(n.name==='VelaPulse Preferences Input Test')return n;for(const c of [...(n.nodes??[]),...(n.floating_nodes??[])]){const f=findNode(c);if(f)return f;}return null;}const n=findNode(tree);assert(n,'No mapped test window');return{x:n.rect.x+n.window_rect.x,y:n.rect.y+n.window_rect.y};}
 async function click(w,fx=.5,fy=.5){const b=bounds(w),o=await offset();await input('click',Math.round(o.x+b.x+b.w*fx),Math.round(o.y+b.y+b.h*fy),1600,1000);await sleep(180);}
-async function type(w,text){await click(w);await key('CTRL+A');if(text)await input('type',text);else await key('BACKSPACE');await sleep(300);}
+async function type(w,text){w.grab_focus();await sleep(180);await click(w);await key('CTRL+A');if(text)await input('type',text);else await key('BACKSPACE');await sleep(300);}
 async function dropdown(w,index){await click(w);await key('HOME');for(let i=0;i<index;i++)await key('DOWN');await key('ENTER');await until(()=>w.selected===index,`Dropdown ${w.title} ignored input`);}
 async function page(title,id){await click(nav(title));await until(()=>walk(window).find(w=>w instanceof Gtk.Stack).visible_child_name===id,`Sidebar ${title} did not navigate`);}
 async function toggle(row,field){const read=()=>field.split('.').reduce((o,k)=>o[k],config());const old=read();const sw=walk(row).find(w=>w instanceof Gtk.Switch);const b=bounds(sw);if(b.y<50||b.y+b.h>window.get_height()){sw.grab_focus();await sleep(200);await key('SPACE');}else await click(sw);await until(()=>read()!==old,`${field} switch did not persist`);await sleep(450);}
@@ -51,7 +51,19 @@ async function run(){
  await toggle(find(Adw.SwitchRow,'Enable weather'),'weather.enabled');await until(()=>config().weather.enabled,'weather enable');await toggle(find(Adw.SwitchRow,'Enable weather'),'weather.enabled');await until(()=>!config().weather.enabled,'weather disable');
  await dropdown(find(Adw.ComboRow,'Temperature units'),1);await until(()=>config().weather.units==='fahrenheit','weather units');await dropdown(find(Adw.ComboRow,'Temperature units'),0);
  for(const [title,key] of [['Rain forecast notices','weather.rain_notices'],['Large temperature change notices','weather.change_notices'],['Idle clock','idle_clock'],['24-hour clock','clock_24h'],['Temperature beside idle clock','clock_temperature']]){await toggle(find(Adw.SwitchRow,title),key);await toggle(find(Adw.SwitchRow,title),key);}
+ const interval=walk(find(Adw.SpinRow,'Refresh interval (minutes)')).find(w=>w instanceof Gtk.Text&&w.get_mapped());interval.grab_focus();await sleep(200);await type(interval,'45');await key('ENTER');await until(()=>config().weather.refresh_minutes===45,'weather refresh interval');await type(interval,'30');await key('ENTER');await until(()=>config().weather.refresh_minutes===30,'weather interval restored');
+ const refreshWeather=walk(window).find(w=>w instanceof Gtk.Button&&w.label==='Refresh weather now');refreshWeather.grab_focus();await key('SPACE');await until(()=>walk(window).some(w=>w instanceof Gtk.Label&&w.label.includes('Refresh requested')),'weather refresh response');
  await page('Developer integrations','developer');for(const [title,key] of [['Codex CLI','codex'],['Claude Code','claude'],['Local tasks','tasks'],['Codex notifications','codex_notifications'],['Claude notifications','claude_notifications'],['Task notifications','task_notifications']]){await toggle(find(Adw.SwitchRow,title),'developer.'+key);await toggle(find(Adw.SwitchRow,title),'developer.'+key);}
+ const hookPath=GLib.getenv('VELAPULSE_TEST_HOOK_SETTINGS');
+ const readHooks=()=>JSON.parse(new TextDecoder().decode(GLib.file_get_contents(hookPath)[1]));const originalHooks=JSON.stringify(readHooks());
+ await type(find(Adw.EntryRow,'Settings JSON path'),hookPath);
+ for(const remove of [false,true]){
+  const label=remove?'Remove VelaPulse Claude hooks…':'Install Claude observer hooks…';const button=walk(window).find(w=>w instanceof Gtk.Button&&w.label===label);button.grab_focus();await sleep(120);await key('SPACE');
+  let dialog;await until(()=>{dialog=Gtk.Window.list_toplevels().find(w=>w instanceof Adw.MessageDialog&&w.visible);return dialog?.get_mapped();},'Hook setup confirmation');
+  const action=remove?'Remove':'Install';const focused=()=>{for(let w=dialog.get_focus();w;w=w.get_parent())if(w instanceof Gtk.Button&&w.label===action)return true;return false;};for(let i=0;i<8&&!focused();i++)await key('TAB');assert(focused(),'Hook confirmation focus');await key('SPACE');await until(()=>!dialog.visible,'Hook confirmation close');
+  await until(()=>remove?JSON.stringify(readHooks())===originalHooks:readHooks().hooks.SessionStart?.length>0,'Hook setup result');
+ }
+ print('PASS actual input: Claude settings path, explicit confirmation, installation and removal preserve private fixture settings');
  await page('Appearance','appearance');print('PASS actual input: weather and developer settings, units, notices, idle clock and opt-in switches');
  print('PASS pointer: all eight sidebar destinations');
  for(const size of ['large','medium','small']){await click(walk(window).find(w=>w.name===`size-${size}`));await until(()=>config().size===size,`pill ${size}`);}
@@ -59,7 +71,7 @@ async function run(){
  for(const id of ['media','timer','stopwatch','battery','volume']){
   // Stopwatch's empty preview is intentionally hidden until a search matches it.
   const search=walk(window).find(w=>w instanceof Gtk.SearchEntry);await type(search,id);
-  const check=walk(window).find(w=>w.name===`enabled-${id}`);const old=config().enabled.includes(id);await click(check);await until(()=>config().enabled.includes(id)!==old,`preview toggle ${id}`);await click(check);await until(()=>config().enabled.includes(id)===old,`preview restore ${id}`);
+  const check=walk(window).find(w=>w.name===`enabled-${id}`);await until(()=>check.get_mapped(),`Search did not reveal ${id}`);const old=config().enabled.includes(id);await click(check);await until(()=>config().enabled.includes(id)!==old,`preview toggle ${id}`);await click(check);await until(()=>config().enabled.includes(id)===old,`preview restore ${id}`);
  }
  const search=walk(window).find(w=>w instanceof Gtk.SearchEntry);await type(search,'media');assert(!walk(window).find(w=>w.name==='preview-timer').visible,'Search did not filter');await type(search,'');
  print('PASS pointer+keyboard: provider checkboxes, five size selectors, search input/filter/clear');

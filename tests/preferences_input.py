@@ -24,6 +24,7 @@ with tempfile.TemporaryDirectory(prefix='vela-prefs-input-')as directory:
  (apps/'velapulse-input-browser.desktop').write_text('[Desktop Entry]\nType=Application\nName=Private input test browser\nExec=/usr/bin/python3 '+str(recorder)+' %u\nMimeType=x-scheme-handler/https;\n')
  (base/'config').mkdir()
  (base/'config/mimeapps.list').write_text('[Default Applications]\nx-scheme-handler/https=velapulse-input-browser.desktop\n')
+ hook_settings=base/'claude-fixture.json';hook_settings.write_text(json.dumps({'theme':'keep-me','hooks':{'Stop':[{'hooks':[{'type':'command','command':'existing-hook'}]}]}}));env['VELAPULSE_TEST_HOOK_SETTINGS']=str(hook_settings)
  env['VELAPULSE_TEST_LINK_LOG']=str(link_log)
  env['VELAPULSE_TEST_REPO']=str(repo)
  env['VELAPULSE_TEST_MUSIC_IMAGE']=str(artifacts/'music-card.png')
