@@ -1,3 +1,5 @@
+import {mergeSettings} from './context-state.js';
+import {addContextPreferences} from './context-preferences.js';
 import {addMusicPreferences} from './music-preferences.js';
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
@@ -87,12 +89,14 @@ export function fillPreferences(window) {
         }
         providerPages.set(id,{description,visible,priority});
     }
-    const request=(method,signature,args)=>new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});
+    const request=(method,signature,args)=>new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,method==='WeatherSearch'?15000:6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});
     const musicSettings=addMusicPreferences(stack.get_child_by_name('media'),window,{request,save,getConfig:()=>config,getActivities:()=>activities});
     const about=page('about');about.append(text('VelaPulse','page-title'));about.append(text('Live activities for your Linux desktop.','muted'));about.append(text('Independent implementation · MIT licensed','muted'));about.append(button('Project and source',()=>Gio.AppInfo.launch_default_for_uri_async('https://github.com/AbdulrahmanAhmedGit/velapulse-linux',null,null,()=>{})));
+    const weatherPage=page('weather'),developerPage=page('developer');const contextSettings=addContextPreferences(weatherPage,developerPage,window,{request,save,getConfig:()=>config});
     nav('Appearance','preferences-desktop-appearance-symbolic','appearance','Settings').active=true;
     nav('General','emblem-system-symbolic','general');
     for(const [id,title,icon] of PROVIDERS)nav(title,icon,id,id==='media'?'Activities':null);
+    nav('Weather & clock','weather-few-clouds-symbolic','weather');nav('Developer integrations','utilities-terminal-symbolic','developer');
     const spacer=box();spacer.vexpand=true;sidebar.append(spacer);nav('About','help-about-symbolic','about');
     inspector.append(text('Appearance','inspector-title'));
     const inspectorGroup=new Adw.PreferencesGroup();inspector.append(inspectorGroup);
@@ -115,17 +119,17 @@ export function fillPreferences(window) {
     search.connect('search-changed',applySearch);
     function command(id,action,seconds) {proxy?.call('Command',new GLib.Variant('(sst)',[id,action,seconds]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{p.call_finish(r);}catch{status.label='This action is unavailable.';}});}
     let saving=false,queued={},inFlight={},draft={};
-    function save(patch) {queued={...queued,...patch};flush();}
+    function save(patch) {queued=mergeSettings(queued,patch);flush();}
     function flush() {
         if(closed||saving||!Object.keys(queued).length)return;
         if(!proxy?.g_name_owner){status.label='Start VelaPulse to change settings.';return;}
-        const patch=queued;queued={};inFlight=patch;config={...config,...patch};saving=true;
+        const patch=queued;queued={};inFlight=patch;config=mergeSettings(config,patch);saving=true;
         proxy.call('Configure',new GLib.Variant('(s)',[JSON.stringify(config)]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{saving=false;inFlight={};if(closed)return;try{p.call_finish(r);status.label='Changes apply immediately';}catch{status.label='Settings could not be saved.';refresh();}flush();});
     }
     function update(json) {
         if(closed)return;let s;try{s=JSON.parse(json);}catch{return;}
         if(lastConfigKey===null)status.label='Changes apply immediately';
-        config={...s.config,...inFlight,...queued,...draft};activities=s.activities;syncing=true;
+        config=mergeSettings(s.config,inFlight,queued,draft);activities=s.activities;syncing=true;
         const configKey=JSON.stringify(config);
         if(configKey!==lastConfigKey) {
             lastConfigKey=configKey;
@@ -157,7 +161,7 @@ export function fillPreferences(window) {
             const description=a?`${a.title} · ${a.description}`:'No activity right now.';
             const refs=providerPages.get(id);if(refs.description.label!==description)refs.description.label=description;
         }
-        musicSettings.update();applySearch();syncing=false;
+        musicSettings.update();contextSettings.update();applySearch();syncing=false;
     }
     function refresh() {if(!proxy?.g_name_owner){status.label='Activity service unavailable';return;}proxy.call('Snapshot',null,Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{update(p.call_finish(r).deep_unpack()[0]);}catch{status.label='Activity service unavailable';}});}
     Gio.DBusProxy.new_for_bus(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,'io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',null,(_,result)=>{if(closed)return;try{proxy=Gio.DBusProxy.new_for_bus_finish(result);}catch{status.label='Activity service unavailable';return;}signal=proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')update(args.deep_unpack()[0]);});ownerSignal=proxy.connect('notify::g-name-owner',refresh);refresh();});

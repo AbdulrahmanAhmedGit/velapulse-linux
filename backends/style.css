@@ -140,3 +140,5 @@ window.vela-window { background: transparent; color: #f4f2f8; font-family: "Adwa
 .vela-music-tools button:not(.vela-icon-button):hover { background:rgba(200,183,229,.24); }
 .vela-music-tools scale:focus-visible { outline-color:#c8bafb; }
 .vela-light .vela-music-tools button:not(.vela-icon-button) { background:#e2ddeb; color:#3a314e; }
+
+.vela-context-lines { font-size:13px; padding:8px 4px; }

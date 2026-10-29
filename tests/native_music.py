@@ -18,7 +18,7 @@ source=(repo/'backends/layer-shell.js').read_text();recorder='''
 const originalExpand=setExpanded;setExpanded=open=>{print('EXPAND',open);originalExpand(open);};
 GLib.timeout_add(GLib.PRIORITY_DEFAULT,100,()=>{
  if(!window?.get_mapped())return GLib.SOURCE_CONTINUE;
- const widgets=[];function visit(w){if(w.get_mapped()){const[ok,b]=w.compute_bounds(window);if(ok)widgets.push({name:w.name,classes:w.get_css_classes(),label:w.label??'',tooltip:w.tooltip_text??'',sensitive:w.is_sensitive(),x:b.origin.x,y:b.origin.y,width:b.size.width,height:b.size.height});}for(let c=w.get_first_child();c;c=c.get_next_sibling())visit(c);}visit(window);
+ const widgets=[];function visit(w){if(w.get_mapped()){const[ok,b]=w.compute_bounds(window);if(ok)widgets.push({name:w.name,classes:w.get_css_classes(),label:w.label??'',button:w instanceof Gtk.Button,tooltip:w.tooltip_text??'',sensitive:w.is_sensitive(),x:b.origin.x,y:b.origin.y,width:b.size.width,height:b.size.height});}for(let c=w.get_first_child();c;c=c.get_next_sibling())visit(c);}visit(window);
  GLib.file_set_contents(GLib.getenv('VELAPULSE_TEST_LAYOUT'),JSON.stringify({width:window.get_width(),height:window.get_height(),bottom:state.config.position==='bottom',topAnchor:Layer.get_anchor(window,Layer.Edge.TOP),bottomAnchor:Layer.get_anchor(window,Layer.Edge.BOTTOM),expanded,selected,state,widgets}));return GLib.SOURCE_CONTINUE;
 });
 '''
@@ -55,6 +55,13 @@ with (artifacts/'native-renderer.log').open('w')as log:
   if next(a for a in snapshot()['activities']if a['id']==current()['selected'])['status']=='active':click(widget(name='music-PlayPause'))
   w=widget(name='music-seek');x,y=coordinates(w,.2);end,_=coordinates(w,.65);send('drag',x,y,end,y,1600,1000);wait(lambda:next(a for a in snapshot()['activities']if a['id']==current()['selected'])['position_seconds']>50,'native seek')
   if env.get('VELAPULSE_TEST_GRIM'):subprocess.run([env['VELAPULSE_TEST_GRIM'],str(artifacts/'native-music-card.png')],env=env,check=True)
+  brief=wait(lambda:next((w for w in current()['widgets']if w.get('button')and w['label']=='Now Brief'and w['height']>0),None),'Now Brief pointer target');click(brief);wait(lambda:current()['selected']=='brief','native Now Brief selected');wait(lambda:any('Today' in w['label']or'Fixture track'in w['label']for w in current()['widgets']),'native Now Brief content')
+  task=subprocess.Popen([str(repo/'target/debug/velapulse'),'run','Pointer task','--','/usr/bin/sleep','30'],env=driver_env)
+  try:
+   wait(lambda:any(a['title']=='Pointer task'for a in snapshot()['activities']),'owned pointer task');rail=wait(lambda:next((w for w in current()['widgets']if w['tooltip']=='Show Pointer task'and w['height']>0),None),'owned task rail');time.sleep(.35);assert current()['expanded'],'Card collapsed when task list changed';rail=next(w for w in current()['widgets']if w['tooltip']=='Show Pointer task'and w['height']>0);click(rail);wait(lambda:current()['selected'].startswith('developer:'),'native owned task selection');cancel=wait(lambda:next((w for w in current()['widgets']if w['tooltip']=='Cancel owned task'and w['height']>0),None),'owned cancel target');click(cancel);assert task.wait(timeout=10)!=0
+  finally:
+   if task.poll()is None:task.terminate();task.wait(timeout=5)
+  print('PASS actual native pointer: Now Brief open and owned-task selection/cancellation',flush=True)
   send('key','ESC');wait(lambda:not current()['expanded']and current()['height']<100,'Escape collapse')
   if env.get('VELAPULSE_TEST_GRIM'):subprocess.run([env['VELAPULSE_TEST_GRIM'],str(artifacts/'native-pill.png')],env=env,check=True)
   print('PASS production native renderer: mapped layer surface, pill expand, player chooser, transport, seek and Escape collapse',flush=True)

@@ -146,3 +146,8 @@
 .vela-light .vela-lyric-active { color:#332547; }
 .vela-pill-main:hover { background-color:rgba(202,189,237,.08); }
 .vela-pill-main:active { background-color:rgba(202,189,237,.16); }
+
+.vela-context-lines { font-size:13px; padding:8px 4px; }
+
+.vela-context-action { width:36px; height:36px; border-radius:18px; background-color:rgba(200,215,245,.16); }
+.vela-context-action StIcon { icon-size:18px; }

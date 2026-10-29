@@ -9,12 +9,12 @@ mkdir -p "$bin" "$data/gnome-shell/extensions/velapulse@velapulse.local" "$data/
 # Replace atomically so updating a running user service is safe.
 install -m 755 target/release/velapulse "$bin/velapulse.new"
 mv "$bin/velapulse.new" "$bin/velapulse"
-cp extension/metadata.json extension/extension.js extension/stylesheet.css extension/prefs.js extension/preferences-host.js extension/preferences.js extension/preferences.css extension/presentation.js extension/music-shell.js extension/lyrics-picker.js extension/music-state.js extension/music-controls.js extension/music-preferences.js "$data/gnome-shell/extensions/velapulse@velapulse.local/"
+cp extension/metadata.json extension/extension.js extension/stylesheet.css extension/prefs.js extension/preferences-host.js extension/preferences.js extension/preferences.css extension/presentation.js extension/music-shell.js extension/lyrics-picker.js extension/music-state.js extension/music-controls.js extension/music-preferences.js extension/context-preferences.js extension/context-state.js "$data/gnome-shell/extensions/velapulse@velapulse.local/"
 mkdir -p "$data/gnome-shell/extensions/velapulse@velapulse.local/assets"
 cp extension/assets/orbit.svg "$data/gnome-shell/extensions/velapulse@velapulse.local/assets/"
 rm -f "$data/velapulse/layer-shell.js"
 cp backends/layer-shell.js backends/preferences.js backends/style.css "$data/velapulse/backends/"
-cp extension/presentation.js extension/preferences.js extension/preferences.css extension/music-state.js extension/music-controls.js extension/music-preferences.js "$data/velapulse/extension/"
+cp extension/presentation.js extension/preferences.js extension/preferences.css extension/music-state.js extension/music-controls.js extension/music-preferences.js extension/context-preferences.js extension/context-state.js "$data/velapulse/extension/"
 cp extension/assets/orbit.svg "$data/velapulse/extension/assets/"
 cat > "$config/systemd/user/velapulse.service" <<'UNIT'
 [Unit]
@@ -48,6 +48,9 @@ data=Path(os.environ['VELAPULSE_INSTALL_DATA'])
 (data/'applications/io.github.velapulse.Preferences.desktop').write_text(
     '[Desktop Entry]\nType=Application\nName=VelaPulse Settings\nComment=Live activities for your desktop\nExec="'+escaped+'" preferences\nIcon=preferences-system\nCategories=Settings;Utility;\nTerminal=false\n')
 PYCODE
+mkdir -p "$data/velapulse/integrations" "$data/gnome-shell/extensions/velapulse@velapulse.local/integrations"
+cp integrations/claude-hook.py integrations/claude-setup.py "$data/velapulse/integrations/"
+cp integrations/claude-hook.py integrations/claude-setup.py "$data/gnome-shell/extensions/velapulse@velapulse.local/integrations/"
 systemctl --user daemon-reload
 if systemctl --user is-active --quiet velapulse.service; then
     if "$bin/velapulse" snapshot | /usr/bin/python3 -c 'import json,sys; s=json.load(sys.stdin); sys.exit(0 if any(a["id"] in ("timer","stopwatch") or a["id"].startswith("external:") for a in s["activities"]) else 1)'; then

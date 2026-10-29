@@ -31,3 +31,13 @@ Artwork accepts local regular files and public anonymous HTTPS on port 443. It r
 
 
 Seek takes seconds in 0..86400 and requires a current matching MPRIS track ID, positive known duration and CanControl/CanSeek. SetPosition is used to prevent seeking a different track after metadata changes. Transport is revalidated against current capabilities and bounded to four seconds. A preferred player may disappear; automatic fallback is temporary and the saved preference is retained for reconnection. Audio volume is 0..1, mute is `0`/`1`, default output is an extant numeric Audio/Sink ID; no arbitrary commands or per-app rerouting are exposed. Normal UI errors are surfaced instead of pretending success.
+
+## Phase 3–4 contracts
+
+`Weather() → s` returns JSON `{weather: View|null, error, official_warnings_supported:false}`. `WeatherSearch(s query) → s` returns up to eight validated `{name,latitude,longitude}` locations. `WeatherRefresh()` schedules a rate-limited request. No caller-controlled endpoint URL or secret is accepted. `Brief() → s` exposes enabled weather and current timer/media/developer summaries. `Command("brief","open"|"refresh",0)` opens an explicit two-minute brief activity; `Command("weather","refresh",0)` requests weather.
+
+`DeveloperEvent(s json) → s` accepts `{provider: "codex"|"claude"|"task", session, state, title, project?, message?, event_id?, progress?}`. Unknown keys, invalid state/text/IDs/progress and disabled providers are rejected. States: starting/running/waiting/completed/failed/cancelled/disconnected. Task events are owned by their publishing bus connection; agent events are same-user opt-in observations. No event contains an executable command or permission decision.
+
+`DeveloperCancel(s id)` emits `TaskCancelled(s id)` only for an active owned task. Its wrapper verifies the daemon signal and matching ID before signaling its own process group. Hook activities cannot be cancelled or approved through this interface.
+
+Activities may carry provider-owned `weather`, `developer` and `summary` fields; external `Push` rejects them. Weather View includes location/timezone/current metrics, canonical Celsius values, hourly/daily arrays, selected display units, update/stale/error/notice/attribution fields. Developer View includes provider/session/state/project, start/update/elapsed timestamps, recent events and owned flag. Configuration adds nested `weather`, `developer` and local clock preferences. Old configuration files acquire opt-out defaults without migration. See WEATHER_AND_AGENTS.md for limits, semantics and setup.

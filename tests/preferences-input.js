@@ -29,7 +29,7 @@ async function click(w,fx=.5,fy=.5){const b=bounds(w),o=await offset();await inp
 async function type(w,text){await click(w);await key('CTRL+A');if(text)await input('type',text);else await key('BACKSPACE');await sleep(300);}
 async function dropdown(w,index){await click(w);await key('HOME');for(let i=0;i<index;i++)await key('DOWN');await key('ENTER');await until(()=>w.selected===index,`Dropdown ${w.title} ignored input`);}
 async function page(title,id){await click(nav(title));await until(()=>walk(window).find(w=>w instanceof Gtk.Stack).visible_child_name===id,`Sidebar ${title} did not navigate`);}
-async function toggle(row,field){const old=config()[field];await click(walk(row).find(w=>w instanceof Gtk.Switch));await until(()=>config()[field]!==old,`${field} switch did not persist`);await sleep(450);}
+async function toggle(row,field){const read=()=>field.split('.').reduce((o,k)=>o[k],config());const old=read();const sw=walk(row).find(w=>w instanceof Gtk.Switch);const b=bounds(sw);if(b.y<50||b.y+b.h>window.get_height()){sw.grab_focus();await sleep(200);await key('SPACE');}else await click(sw);await until(()=>read()!==old,`${field} switch did not persist`);await sleep(450);}
 async function run(){
  inputProcess=Gio.Subprocess.new([GLib.getenv('VELAPULSE_TEST_INPUT')],Gio.SubprocessFlags.STDIN_PIPE|Gio.SubprocessFlags.STDOUT_PIPE|Gio.SubprocessFlags.STDERR_PIPE);inputReader=new Gio.DataInputStream({base_stream:inputProcess.get_stdout_pipe()});inputWriter=new Gio.DataOutputStream({base_stream:inputProcess.get_stdin_pipe()});assert(await readInput()==='READY','Input client not ready');
  await sleep(700);
@@ -42,6 +42,17 @@ async function run(){
  }
  if(mode!=='standalone')assert(!host.modal&&window.modal,'Modality must belong to visible child');
  for(const[title,id]of [['General','general'],['Media','media'],['Timer','timer'],['Stopwatch','stopwatch'],['Battery','battery'],['Audio','volume'],['About','about'],['Appearance','appearance']])await page(title,id);
+ await page('Weather & clock','weather');
+ if(GLib.getenv('VELAPULSE_TEST_WEATHER_UI')==='1'){
+  await type(find(Adw.EntryRow,'Search city'),'Berlin');await click(walk(window).find(w=>w instanceof Gtk.Button&&w.label==='Find cities'));
+  let ready=false;for(let i=0;i<150;i++){if(find(Adw.ComboRow,'Search results').model.get_string(0).includes('Berlin')){ready=true;break;}await sleep(100);}assert(ready,'Real city search results');
+  await dropdown(find(Adw.ComboRow,'Search results'),0);await click(walk(window).find(w=>w instanceof Gtk.Button&&w.label==='Use selected city'));await until(()=>config().weather.location?.name.includes('Berlin'),'city persisted');print('PASS actual pointer/key: real city search, selection and persisted location');
+ }
+ await toggle(find(Adw.SwitchRow,'Enable weather'),'weather.enabled');await until(()=>config().weather.enabled,'weather enable');await toggle(find(Adw.SwitchRow,'Enable weather'),'weather.enabled');await until(()=>!config().weather.enabled,'weather disable');
+ await dropdown(find(Adw.ComboRow,'Temperature units'),1);await until(()=>config().weather.units==='fahrenheit','weather units');await dropdown(find(Adw.ComboRow,'Temperature units'),0);
+ for(const [title,key] of [['Rain forecast notices','weather.rain_notices'],['Large temperature change notices','weather.change_notices'],['Idle clock','idle_clock'],['24-hour clock','clock_24h'],['Temperature beside idle clock','clock_temperature']]){await toggle(find(Adw.SwitchRow,title),key);await toggle(find(Adw.SwitchRow,title),key);}
+ await page('Developer integrations','developer');for(const [title,key] of [['Codex CLI','codex'],['Claude Code','claude'],['Local tasks','tasks'],['Codex notifications','codex_notifications'],['Claude notifications','claude_notifications'],['Task notifications','task_notifications']]){await toggle(find(Adw.SwitchRow,title),'developer.'+key);await toggle(find(Adw.SwitchRow,title),'developer.'+key);}
+ await page('Appearance','appearance');print('PASS actual input: weather and developer settings, units, notices, idle clock and opt-in switches');
  print('PASS pointer: all eight sidebar destinations');
  for(const size of ['large','medium','small']){await click(walk(window).find(w=>w.name===`size-${size}`));await until(()=>config().size===size,`pill ${size}`);}
  for(const size of ['large','normal']){await click(walk(window).find(w=>w.name===`card-${size}`));await until(()=>config().card_size===size,`card ${size}`);}

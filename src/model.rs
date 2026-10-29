@@ -28,6 +28,12 @@ pub struct Activity {
     pub source: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub music: Option<crate::music::Details>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub weather: Option<crate::weather::View>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub summary: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub developer: Option<crate::developer::View>,
 }
 fn active() -> String {
     "active".into()
@@ -50,6 +56,9 @@ impl Activity {
             duration_seconds: None,
             source: String::new(),
             music: None,
+            weather: None,
+            summary: vec![],
+            developer: None,
         }
     }
     pub fn validate(&self) -> Result<(), String> {
@@ -83,6 +92,9 @@ impl Activity {
         if self.position_seconds.is_some()
             || self.duration_seconds.is_some()
             || self.music.is_some()
+            || !self.summary.is_empty()
+            || self.weather.is_some()
+            || self.developer.is_some()
             || !self.source.is_empty()
         {
             return Err("provider metadata cannot be supplied externally".into());
@@ -194,23 +206,45 @@ impl Engine {
                 self.providers
                     .values()
                     .filter(|a| {
-                        config
-                            .enabled
-                            .contains(&a.id.split(':').next().unwrap_or("").to_string())
+                        ["weather", "clock"].contains(&a.id.as_str())
+                            || a.id.starts_with("developer:")
+                            || config
+                                .enabled
+                                .contains(&a.id.split(':').next().unwrap_or("").to_string())
                     })
                     .cloned(),
             )
             .collect();
+        let busy = items.iter().any(|a| {
+            (a.id == "timer"
+                || a.id == "stopwatch"
+                || a.id.starts_with("media:")
+                || a.id.starts_with("developer:"))
+                && ["active", "warning", "completed"].contains(&a.status.as_str())
+        });
+        if busy {
+            items.retain(|a| a.id != "clock");
+        }
         items.sort_by_key(|a| {
             (
-                std::cmp::Reverse(if a.status == "completed" {
-                    1000
-                } else {
-                    *config
-                        .priorities
-                        .get(a.id.split(':').next().unwrap_or(""))
-                        .unwrap_or(&50)
-                }),
+                std::cmp::Reverse(
+                    if a.developer.as_ref().is_some_and(|d| d.state == "waiting") {
+                        1100
+                    } else if a.status == "completed" {
+                        1000
+                    } else {
+                        *config
+                            .priorities
+                            .get(a.id.split(':').next().unwrap_or(""))
+                            .unwrap_or(&match a.id.split(':').next().unwrap_or("") {
+                                "developer" => 80,
+                                "weather" => 20,
+                                "clock" => 25,
+                                "battery" | "volume" => 5,
+                                _ => 50,
+                            })
+                    },
+                ),
                 if a.id.starts_with("media:") {
                     if a.id == config.selected_player {
                         0

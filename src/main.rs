@@ -1,13 +1,17 @@
 mod artwork;
 mod audio;
+mod brief;
 mod capabilities;
 mod config;
 mod desktop;
+mod developer;
 mod history;
 mod lyrics;
 mod model;
 mod music;
 mod providers;
+mod tasks;
+mod weather;
 use futures_util::StreamExt;
 use model::{Activity, Clock, Engine};
 use std::{
@@ -24,6 +28,9 @@ struct Service {
     config: Arc<Mutex<config::Config>>,
     wake: Arc<Notify>,
     history: Arc<Mutex<history::Store>>,
+    weather: Arc<Mutex<weather::State>>,
+    weather_refresh: Arc<Notify>,
+    developer: Arc<Mutex<developer::Store>>,
 }
 fn invalid(e: impl ToString) -> zbus::fdo::Error {
     zbus::fdo::Error::InvalidArgs(e.to_string())
@@ -41,7 +48,16 @@ impl Service {
     }
     async fn json(&self) -> String {
         let config = self.config.lock().await.clone();
-        let activities = self.engine.lock().await.snapshot(Instant::now(), &config);
+        let mut developers = self.developer.lock().await;
+        let items = developers.refresh(&config.developer, history::now());
+        let mut engine = self.engine.lock().await;
+        engine
+            .providers
+            .retain(|id, _| !id.starts_with("developer:"));
+        for a in items {
+            engine.providers.insert(a.id.clone(), a);
+        }
+        let activities = engine.snapshot(Instant::now(), &config);
         serde_json::json!({"version":1,"activities":activities,"config":config}).to_string()
     }
 }
@@ -51,6 +67,53 @@ impl Service {
         self.json().await
     }
     async fn command(&self, id: &str, action: &str, seconds: u64) -> zbus::fdo::Result<()> {
+        if id == "brief" && ["open", "refresh"].contains(&action) {
+            let date = brief::local_date().await;
+            let forecast = self.weather.lock().await.view.clone();
+            let cfg = self.config.lock().await.clone();
+            let mut e = self.engine.lock().await;
+            let activities = e.snapshot(Instant::now(), &cfg);
+            let mut a = Activity::new("brief", "Now Brief");
+            a.controls = vec!["refresh".into()];
+            a.description = "Your enabled activities at a glance".into();
+            a.summary = activities
+                .iter()
+                .filter(|a| a.id != "brief")
+                .map(|a| format!("{} · {}", a.title, a.description))
+                .collect();
+            a.summary.insert(0, date);
+            if cfg.weather.enabled
+                && let Some(w) = forecast.as_ref()
+            {
+                if let Some(day) = w.days.first() {
+                    a.summary.push(format!(
+                        "Today: {:.0}° – {:.0}° · rain {:.0}%",
+                        weather::temp(day.low, &cfg.weather.units),
+                        weather::temp(day.high, &cfg.weather.units),
+                        day.rain
+                    ));
+                }
+                a.summary.extend(w.notices.iter().cloned());
+                a.summary
+                    .push("Weather data by Open-Meteo · CC BY 4.0 · open-meteo.com".into());
+            }
+            if a.summary.len() == 1 {
+                a.summary.push(
+                    "No active activities. Enable weather or start something when ready.".into(),
+                );
+            }
+            e.external.insert(
+                "brief".into(),
+                (a, Instant::now() + Duration::from_secs(120)),
+            );
+            drop(e);
+            self.wake.notify_one();
+            return Ok(());
+        }
+        if id == "weather" && action == "refresh" {
+            self.weather_refresh.notify_one();
+            return Ok(());
+        }
         if id.starts_with("media:") {
             tokio::time::timeout(Duration::from_secs(4), music::control(id, action))
                 .await
@@ -207,6 +270,106 @@ impl Service {
             .map_err(invalid)?
             .to_string())
     }
+    async fn weather(&self) -> String {
+        self.weather.lock().await.display().to_string()
+    }
+    async fn weather_search(&self, query: &str) -> zbus::fdo::Result<String> {
+        let mut state = self.weather.lock().await;
+        if state
+            .search_at
+            .is_some_and(|t| t.elapsed() < Duration::from_secs(2))
+        {
+            return Err(invalid("Wait two seconds between city searches"));
+        }
+        state.search_at = Some(Instant::now());
+        drop(state);
+        serde_json::to_string(&weather::search(query).await.map_err(invalid)?).map_err(invalid)
+    }
+    async fn weather_refresh(&self) {
+        self.weather_refresh.notify_one();
+    }
+    async fn brief(&self) -> String {
+        let config = self.config.lock().await.clone();
+        let activities = self.engine.lock().await.snapshot(Instant::now(), &config);
+        brief::compose(
+            &activities,
+            if config.weather.enabled {
+                self.weather.lock().await.display()
+            } else {
+                serde_json::json!({"error":"Weather is disabled"})
+            },
+        )
+        .to_string()
+    }
+    async fn developer_event(
+        &self,
+        json: &str,
+        #[zbus(header)] header: Header<'_>,
+    ) -> zbus::fdo::Result<String> {
+        if json.len() > 4096 {
+            return Err(invalid("event too large"));
+        }
+        let event: developer::Event = serde_json::from_str(json).map_err(invalid)?;
+        let settings = self.config.lock().await.developer.clone();
+        let provider = event.provider.clone();
+        let state = event.state.clone();
+        let title = event.title.clone();
+        let message = event.message.clone();
+        let (id, changed) = self
+            .developer
+            .lock()
+            .await
+            .apply(
+                event,
+                header
+                    .sender()
+                    .ok_or_else(|| invalid("missing owner"))?
+                    .as_str(),
+                &settings,
+                history::now(),
+            )
+            .map_err(invalid)?;
+        self.developer.lock().await.save().map_err(invalid)?;
+        self.wake.notify_one();
+        let enabled = match provider.as_str() {
+            "codex" => settings.codex_notifications,
+            "claude" => settings.claude_notifications,
+            _ => settings.task_notifications,
+        };
+        if changed
+            && enabled
+            && ["waiting", "completed", "failed"].contains(&state.as_str())
+            && let Ok(bus) = zbus::Connection::session().await
+        {
+            tokio::spawn(async move {
+                developer::notify(&bus, &format!("{} · {}", title, state), &message, 1).await;
+            });
+        }
+        Ok(id)
+    }
+    async fn developer_cancel(
+        &self,
+        id: &str,
+        #[zbus(signal_emitter)] emitter: SignalEmitter<'_>,
+    ) -> zbus::fdo::Result<()> {
+        let store = self.developer.lock().await;
+        let r = store
+            .records
+            .get(id)
+            .ok_or_else(|| invalid("task unavailable"))?;
+        if !r.view.owned
+            || !["running", "starting", "waiting"].contains(&r.view.state.as_str())
+            || r.owner.is_empty()
+        {
+            return Err(invalid(
+                "Only an active VelaPulse-owned task can be cancelled",
+            ));
+        }
+        drop(store);
+        Self::task_cancelled(&emitter, id).await.map_err(invalid)
+    }
+    #[zbus(signal)]
+    async fn task_cancelled(emitter: &SignalEmitter<'_>, id: &str) -> zbus::Result<()>;
     #[zbus(signal)]
     async fn changed(emitter: &SignalEmitter<'_>, json: &str) -> zbus::Result<()>;
 }
@@ -217,7 +380,23 @@ async fn main() -> anyhow::Result<()> {
         return desktop::doctor().await;
     }
     if args.get(1).map(String::as_str) == Some("run") {
-        return desktop::run_task(&args[2..]).await;
+        return tasks::run(&args[2..], false).await;
+    }
+    if args.get(1).map(String::as_str) == Some("codex") {
+        return tasks::run(&args[2..], true).await;
+    }
+    if args.get(1).map(String::as_str) == Some("agent-event") {
+        let c = zbus::Connection::session().await?;
+        let p = zbus::Proxy::new(&c, NAME, PATH, "io.github.velapulse.Service1").await?;
+        let _: String = p
+            .call(
+                "DeveloperEvent",
+                &(args
+                    .get(2)
+                    .ok_or_else(|| anyhow::anyhow!("missing event"))?,),
+            )
+            .await?;
+        return Ok(());
     }
     if args.get(1).map(String::as_str) == Some("preferences") {
         return desktop::preferences().await;
@@ -267,6 +446,9 @@ async fn main() -> anyhow::Result<()> {
         config: Arc::new(Mutex::new(config::Config::load()?)),
         wake: Default::default(),
         history: Arc::new(Mutex::new(history::Store::load())),
+        weather: Default::default(),
+        weather_refresh: Default::default(),
+        developer: Arc::new(Mutex::new(developer::Store::load())),
     };
     let conn = zbus::connection::Builder::session()?
         .serve_at(PATH, service.clone())?
@@ -281,6 +463,24 @@ async fn main() -> anyhow::Result<()> {
     );
     conn.request_name_with_flags(NAME, zbus::fdo::RequestNameFlags::DoNotQueue.into())
         .await?;
+    weather::spawn(
+        service.weather.clone(),
+        service.engine.clone(),
+        service.config.clone(),
+        service.wake.clone(),
+        service.weather_refresh.clone(),
+    );
+    developer::spawn(
+        service.developer.clone(),
+        service.engine.clone(),
+        service.config.clone(),
+        service.wake.clone(),
+    );
+    brief::spawn(
+        service.engine.clone(),
+        service.config.clone(),
+        service.wake.clone(),
+    );
     let renderer = tokio::spawn(desktop::supervise(service.config.clone()));
     let emitter = SignalEmitter::new(&conn, PATH)?;
     let mut disconnected = zbus::MessageStream::from(&conn);

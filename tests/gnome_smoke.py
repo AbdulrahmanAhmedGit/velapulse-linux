@@ -9,6 +9,7 @@ from pathlib import Path
 from gi.repository import Gio,GLib
 repo=Path(__file__).resolve().parents[1];bus=Gio.bus_get_sync(Gio.BusType.SESSION,None);uuid='velapulse@velapulse.local'
 def call(name,path,interface,method,sig='()',args=()):return bus.call_sync(name,path,interface,method,GLib.Variant(sig,args),None,Gio.DBusCallFlags.NONE,3000,None).unpack()
+def snapshot():return json.loads(call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Snapshot')[0])
 def wait(fn,message):
  for _ in range(100):
   try:
@@ -40,6 +41,8 @@ with tempfile.TemporaryDirectory(prefix='vela-gnome-')as temp:
  env.update(PATH=str(tools)+':'+env['PATH'],VELAPULSE_TEST_AUDIO_STATE=str(audio))
  subprocess.run(['gsettings','set','org.gnome.shell','enabled-extensions',"['"+uuid+"']"],env=env,check=True)
  artifacts=repo/'target/phase-1-2';artifacts.mkdir(parents=True,exist_ok=True)
+ if os.environ.get('VELAPULSE_TEST_PHASE34')=='1':
+  cached=json.loads((repo/'target/phase-3-4/live-weather.json').read_text());(data/'velapulse').mkdir(parents=True,exist_ok=True);(data/'velapulse/weather-cache.json').write_text(json.dumps(cached));config=root/'config/velapulse';config.mkdir(parents=True);(config/'config.json').write_text(json.dumps({'weather':{'enabled':True,'location':cached['location']},'developer':{'claude':True,'claude_notifications':False}}))
  with (artifacts/'gnome-shell.log').open('w')as log:
   daemon=subprocess.Popen([str(repo/'target/debug/velapulse'),'daemon'],env=dict(env,WAYLAND_DISPLAY='velapulse-gnome-no-native'),stdout=log,stderr=log)
   player=subprocess.Popen(['/usr/bin/python3',str(repo/'tests/mpris_fixture.py')],env=dict(env,VELAPULSE_TEST_ARTWORK=(repo/'tests/fixtures/music-cover.png').as_uri()),stdout=log,stderr=log)
@@ -55,13 +58,20 @@ with tempfile.TemporaryDirectory(prefix='vela-gnome-')as temp:
    # A fresh headless user session opens Overview. Hide it in the test copy for a clean capture.
    # This is a semantic render/activation smoke, not evidence of external pointer delivery.
    wait(lambda:layout().get('nodes'),'extension actors');time.sleep(2.5);activate('Expand live activity');wait(lambda:layout()['expanded'],'card expansion');activate('Pause')
-   call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Configure','(s)',[json.dumps({'appearance':'glass'})]);wait(lambda:any('vela-glass' in n['classes']for n in layout()['nodes'])and 0<layout()['cardAlpha']<200,'translucent glass card')
+   call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Configure','(s)',[json.dumps({**snapshot()['config'],'appearance':'glass'})]);wait(lambda:any('vela-glass' in n['classes']for n in layout()['nodes'])and 0<layout()['cardAlpha']<200,'translucent glass card')
    def snapshot():return json.loads(call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Snapshot')[0])
    wait(lambda:any(a.get('music')and a['status']=='paused'for a in snapshot()['activities']),'GNOME Pause callback')
    current=next(a for a in snapshot()['activities']if a.get('music'));lrc=root/'original.lrc';lrc.write_text('[00:00]Original GNOME fixture line\n[00:05]Original GNOME active line');call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','ImportLyrics','(sss)',[current['id'],current['music']['track_id'],lrc.as_uri()]);activate('Lyrics');wait(lambda:any(n['text']=='Original GNOME active line'for n in layout()['nodes']),'GNOME local lyrics');activate('Audio output');time.sleep(.4)
    capture=artifacts/'gnome-glass-music-card.png';done=Path(str(capture)+'.done');done.unlink(missing_ok=True);capture.unlink(missing_ok=True);(root/'capture').write_text(str(capture));wait(done.exists,'GNOME capture');activate('Collapse');wait(lambda:not layout()['expanded'],'card collapse')
-   call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Configure','(s)',[json.dumps({'appearance':'dark'})]);wait(lambda:layout()['cardAlpha']==255,'dark card restored')
+   call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Configure','(s)',[json.dumps({**snapshot()['config'],'appearance':'dark'})]);wait(lambda:layout()['cardAlpha']==255,'dark card restored')
    print('PASS card appearance: Liquid Glass has a translucent background; Dark restores an opaque background.')
+   if os.environ.get('VELAPULSE_TEST_PHASE34')=='1':
+    def capture_context(name):
+     path=repo/'target/phase-3-4'/name;done=Path(str(path)+'.done');done.unlink(missing_ok=True);path.unlink(missing_ok=True);(root/'capture').write_text(str(path));wait(done.exists,'context screenshot')
+    call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','Configure','(s)',[json.dumps({**snapshot()['config'],'appearance':'glass'})]);activate('Expand live activity')
+    weather=next(a for a in snapshot()['activities']if a['id']=='weather');activate('Show '+weather['title']);wait(lambda:any('Next hours'in n['text']for n in layout()['nodes']),'weather forecast content');capture_context('gnome-weather.png')
+    event={'provider':'claude','session':'ui-fixture','state':'waiting','title':'Claude Code','project':'Example project','message':'Return to Claude Code to review · Tool: Bash','event_id':'ui-permission'};call('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1','DeveloperEvent','(s)',[json.dumps(event)]);wait(lambda:any(a.get('developer')for a in snapshot()['activities']),'developer UI event');activate('Show Claude Code');wait(lambda:any('Review the request'in n['text']for n in layout()['nodes']),'permission return guidance');capture_context('gnome-developer.png')
+    activate('Now Brief');wait(lambda:layout()['selected']=='brief','Now Brief selection');wait(lambda:any('Today:'in n['text']for n in layout()['nodes']),'Now Brief forecast');capture_context('gnome-brief.png');activate('Collapse activity');print('PASS stock GNOME Phase 3/4 weather, attention card and Now Brief content/actions/screenshots; cached live API data and synthetic agent UI event.')
    errors=call('org.gnome.Shell','/org/gnome/Shell','org.gnome.Shell.Extensions','GetExtensionErrors','(s)',[uuid])[0];assert not errors,errors
    print('PASS stock GNOME 50: extension ACTIVE; real St button activation expands/collapses, pauses fixture playback, opens lyrics/audio; no extension errors. Not a physical input test.')
   finally:

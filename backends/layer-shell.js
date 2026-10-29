@@ -1,4 +1,5 @@
 #!/usr/bin/gjs -m
+import {activityLines} from '../extension/context-state.js';
 import {createMusicControls} from '../extension/music-controls.js';
 import {activePlayer,pillWidth} from '../extension/music-state.js';
 import Gtk from 'gi://Gtk?version=4.0';
@@ -34,7 +35,7 @@ function call(method, signature, args, done = () => {}) {
     });
 }
 function request(method,signature,args){return new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});}
-function command(id, action, seconds = 0) {if(action === 'start') {selected = id;launcherOpen = false;}call('Command', '(sst)', [id, action, seconds]);}
+function command(id, action, seconds = 0) {if(action==='cancel'){call('DeveloperCancel','(s)',[id]);return;}if(action === 'start') {selected = id;launcherOpen = false;}call('Command', '(sst)', [id, action, seconds],()=>{if(id==='brief'){selected='brief';call('Snapshot','()',[],([json])=>render(json));}});}
 function label(text, style, expand = false) {return new Gtk.Label({label:text, xalign:0, ellipsize:3, max_width_chars:style==='vela-pill-title'?14:style==='vela-pill-detail'?16:style==='vela-title'?25:42, hexpand:expand, css_classes:[style]});}
 function box(vertical = false, style = '', spacing = 0) {return new Gtk.Box({orientation:vertical ? Gtk.Orientation.VERTICAL : Gtk.Orientation.HORIZONTAL, spacing, css_classes:style ? [style] : []});}
 function clear(widget) {while(widget.get_first_child())widget.remove(widget.get_first_child());}
@@ -114,14 +115,16 @@ function renderCard() {
             const panel=box(true,'vela-metric-panel',9);refs.metric=label(p.metric,'vela-metric');panel.append(refs.metric);
             refs.title=label(p.title,'vela-metric-title');panel.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');panel.append(refs.detail);card.append(panel);buildProgress();
         } else {
-            const panel=box(true,'vela-summary-panel',15);panel.append(new Gtk.Image({icon_name:p.icon,pixel_size:34,halign:Gtk.Align.START}));
+            const panel=box(true,'vela-summary-panel',15);if(!['weather','developer','brief'].includes(p.type))panel.append(new Gtk.Image({icon_name:p.icon,pixel_size:34,halign:Gtk.Align.START}));
             refs.title=label(p.title,'vela-title');panel.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');panel.append(refs.detail);card.append(panel);buildProgress();
         }
+        if(['weather','developer','brief'].includes(p.type)){refs.context=new Gtk.Label({wrap:true,xalign:0,selectable:true,css_classes:['vela-context-lines']});card.append(refs.context);}
         if(a?.controls.length&&p.type!=='media') {
             const controls=box(false,'vela-transport',17);controls.halign=Gtk.Align.CENTER;
             const ordered=['timer','stopwatch'].includes(p.type) ? [...a.controls].reverse() : a.controls;
             refs.transport=[];for(const action of ordered) {const [icon,name]=actionInfo(action,a.status);const b=iconButton(icon,name,()=>command(a.id,action),['PlayPause','pause','resume'].includes(action)?'vela-primary':'vela-secondary');controls.append(b);refs.transport.push({button:b,action});}card.append(controls);
         }
+        card.append(textButton('Now Brief',()=>{selected='brief';command('brief','open');}));
         if(state.activities.length>1) {
             const rail=box(false,'vela-activity-rail',6);rail.halign=Gtk.Align.CENTER;
             for(const activity of state.activities.slice(0,5))rail.append(iconButton(present(activity).icon,`Show ${activity.title}`,()=>{selected=activity.id;launcherOpen=false;if(activity.music)request('SelectPlayer','(s)',[activity.id]).then(()=>render(JSON.stringify(state))).catch(()=>{});else render(JSON.stringify(state));},activity.id===a?.id?'vela-rail-selected':'vela-rail-item'));
@@ -136,6 +139,7 @@ function renderCard() {
     }
     for(const {button,action}of refs.transport??[]){const[icon,name]=actionInfo(action,a?.status);button.icon_name=icon;button.tooltip_text=name;button.update_property([Gtk.AccessibleProperty.LABEL],[name]);}
     refs.title.label=p.type==='timer' ? (p.state==='completed'?'A moment well spent':'Time to focus') : p.title;
+    if(refs.context)refs.context.label=activityLines(a).join('\n');
     refs.detail.label=p.subtitle;if(refs.metric)refs.metric.label=p.metric;
     if(refs.progress){if(refs.wave)refs.progress.queue_draw();else refs.progress.fraction=p.progress;refs.progress.visible=a?.progress!==null && a?.progress!==undefined;}refs.music?.update();
     if(refs.art) {
@@ -164,7 +168,11 @@ app.connect('activate',()=>{
     revealer=new Gtk.Revealer({transition_type:Gtk.RevealerTransitionType.SLIDE_DOWN,visible:false});revealer.connect('notify::child-revealed',()=>{if(!revealer.child_revealed&&!expanded)revealer.visible=false;});card=box(true,'vela-card',12);cardScroll=new Gtk.ScrolledWindow({hscrollbar_policy:Gtk.PolicyType.NEVER,propagate_natural_height:true,max_content_height:760});cardScroll.set_child(card);revealer.set_child(cardScroll);root.append(revealer);
     const css=new Gtk.CssProvider();css.load_from_file(here.get_child('style.css'));Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     const keys=new Gtk.EventControllerKey();keys.connect('key-pressed',(_,key)=>{if(key===Gdk.KEY_Escape){setExpanded(false);return true;}return false;});window.add_controller(keys);
-    const focus=new Gtk.EventControllerFocus();focus.connect('leave',()=>{if(!window._velaModalInput)setExpanded(false);});window.add_controller(focus);
+    const focus=new Gtk.EventControllerFocus();focus.connect('leave',()=>{GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE,()=>{
+        // Rebuilding a card can remove its focused child without leaving this window.
+        if(!window._velaModalInput&&!window.is_active)setExpanded(false);
+        return GLib.SOURCE_REMOVE;
+    });});window.add_controller(focus);
     monitorSignal=Gdk.Display.get_default().get_monitors().connect('items-changed',position);
     proxy=Gio.DBusProxy.new_for_bus_sync(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,BUS,PATH,IFACE,null);
     const refresh=()=>{if(proxy.g_name_owner)call('Snapshot','()',[],([json])=>render(json));else {app.quit();}};

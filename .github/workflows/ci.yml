@@ -14,6 +14,7 @@ jobs:
       - run: cargo test --locked
       - run: cargo build --locked --examples --bins
       - run: ./scripts/test-preferences-input.sh
+      - run: ./scripts/test-phase34.sh
       - run: ./scripts/test-music.sh
       - run: ./scripts/test-music-input.sh
         env:
@@ -27,9 +28,12 @@ jobs:
             target/preferences-input
             target/music-input
             target/phase-1-2
+            target/phase-3-4
       - run: ./scripts/integration.sh
       - run: ./scripts/test-providers.sh
       - run: ./scripts/test-activation.sh
       - run: node --check extension/extension.js && node --check extension/preferences.js && node --check extension/prefs.js && node --check backends/layer-shell.js
       - run: node --check extension/music-controls.js && node --check extension/music-shell.js && node --check extension/music-preferences.js && node --check extension/lyrics-picker.js
       - run: node tests/presentation.mjs
+
+      - run: node --check extension/context-state.js && node --check extension/context-preferences.js

@@ -21,3 +21,10 @@ assert.equal(lyricIndex([{seconds:0},{seconds:12.5},{seconds:20}],13),1);assert.
 assert.equal(musicColor({music:{color:'url(malicious)'}}),'#b5a4f5');assert.match(musicColor({music:{color:'#102030'}}),/^#[0-9a-f]{6}$/);
 assert.ok(pillWidth({title:'Long title '.repeat(100),controls:['PlayPause','Next']},310)<=310);
 console.log('PASS: shared player preference, lyric synchronization, safe palette and bounded pill width');
+
+const {mergeSettings,activityLines}=await import('../extension/context-state.js');
+const merged=mergeSettings({weather:{enabled:false,units:'celsius',location:{name:'Test'}},developer:{codex:false,claude:false}},{weather:{enabled:true}},{weather:{units:'fahrenheit'}},{developer:{claude:true}});
+assert.equal(merged.weather.enabled,true);assert.equal(merged.weather.units,'fahrenheit');assert.equal(merged.weather.location.name,'Test');assert.equal(merged.developer.codex,false);assert.equal(merged.developer.claude,true);
+assert.equal(present({id:'weather',title:'Weather',icon:'weather-snow-symbolic'}).icon,'weather-snow-symbolic');
+assert.match(activityLines({developer:{project:'Test',state:'waiting',elapsed:65,message:'Review',events:[]}}).join(' '),/cannot approve or reject/);
+console.log('PASS: nested settings patches, weather presentation and safe permission guidance');
