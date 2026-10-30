@@ -49,11 +49,23 @@ with (artifacts/'native-renderer.log').open('w')as log:
   def coordinates(w,fx=.5):
    frame=current();x=(screen_width-frame['width'])/2+w['x']+w['width']*fx;y=(screen_height-28-frame['height']if frame['bottom']else 28)+w['y']+w['height']/2;return round(x),round(y)
   def click(w):
-   time.sleep(.45)
-   if w['tooltip']:w=next(n for n in current()['widgets']if n['tooltip']==w['tooltip']and n['y']>=0 and n['y']+n['height']<=current()['height'])
-   elif w['label']:w=next(n for n in current()['widgets']if n['button']and n['label']==w['label'])
-   elif w['classes']:w=next(n for n in current()['widgets']if w['classes'][0]in n['classes'])
-   x,y=coordinates(w);send('click',x,y,screen_width,screen_height);time.sleep(.45)
+   # A bottom-anchored layer surface moves when card content changes. Observe
+   # target and surface geometry in one frame, and wait for allocation to settle.
+   last=None
+   for _ in range(30):
+    f=current()
+    if w['tooltip']:target=next((n for n in f['widgets']if n['tooltip']==w['tooltip']and n['y']>=0 and n['y']+n['height']<=f['height']),None)
+    elif w['label']:target=next((n for n in f['widgets']if n['button']and n['label']==w['label']),None)
+    else:target=next((n for n in f['widgets']if w['classes'][0]in n['classes']),None)
+    if target:
+     x=round((screen_width-f['width'])/2+target['x']+target['width']/2)
+     y=round((screen_height-28-f['height']if f['bottom']else 28)+target['y']+target['height']/2)
+     point=(x,y,f['width'],f['height'])
+     if point==last:break
+     last=point
+    time.sleep(.2)
+   else:raise AssertionError('Unstable or clipped pointer target: '+str(w))
+   send('click',x,y,screen_width,screen_height);time.sleep(.45)
   # UI-only fixtures: timestamps and agent lifecycle events are synthetic.
   def capture(name):
    time.sleep(.35)

@@ -50,3 +50,10 @@ VELAPULSE_TEST_GNOME_INPUT=1 VELAPULSE_TEST_PHASE34=1 \
 Add `VELAPULSE_TEST_GNOME_SCALE=1.25` for the private fractional output. This mode delivers actual EIS events, checks the private Shell owns the remote-desktop bus, and does not activate widget signals. Never target the active user desktop. The default mode remains a callback/render smoke. Optional `VELAPULSE_TEST_REAL_CODEX_UI=1` runs a real minimal ephemeral Codex task and requires working model access; it is not a fixture or a default CI requirement. Do not infer real Claude permission validation from its explicitly synthetic UI card.
 
 See [UI quality report](PHASE_3_4_UI_REPORT.md) for results, screenshots and remaining limits. No dependency installation or host application replacement is performed by these checks.
+
+
+## Layout tokens and spacing matrix
+
+`extension/layout.js` is the shared geometry source. Run `node scripts/generate-layout-css.mjs` to update the three stylesheet geometry sections, then `node scripts/generate-layout-css.mjs --check` to verify them. Existing palette rules stay independent.
+
+Set `VELAPULSE_TEST_LAYOUT_AUDIT=1` in the native context or private GNOME EIS harness for five major pill types, text/font/bidi/width/state cases, geometry checks, screenshots and actual pointer/keyboard navigation. Use separate artifact directories and the scale flags described in the [spacing report](SPACING_ALIGNMENT_REPORT.md). Preferences input also supports logical scaling and real wheel scrolling before clicking off-screen controls. No live desktop is targeted by these tests.

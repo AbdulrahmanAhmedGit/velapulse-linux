@@ -1,0 +1,28 @@
+Running real input mode: legacy
+PASS legacy regression: hidden modal host received 6 events; visible window received none
+
+Running real input mode: standalone
+PASS actual input: Claude settings path, explicit confirmation, installation and removal preserve private fixture settings
+PASS actual input: weather and developer settings, units, notices, idle clock and opt-in switches
+PASS pointer: all eight sidebar destinations
+PASS pointer+keyboard: provider checkboxes, five size selectors, search input/filter/clear
+PASS pointer+keyboard: appearance/position/placement dropdowns, animation switch, opacity slider
+PASS pointer+keyboard: renderer selection, autostart file, display selection
+PASS pointer+keyboard: all five provider switches, priorities, history opt-in/disable, summary and clear confirmation
+PASS pointer+keyboard: timer duration/start/reset and stopwatch start/reset
+PASS pointer: About link delivered to private URI handler
+PASS event delivery and persistence: 228 pointer events, 272 key events, no events redirected to hidden host; close lifecycle
+
+Running real input mode: fixed
+PASS actual input: Claude settings path, explicit confirmation, installation and removal preserve private fixture settings
+PASS actual input: weather and developer settings, units, notices, idle clock and opt-in switches
+PASS pointer: all eight sidebar destinations
+PASS pointer+keyboard: provider checkboxes, five size selectors, search input/filter/clear
+PASS pointer+keyboard: appearance/position/placement dropdowns, animation switch, opacity slider
+PASS pointer+keyboard: renderer selection, autostart file, display selection
+PASS pointer+keyboard: all five provider switches, priorities, history opt-in/disable, summary and clear confirmation
+PASS pointer+keyboard: timer duration/start/reset and stopwatch start/reset
+PASS pointer: About link delivered to private URI handler
+PASS event delivery and persistence: 228 pointer events, 272 key events, no events redirected to hidden host; close lifecycle
+
+PASS private configuration persisted across service restart; host installation untouched

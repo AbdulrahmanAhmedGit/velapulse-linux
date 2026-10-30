@@ -2,7 +2,7 @@
 
 ## UI quality follow-up
 
-The original Weather screenshots below document the rejected text-dump implementation. The replacement uses structured GTK/St components and has actual pointer/keyboard validation at 100% and 125%. See the [UI correction report and genuine screenshots](PHASE_3_4_UI_REPORT.md) for current results, provenance and limits. The UI fix is source-only; it has not replaced the installed application.
+The original Weather screenshots below document the rejected text-dump implementation. The replacement uses structured GTK/St components and has actual pointer/keyboard validation at 100% and 125%. See the [UI correction report and genuine screenshots](PHASE_3_4_UI_REPORT.md) for current results, provenance and limits. The structured Weather UI was subsequently installed as `bc5e3aa` with separate approval. The [global spacing follow-up](SPACING_ALIGNMENT_REPORT.md) is source-only and has not replaced that installation.
 
 ## Scope and revision
 
@@ -10,7 +10,7 @@ PR: https://github.com/AbdulrahmanAhmedGit/velapulse-linux/pull/3
 
 Branch: `feature/weather-ai-activities`, stacked on `feature/core-ui-advanced-music` at `de4bc487bc4f3b08c05370f597be454b0f2f45ac`. Main implementation: `2f75cf9ab3e38c5c57290caa667863410a9ee9e0`. Cached-midnight correction: `0d7ad274d9bf0f6468e5ac8bc3d2e5bed05ff2fb`. Card-focus, compact labels and input/privacy refinements: `a23a2df6e9c15f684d26e2f1785aceccd4f97eb7`. Explicit hook-path UI and expanded real-input coverage: `5d72c27a43f77b945f662f870b667ecaa1902a50`.
 
-Only Phases 3–4 are included. No Galaxy Buds, calendar accounts or Phases 5–7. Initial development used private sessions. A later separately authorized update installed `19caabbd12dcde338e1859e4b313fd01beefe3af`. The subsequent UI correction linked above does not alter that installation, running user services, external agent settings, system packages or Mutter. Installing the UI correction requires separate approval.
+Only Phases 3–4 are included. No Galaxy Buds, calendar accounts or Phases 5–7. Initial development used private sessions. Separately authorized updates later installed `19caabb`, then the structured UI correction `bc5e3aa`. The current spacing follow-up does not alter that installation, running user services, external agent settings, system packages or Mutter; installing it requires separate approval.
 
 ## Delivered behavior
 

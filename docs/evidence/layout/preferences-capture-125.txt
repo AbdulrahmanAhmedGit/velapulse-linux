@@ -1,0 +1,4 @@
+Running real input mode: standalone
+PASS actual preferences capture after pointer/keyboard appearance selection
+
+PASS private configuration persisted across service restart; host installation untouched
