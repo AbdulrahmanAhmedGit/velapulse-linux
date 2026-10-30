@@ -1,0 +1,17 @@
+PASS: timer, pause/resume, completion, reset, stopwatch, expiration, validation, persistence, single-instance
+/home/abdulrahman/Documents/Codex/2026-10-30/files-pasted-by-the-user-velapulse/outputs/velapulse-linux/tests/mpris_fixture.py:39: DeprecationWarning: Gio.DBusConnection.register_object is deprecated
+  for interface in Gio.DBusNodeInfo.new_for_xml(xml).interfaces:c.register_object(path,interface,method,prop,None)
+PASS: MPRIS discovery, metadata, progress, signals, controls, disconnect; external ownership, update, removal, quotas
+/home/abdulrahman/Documents/Codex/2026-10-30/files-pasted-by-the-user-velapulse/outputs/velapulse-linux/tests/mpris_fixture.py:39: DeprecationWarning: Gio.DBusConnection.register_object is deprecated
+  for interface in Gio.DBusNodeInfo.new_for_xml(xml).interfaces:c.register_object(path,interface,method,prop,None)
+/home/abdulrahman/Documents/Codex/2026-10-30/files-pasted-by-the-user-velapulse/outputs/velapulse-linux/tests/mpris_fixture.py:39: DeprecationWarning: Gio.DBusConnection.register_object is deprecated
+  for interface in Gio.DBusNodeInfo.new_for_xml(xml).interfaces:c.register_object(path,interface,method,prop,None)
+PASS advanced music: two players, stable selection, pause/seek/stale-track/capabilities, track changes, bounded artwork, LRC, opt-in history, audio commands, disconnect and restart
+{"idle": {"cpu_percent": 0.67, "rss_kib": 18136, "snapshot_median_ms": 0.94, "snapshot_max_ms": 1.6, "sample_seconds": 3.0}, "active_two_players": {"cpu_percent": 1.0, "rss_kib": 21284, "snapshot_median_ms": 1.11, "snapshot_max_ms": 2.02, "sample_seconds": 3.0}}
+Error: Activity service disconnected; owned command stopped
+PASS Phase 3/4: opt-in defaults, idle clock, brief, real command success/failure/concurrency/cancel, hook state/dedup/privacy, permission limits, persistence/restart, hook merge/removal
+dbus-daemon[159690]: [session uid=1000 pid=159690 pidfd=5] Activating service name='io.github.velapulse.Service' requested by ':1.0' (uid=1000 pid=159694 comm="/home/abdulrahman/Documents/Codex/2026-10-30/files" label="chatgpt (unconfined)")
+dbus-daemon[159690]: [session uid=1000 pid=159690 pidfd=5] Successfully activated service 'io.github.velapulse.Service'
+dbus-daemon[159690]: [session uid=1000 pid=159690 pidfd=5] Activating service name='io.github.velapulse.Service' requested by ':1.9' (uid=1000 pid=159733 comm="/home/abdulrahman/Documents/Codex/2026-10-30/files" label="chatgpt (unconfined)")
+dbus-daemon[159690]: [session uid=1000 pid=159690 pidfd=5] Successfully activated service 'io.github.velapulse.Service'
+PASS: on-demand D-Bus activation, reactivation after termination, persisted timer recovery

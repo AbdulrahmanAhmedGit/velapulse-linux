@@ -9,12 +9,12 @@ mkdir -p "$bin" "$data/gnome-shell/extensions/velapulse@velapulse.local" "$data/
 # Replace atomically so updating a running user service is safe.
 install -m 755 target/release/velapulse "$bin/velapulse.new"
 mv "$bin/velapulse.new" "$bin/velapulse"
-cp extension/metadata.json extension/extension.js extension/stylesheet.css extension/prefs.js extension/preferences-host.js extension/preferences.js extension/preferences.css extension/presentation.js extension/music-shell.js extension/lyrics-picker.js extension/music-state.js extension/music-controls.js extension/music-preferences.js extension/context-preferences.js extension/context-state.js extension/layout.js extension/context-cards.js extension/context-gtk.js extension/context-shell.js "$data/gnome-shell/extensions/velapulse@velapulse.local/"
+cp extension/card-tree.js extension/settings-search.js extension/metadata.json extension/extension.js extension/stylesheet.css extension/prefs.js extension/preferences-host.js extension/preferences.js extension/preferences.css extension/presentation.js extension/music-shell.js extension/lyrics-picker.js extension/music-state.js extension/music-controls.js extension/music-preferences.js extension/context-preferences.js extension/context-state.js extension/layout.js extension/context-cards.js extension/context-gtk.js extension/context-shell.js "$data/gnome-shell/extensions/velapulse@velapulse.local/"
 mkdir -p "$data/gnome-shell/extensions/velapulse@velapulse.local/assets"
 cp extension/assets/orbit.svg "$data/gnome-shell/extensions/velapulse@velapulse.local/assets/"
 rm -f "$data/velapulse/layer-shell.js"
 cp backends/layer-shell.js backends/preferences.js backends/style.css "$data/velapulse/backends/"
-cp extension/presentation.js extension/preferences.js extension/preferences.css extension/music-state.js extension/music-controls.js extension/music-preferences.js extension/context-preferences.js extension/context-state.js extension/layout.js extension/context-cards.js extension/context-gtk.js extension/context-shell.js "$data/velapulse/extension/"
+cp extension/card-tree.js extension/settings-search.js extension/presentation.js extension/preferences.js extension/preferences.css extension/music-state.js extension/music-controls.js extension/music-preferences.js extension/context-preferences.js extension/context-state.js extension/layout.js extension/context-cards.js extension/context-gtk.js extension/context-shell.js "$data/velapulse/extension/"
 cp extension/assets/orbit.svg "$data/velapulse/extension/assets/"
 cat > "$config/systemd/user/velapulse.service" <<'UNIT'
 [Unit]
