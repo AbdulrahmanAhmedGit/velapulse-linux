@@ -1,3 +1,4 @@
+import {createSettingsSearch} from './settings-search.js';
 import {SPACE, LAYOUT} from './layout.js';
 import {mergeSettings} from './context-state.js';
 import {addContextPreferences} from './context-preferences.js';
@@ -15,43 +16,46 @@ const PROVIDERS = [
 ];
 export function fillPreferences(window) {
     const geometry=Gdk.Display.get_default().get_monitors().get_item(0)?.get_geometry();
-    window.set_default_size(Math.min(1180,(geometry?.width??1228)-SPACE.xl*2),Math.min(820,(geometry?.height??868)-SPACE.xl*2));window.set_title('VelaPulse');
+    window.set_default_size(Math.min(940,(geometry?.width??988)-SPACE.xl*2),Math.min(820,(geometry?.height??868)-SPACE.xl*2));window.set_title('VelaPulse');
     let config={},activities=[],syncing=false,proxy,signal,ownerSignal,closed=false,pending=0,lastConfigKey=null,lastAppearance=null;
     const box=(vertical=false,style='',spacing=0)=>new Gtk.Box({orientation:vertical?Gtk.Orientation.VERTICAL:Gtk.Orientation.HORIZONTAL,spacing,css_classes:style?style.split(/\s+/):[]});
     const text=(value,style='',expand=false)=>new Gtk.Label({label:value,xalign:0,hexpand:expand,ellipsize:3,max_width_chars:style==='preview-pill-title'?16:style==='preview-pill-detail'?14:100,css_classes:style?style.split(/\s+/):[]});
     const button=(value,fn,style='')=>{const b=new Gtk.Button({label:value,css_classes:style?style.split(/\s+/):[]});b.connect('clicked',fn);return b;};
     const css=new Gtk.CssProvider();css.load_from_file(Gio.File.new_for_uri(import.meta.url).get_parent().get_child('preferences.css'));
     Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
-    const root=box(false,'vela-settings');window.set_content(root);
-    const sidebar=box(true,'settings-sidebar',5);sidebar.set_size_request(206,-1);root.append(sidebar);
+    const root=new Adw.OverlaySplitView({css_classes:['vela-settings'],min_sidebar_width:208,max_sidebar_width:224,sidebar_width_fraction:.23});window.set_content(root);
+    const sidebar=box(true,'settings-sidebar',5);const sidebarScroll=new Gtk.ScrolledWindow({hscrollbar_policy:Gtk.PolicyType.NEVER});sidebarScroll.set_child(sidebar);root.set_sidebar(sidebarScroll);
+    const breakpoint=new Adw.Breakpoint({condition:Adw.BreakpointCondition.parse('max-width: 720px')});breakpoint.add_setter(root,'collapsed',true);window.add_breakpoint(breakpoint);
     const brand=box(false,'settings-brand',10);brand.append(new Gtk.Image({icon_name:'media-record-symbolic',pixel_size:18}));brand.append(text('VelaPulse','brand-title'));sidebar.append(brand);
     const stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:120,hexpand:true,vexpand:true});
-    const body=box(true,'settings-body');body.hexpand=true;root.append(body);
+    const body=box(true,'settings-body');body.hexpand=true;root.set_content(body);
     const header=new Adw.HeaderBar({show_start_title_buttons:false,css_classes:['flat','settings-header']});
+    const navToggle=new Gtk.Button({icon_name:'sidebar-show-symbolic',tooltip_text:'Show settings categories'});navToggle.connect('clicked',()=>{root.show_sidebar=!root.show_sidebar;});navToggle.visible=root.collapsed;root.connect('notify::collapsed',()=>{navToggle.visible=root.collapsed;});header.pack_start(navToggle);
     const sectionTitle=text('Appearance','header-title');header.set_title_widget(sectionTitle);body.append(header);
     const columns=box(false,'settings-columns');columns.vexpand=true;body.append(columns);
     const scroll=new Gtk.ScrolledWindow({hscrollbar_policy:Gtk.PolicyType.NEVER,hexpand:true,vexpand:true});scroll.set_child(stack);columns.append(scroll);
-    const inspector=box(true,'settings-inspector',12);inspector.set_size_request(260,-1);columns.append(inspector);
+    const inspector=box(true,'settings-inspector',12);inspector.hexpand=true;
     const navButtons=[];
     function nav(title,icon,page,section) {
         if(section)sidebar.append(text(section,'nav-section'));
-        const b=new Gtk.ToggleButton({css_classes:['nav-button']});const row=box(false,'',10);row.append(new Gtk.Image({icon_name:icon,pixel_size:16}));row.append(text(title));b.set_child(row);
-        if(navButtons.length)b.set_group(navButtons[0]);navButtons.push(b);
-        b.connect('toggled',()=>{if(b.active){stack.visible_child_name=page;sectionTitle.label=title;}});sidebar.append(b);return b;
+        const b=new Gtk.ToggleButton({css_classes:['nav-button']});const row=box(false,'',10);row.append(new Gtk.Image({icon_name:icon,pixel_size:16}));const navLabel=text(title);navLabel.wrap=true;navLabel.ellipsize=0;row.append(navLabel);b.set_child(row);
+        b._settingsPage=page;if(navButtons.length)b.set_group(navButtons[0]);navButtons.push(b);
+        b.connect('toggled',()=>{if(b.active){stack.visible_child_name=page;sectionTitle.label=title;if(root.collapsed)root.show_sidebar=false;}});sidebar.append(b);return b;
     }
     function page(name) {const p=box(true,'settings-page',20);stack.add_named(p,name);return p;}
     const appearance=page('appearance');
-    const search=new Gtk.SearchEntry({placeholder_text:'Find a setting…',css_classes:['settings-search']});appearance.append(search);
-    const searchHint=text('Choose the shape of your desktop activities.','muted');appearance.append(searchHint);
+    const search=new Gtk.SearchEntry({placeholder_text:'Find a setting…',css_classes:['settings-search']});body.insert_child_after(search,header);
+    appearance.append(text('Make it yours','page-title'));
+    const searchHint=text('Shape, placement and the activities you see.','muted');appearance.append(searchHint);
     appearance.append(text('Live activities','section-title'));
     const previewRows=new Map(),toggles=new Map();
     for(const [id,title,icon] of PROVIDERS) {
         const row=box(false,'preview-row',SPACE.sm);row.set_name(`preview-${id}`);const enabled=new Gtk.CheckButton({tooltip_text:`Show ${title}`,name:`enabled-${id}`});toggles.set(id,enabled);
         enabled.connect('toggled',()=>{if(syncing)return;const next=new Set(config.enabled??[]);if(enabled.active)next.add(id);else next.delete(id);save({enabled:[...next]});});row.append(enabled);
         const labels=box(false,'',8);labels.hexpand=true;labels.append(text(title,'preview-name'));const positionLabel=text('background','muted');labels.append(positionLabel);row.append(labels);
-        const pill=box(false,`pill-preview preview-${id}`,LAYOUT.textGap);pill.set_size_request(230,-1);pill.valign=Gtk.Align.CENTER;
+        const pill=box(false,`pill-preview preview-${id}`,LAYOUT.textGap);pill.set_size_request(180,-1);pill.valign=Gtk.Align.CENTER;
         const well=new Gtk.CenterBox({css_classes:['preview-well'],valign:Gtk.Align.CENTER});well.set_center_widget(new Gtk.Image({icon_name:icon,pixel_size:LAYOUT.icon}));pill.append(well);
-        const titleLabel=text('','preview-pill-title'),detail=text('','preview-pill-detail',true);pill.append(titleLabel);pill.append(detail);
+        const titleLabel=text('','preview-pill-title'),detail=text('','preview-pill-detail',true);const previewText=box(true,'',LAYOUT.textGap);previewText.append(titleLabel);previewText.append(detail);pill.append(previewText);
         if(id==='media'||id==='timer')pill.append(new Gtk.Image({icon_name:'media-playback-pause-symbolic',pixel_size:13}));
         row.append(pill);appearance.append(row);previewRows.set(id,{row,titleLabel,detail,pill,positionLabel});
     }
@@ -71,7 +75,7 @@ export function fillPreferences(window) {
         const line=box(false,'mini-line');line.set_size_request(60,3);sample.append(line);sample.append(text(title,'size-label'));b.set_child(sample);
         b.connect('toggled',()=>{if(b.active&&!syncing)save({card_size:id});});cardButtons.set(id,b);cardRow.insert(b,-1);
     }
-    const status=text('Connecting to your activities…','settings-status');appearance.append(status);
+    const status=text('Connecting to your activities…','settings-status');body.append(status);
     const general=page('general');general.append(text('General','page-title'));general.append(text('Startup, display and motion.','muted'));
     const generalGroup=new Adw.PreferencesGroup();general.append(generalGroup);
     const backend=new Adw.ComboRow({title:'Desktop renderer',subtitle:'Automatic prefers native layer shell when available. Panel mode uses the GNOME extension.',model:Gtk.StringList.new(['Automatic','Native layer shell','GNOME extension'])});generalGroup.add(backend);backend.connect('notify::selected',()=>{if(!syncing)save({backend:['auto','layer-shell','gnome-extension'][backend.selected]});});
@@ -100,7 +104,8 @@ export function fillPreferences(window) {
     for(const [id,title,icon] of PROVIDERS)nav(title,icon,id,id==='media'?'Activities':null);
     nav('Weather & clock','weather-few-clouds-symbolic','weather');nav('Developer integrations','utilities-terminal-symbolic','developer');
     const spacer=box();spacer.vexpand=true;sidebar.append(spacer);nav('About','help-about-symbolic','about');
-    inspector.append(text('Appearance','inspector-title'));
+    appearance.insert_child_after(inspector,searchHint);
+    inspector.append(text('Desktop appearance','inspector-title'));
     const inspectorGroup=new Adw.PreferencesGroup();inspector.append(inspectorGroup);
     const placement=new Adw.ComboRow({title:'Placement',subtitle:'Top Bar requires GNOME',model:Gtk.StringList.new(['Floating pill','GNOME Top Bar'])});inspectorGroup.add(placement);placement.connect('notify::selected',()=>{if(!syncing)save({surface:placement.selected?'panel':'floating'});});
     const theme=new Adw.ComboRow({title:'Appearance',model:Gtk.StringList.new(['Dark','Liquid Glass','Light'])});inspectorGroup.add(theme);theme.connect('notify::selected',()=>{if(!syncing)save({appearance:['dark','glass','light'][theme.selected]});});
@@ -110,15 +115,9 @@ export function fillPreferences(window) {
     opacity.connect('value-changed',()=>{if(syncing)return;draft={opacity:Math.round(opacity.get_value())};if(pending)GLib.Source.remove(pending);pending=GLib.timeout_add(GLib.PRIORITY_DEFAULT,140,()=>{pending=0;const patch=draft;draft={};save(patch);return GLib.SOURCE_REMOVE;});});
     const motionGroup=new Adw.PreferencesGroup({title:'Motion'});inspector.append(motionGroup);const motion=new Adw.SwitchRow({title:'Animations'});motionGroup.add(motion);motion.connect('notify::active',()=>{if(!syncing)save({animations:motion.active});});
     inspector.append(text('Changes apply immediately','inspector-note'));
-    function applySearch() {
-        const q=search.text.trim().toLowerCase();
-        for(const [id,{row}] of previewRows) {
-            const match=!q||id.includes(q)||PROVIDERS.find(x=>x[0]===id)[1].toLowerCase().includes(q);
-            row.visible=match&&(id!=='stopwatch'||activities.some(a=>a.id==='stopwatch')||Boolean(q));
-        }
-        sizes.visible=!q||'pill size'.includes(q);cards.visible=!q||'card size'.includes(q);
-    }
-    search.connect('search-changed',applySearch);
+    const searchResults=new Gtk.ListBox({selection_mode:Gtk.SelectionMode.NONE,css_classes:['boxed-list','settings-search-results'],visible:false});
+    body.insert_child_after(searchResults,search);
+    const {applySearch,dispose:disposeSearch}=createSettingsSearch({window,search,results:searchResults,stack,navButtons,previewRows,PROVIDERS,sizes,cards,getActivities:()=>activities});
     function command(id,action,seconds) {proxy?.call('Command',new GLib.Variant('(sst)',[id,action,seconds]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{p.call_finish(r);}catch{status.label='This action is unavailable.';}});}
     let saving=false,queued={},inFlight={},draft={};
     function save(patch) {queued=mergeSettings(queued,patch);flush();}
@@ -151,11 +150,11 @@ export function fillPreferences(window) {
         for(const [id,{row,titleLabel,detail,positionLabel}] of previewRows) {
             const a=activities.find(a=>a.id.split(':')[0]===id),p=present(a);
             const title=a?p.compact:PROVIDERS.find(provider=>provider[0]===id)[1];
-            const subtitle=a?` · ${p.detail}`:(id==='media'?' · Nothing playing':' · Not running');
+            const subtitle=a?p.detail:(id==='media'?'Nothing playing':'Not running');
             if(titleLabel.label!==title)titleLabel.label=title;
             if(detail.label!==subtitle)detail.label=subtitle;
             const foreground=activities[0]?.id.split(':')[0]===id;
-            const position=foreground?'foreground':'background';
+            const position=foreground?'Showing now':'Available';
             if(positionLabel.label!==position)positionLabel.label=position;
             if(row.has_css_class('preview-row-selected')!==foreground) {
                 if(foreground)row.add_css_class('preview-row-selected');else row.remove_css_class('preview-row-selected');
@@ -167,5 +166,5 @@ export function fillPreferences(window) {
     }
     function refresh() {if(!proxy?.g_name_owner){status.label='Activity service unavailable';return;}proxy.call('Snapshot',null,Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{update(p.call_finish(r).deep_unpack()[0]);}catch{status.label='Activity service unavailable';}});}
     Gio.DBusProxy.new_for_bus(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,'io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',null,(_,result)=>{if(closed)return;try{proxy=Gio.DBusProxy.new_for_bus_finish(result);}catch{status.label='Activity service unavailable';return;}signal=proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')update(args.deep_unpack()[0]);});ownerSignal=proxy.connect('notify::g-name-owner',refresh);refresh();});
-    window.connect('close-request',()=>{closed=true;if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(pending)GLib.Source.remove(pending);Gtk.StyleContext.remove_provider_for_display(Gdk.Display.get_default(),css);return false;});
+    window.connect('close-request',()=>{closed=true;disposeSearch();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(pending)GLib.Source.remove(pending);Gtk.StyleContext.remove_provider_for_display(Gdk.Display.get_default(),css);return false;});
 }
