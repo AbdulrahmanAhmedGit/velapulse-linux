@@ -1,22 +1,21 @@
 .vela-settings { background:#171717; color:#f3f1ec; --accent-bg-color:#ffdf70; --accent-fg-color:#242018; font-family: "Adwaita Sans",sans-serif; }
-.settings-sidebar { background:linear-gradient(135deg,#282826,#20201f); border:1px solid #383836; border-radius:22px; margin:10px; padding:20px 12px 15px; }
-.settings-brand { padding:1px 10px 23px; color:#ffdf70; }
+.settings-sidebar { background:linear-gradient(135deg,#282826,#20201f); border:1px solid #383836; border-radius:22px; }
+.settings-brand { color:#ffdf70; }
 .brand-title { font-size:16px; font-weight:700; color:#f5f3ec; }
 .nav-section { color:#aaa69e; font-size:12px; margin:12px 10px 6px; }
-.nav-button { background:transparent; border:none; box-shadow:none; border-radius:12px; padding:11px 12px; font-size:13px; font-weight:500; }
+.nav-button { background:transparent; border:none; box-shadow:none; border-radius:12px; font-size:13px; font-weight:500; }
 .nav-button:checked { background:#393937; color:#fff; }
 .nav-button:hover { background:#30302e; }
 .settings-header { background:transparent; box-shadow:none; }
 .header-title { font-size:14px; font-weight:600; }
-.settings-page { padding:18px 23px 26px; }
-.settings-search { border-radius:14px; padding:6px 10px; background:#20201f; box-shadow:none; border:1px solid #33332f; }
+.settings-search { border-radius:14px; background:#20201f; box-shadow:none; border:1px solid #33332f; }
 .muted { color:#96928a; font-size:12px; }
 .section-title { color:#aaa69c; font-size:12px; font-weight:500; }
-.preview-row { padding:9px; border-radius:12px; margin-top:-12px; }
+.preview-row { border-radius:12px; }
 .preview-row-selected { background:#383324; }
 .preview-name { font-size:13px; font-weight:500; }
-.pill-preview { background:#101010; border-radius:22px; padding:3px 8px 3px 3px; color:#faf9f7; }
-.preview-well { background:#6156ce; border-radius:20px; padding:6px; color:#fff; }
+.pill-preview { background:#101010; color:#faf9f7; }
+.preview-well { background:#6156ce; color:#fff; }
 .preview-media .preview-well { background:#592e42; }
 .preview-battery .preview-well { background:#26bf59; }
 .preview-volume .preview-well { background:#3979ef; }
@@ -35,7 +34,7 @@
 .card-choice-content { padding:10px 0; }
 .mini-cover { background:radial-gradient(circle at 20% 15%,#d19b71,transparent 65%),radial-gradient(circle at 90% 30%,#bd3977,transparent 65%),#3d284d; border-radius:12px; }
 .settings-status { font-size:11px; color:#c1b69a; padding-top:8px; }
-.settings-inspector { background:#121212; border-left:1px solid #272725; padding:20px 16px; }
+.settings-inspector { background:#121212; border-left:1px solid #272725; }
 .inspector-title { font-size:14px; font-weight:600; margin-bottom:14px; }
 .inspector-label { font-size:13px; }
 .inspector-section { padding:12px 4px; border-bottom:1px solid #282825; }
@@ -84,3 +83,19 @@ window.vela-preferences-glass { background:transparent; --window-bg-color:transp
 .settings-glass switch:checked,.settings-glass checkbutton check:checked,.settings-glass scale highlight { background:#c8d8ff; color:#172337; border-color:#c8d8ff; }
 .settings-glass .nav-button:focus-visible,.settings-glass .size-choice:focus-visible,.settings-glass .card-choice:focus-visible { outline:2px solid #d6e5ff; outline-offset:2px; }
 .settings-glass row:focus-visible { outline-color:#c8d8ff; }
+
+.size-grid flowboxchild { padding:0; background:transparent; }
+.preview-row checkbutton, .preview-row image, .preview-row label { min-height:24px; }
+
+/* BEGIN GENERATED LAYOUT: scripts/generate-layout-css.mjs */
+.settings-sidebar { padding: 16px 12px; margin: 8px; }
+.settings-page { padding: 16px 24px 24px; }
+.settings-brand { padding: 0 8px 16px; }
+.nav-button { min-height: 32px; padding: 8px 12px; }
+.settings-search { padding: 8px 12px; }
+.preview-row { padding: 8px; margin-top: 0px; }
+.pill-preview { min-height: 32px; padding: 6px 12px; border-radius: 999px; }
+.preview-well { min-width: 24px; min-height: 24px; padding: 0px; border-radius: 999px; }
+.settings-inspector { padding: 16px 12px; }
+.provider-controls button { min-height: 32px; padding: 8px 12px; }
+/* END GENERATED LAYOUT */

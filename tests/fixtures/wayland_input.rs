@@ -180,6 +180,24 @@ fn main() -> anyhow::Result<()> {
                 pointer.frame();
                 q.roundtrip(&mut s)?;
             }
+            Some("scroll") => {
+                anyhow::ensure!(a.len() == 6, "scroll x y delta width height");
+                time = time
+                    .saturating_add(1)
+                    .max(start.elapsed().as_millis() as u32);
+                pointer.motion_absolute(
+                    time,
+                    a[1].parse()?,
+                    a[2].parse()?,
+                    a[4].parse()?,
+                    a[5].parse()?,
+                );
+                pointer.frame();
+                q.roundtrip(&mut s)?;
+                pointer.axis(time, wl_pointer::Axis::VerticalScroll, a[3].parse()?);
+                pointer.frame();
+                q.roundtrip(&mut s)?;
+            }
             Some("key" | "type") => {
                 let text = line
                     .split_once(' ')

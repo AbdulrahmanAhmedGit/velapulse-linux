@@ -7,6 +7,7 @@ import {fillPreferences} from '../extension/preferences.js';
 import {fillExtensionPreferences} from '../extension/preferences-host.js';
 if(GLib.getenv('VELAPULSE_ISOLATED_TEST')!=='1'||!GLib.file_test(`${GLib.getenv('XDG_RUNTIME_DIR')}/velapulse-test-session`,GLib.FileTest.IS_REGULAR))throw new Error('Private compositor required');
 const mode=ARGV[0]??'fixed';
+const outputScale=Number(GLib.getenv('VELAPULSE_TEST_SCALE')??1),screenWidth=Math.round(1600/outputScale),screenHeight=Math.round(1000/outputScale);
 const app=new Adw.Application({application_id:'io.github.velapulse.PreferencesInputTest'});
 let failed=false,host,window,mouse=0,keys=0,hostEvents=0;
 const sleep=ms=>new Promise(resolve=>GLib.timeout_add(GLib.PRIORITY_DEFAULT,ms,()=>{resolve();return GLib.SOURCE_REMOVE;}));
@@ -25,14 +26,30 @@ function find(Type,title){return walk(window).find(w=>w instanceof Type&&w.title
 function nav(title){return walk(window).find(w=>w instanceof Gtk.ToggleButton&&w.has_css_class('nav-button')&&walk(w).some(c=>c instanceof Gtk.Label&&c.label===title));}
 function bounds(w){const[ok,r]=w.compute_bounds(window);assert(ok&&w.get_mapped()&&r.size.width>0&&r.size.height>0,`Unmapped control ${w.title??w.name} visible=${w.visible} mapped=${w.get_mapped()}`);return {x:r.origin.x,y:r.origin.y,w:r.size.width,h:r.size.height};}
 async function offset(){const tree=JSON.parse(await process([GLib.getenv('VELAPULSE_TEST_SWAYMSG'),'-r','-t','get_tree']));function findNode(n){if(n.name==='VelaPulse Preferences Input Test')return n;for(const c of [...(n.nodes??[]),...(n.floating_nodes??[])]){const f=findNode(c);if(f)return f;}return null;}const n=findNode(tree);assert(n,'No mapped test window');return{x:n.rect.x+n.window_rect.x,y:n.rect.y+n.window_rect.y};}
-async function click(w,fx=.5,fy=.5){const b=bounds(w),o=await offset();await input('click',Math.round(o.x+b.x+b.w*fx),Math.round(o.y+b.y+b.h*fy),1600,1000);await sleep(180);}
+async function reveal(w){
+ let scroll=w.get_parent();while(scroll&&!(scroll instanceof Gtk.ScrolledWindow))scroll=scroll.get_parent();
+ if(!scroll)return;
+ for(let i=0;i<16;i++){
+  const b=bounds(w),v=bounds(scroll),o=await offset(),bottom=Math.min(v.y+v.h,screenHeight-o.y-8);
+  if(b.y>=v.y+4&&b.y+b.h<=bottom-4)return;
+  await input('scroll',Math.round(o.x+v.x+v.w/2),Math.round(o.y+v.y+Math.min(v.h,bottom-v.y)/2),b.y<v.y+4?-160:160,screenWidth,screenHeight);await sleep(200);
+ }
+ throw new Error('Control cannot scroll into view: '+(w.title??w.name));
+}
+async function click(w,fx=.5,fy=.5){await reveal(w);const b=bounds(w),o=await offset();await input('click',Math.round(o.x+b.x+b.w*fx),Math.round(o.y+b.y+b.h*fy),screenWidth,screenHeight);await sleep(180);}
 async function type(w,text){w.grab_focus();await sleep(180);await click(w);await key('CTRL+A');if(text)await input('type',text);else await key('BACKSPACE');await sleep(300);}
 async function dropdown(w,index){await click(w);await key('HOME');for(let i=0;i<index;i++)await key('DOWN');await key('ENTER');await until(()=>w.selected===index,`Dropdown ${w.title} ignored input`);}
 async function page(title,id){await click(nav(title));await until(()=>walk(window).find(w=>w instanceof Gtk.Stack).visible_child_name===id,`Sidebar ${title} did not navigate`);}
-async function toggle(row,field){const read=()=>field.split('.').reduce((o,k)=>o[k],config());const old=read();const sw=walk(row).find(w=>w instanceof Gtk.Switch);const b=bounds(sw);if(b.y<50||b.y+b.h>window.get_height()){sw.grab_focus();await sleep(200);await key('SPACE');}else await click(sw);await until(()=>read()!==old,`${field} switch did not persist`);await sleep(450);}
+async function toggle(row,field){const read=()=>field.split('.').reduce((o,k)=>o[k],config());const old=read();const sw=walk(row).find(w=>w instanceof Gtk.Switch);await click(sw);await until(()=>read()!==old,`${field} switch did not persist`);await sleep(450);}
 async function run(){
  inputProcess=Gio.Subprocess.new([GLib.getenv('VELAPULSE_TEST_INPUT')],Gio.SubprocessFlags.STDIN_PIPE|Gio.SubprocessFlags.STDOUT_PIPE|Gio.SubprocessFlags.STDERR_PIPE);inputReader=new Gio.DataInputStream({base_stream:inputProcess.get_stdout_pipe()});inputWriter=new Gio.DataOutputStream({base_stream:inputProcess.get_stdin_pipe()});assert(await readInput()==='READY','Input client not ready');
  await sleep(700);
+ if(GLib.getenv('VELAPULSE_TEST_LAYOUT_CAPTURE')==='1'){
+  await dropdown(find(Adw.ComboRow,'Appearance'),1);await sleep(300);
+  await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_GLASS_IMAGE')]);
+  print('PASS actual preferences capture after pointer/keyboard appearance selection');return;
+ }
+
  const stack=walk(window).find(w=>w instanceof Gtk.Stack);
  assert(window.is_sensitive()&&bounds(nav('General')).w>0,'Visible widgets insensitive');
  if(mode==='legacy'){
@@ -82,7 +99,7 @@ async function run(){
  await dropdown(find(Adw.ComboRow,'Placement'),1);await until(()=>config().surface==='panel','panel placement');assert(!find(Adw.ComboRow,'Position').is_sensitive(),'Panel must disable floating position');await dropdown(find(Adw.ComboRow,'Placement'),0);
  await toggle(find(Adw.SwitchRow,'Animations'),'animations');await toggle(find(Adw.SwitchRow,'Animations'),'animations');
  const scale=walk(window).find(w=>w instanceof Gtk.Scale);await click(scale,.25);await key('HOME');for(let i=0;i<5;i++)await key('RIGHT');await until(()=>config().opacity===70,'Slider keyboard persistence');
- const b=bounds(scale),o=await offset();await input('drag',Math.round(o.x+b.x+20),Math.round(o.y+b.y+b.h/2),Math.round(o.x+b.x+b.w*.7),Math.round(o.y+b.y+b.h/2),1600,1000);await until(()=>config().opacity!==70,'Slider pointer drag persistence');
+ const b=bounds(scale),o=await offset();await input('drag',Math.round(o.x+b.x+20),Math.round(o.y+b.y+b.h/2),Math.round(o.x+b.x+b.w*.7),Math.round(o.y+b.y+b.h/2),screenWidth,screenHeight);await until(()=>config().opacity!==70,'Slider pointer drag persistence');
  print('PASS pointer+keyboard: appearance/position/placement dropdowns, animation switch, opacity slider');
  await page('General','general');await dropdown(find(Adw.ComboRow,'Desktop renderer'),2);await until(()=>config().backend==='gnome-extension','backend setting');await dropdown(find(Adw.ComboRow,'Desktop renderer'),0);
  await toggle(find(Adw.SwitchRow,'Start at login'),'autostart');assert(GLib.file_test(`${GLib.getenv('XDG_CONFIG_HOME')}/autostart/io.github.velapulse.desktop`,GLib.FileTest.IS_REGULAR),'Autostart entry missing');await toggle(find(Adw.SwitchRow,'Start at login'),'autostart');
@@ -115,7 +132,7 @@ app.connect('activate',()=>{
  else if(mode==='legacy'){
   host.add(new Adw.PreferencesPage({title:'VelaPulse'}));window=new Adw.ApplicationWindow({application:app});fillPreferences(window);host.connect('map',()=>{host.hide();window.present();});window.connect('close-request',()=>{host.close();return false;});
  }else window=fillExtensionPreferences(host);
- window.set_decorated(false);window.set_default_size(1280,900);window.title='VelaPulse Preferences Input Test';
+ window.set_decorated(false);window.set_default_size(Math.min(1280,screenWidth-32),Math.min(900,screenHeight-32));window.title='VelaPulse Preferences Input Test';
  for(const[w,isHost]of [[host,true],[window,false]]){const controller=new Gtk.EventControllerLegacy({propagation_phase:Gtk.PropagationPhase.CAPTURE});controller.connect('event',(_,event)=>{const type=event.get_event_type();if([2,3,4,5].includes(type)){if(isHost)hostEvents++;else if([2,3].includes(type))mouse++;else {keys++;}}return false;});w.add_controller(controller);}
- window.present();if(mode!=='standalone')host.show();run().catch(e=>{printerr(e.message);printerr(e.stack);failed=true;}).finally(()=>{inputProcess?.force_exit();window.close();host.close();app.release();app.quit();});
+ window.present();if(mode!=='standalone')host.show();run().catch(async e=>{printerr(e.message);printerr(e.stack);if(GLib.getenv('VELAPULSE_TEST_GRIM'))await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_GLASS_IMAGE').replace('liquid-glass','preferences-failure')]);failed=true;}).finally(()=>{inputProcess?.force_exit();window.close();host.close();app.release();app.quit();});
 });app.run([]);if(failed)throw new Error('Preferences input regression failed');

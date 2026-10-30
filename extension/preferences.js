@@ -1,3 +1,4 @@
+import {SPACE, LAYOUT} from './layout.js';
 import {mergeSettings} from './context-state.js';
 import {addContextPreferences} from './context-preferences.js';
 import {addMusicPreferences} from './music-preferences.js';
@@ -13,7 +14,8 @@ const PROVIDERS = [
     ['stopwatch','Stopwatch','preferences-system-time-symbolic'],['battery','Battery','battery-good-symbolic'],['volume','Audio','audio-volume-high-symbolic'],
 ];
 export function fillPreferences(window) {
-    window.set_default_size(1180,820);window.set_title('VelaPulse');
+    const geometry=Gdk.Display.get_default().get_monitors().get_item(0)?.get_geometry();
+    window.set_default_size(Math.min(1180,(geometry?.width??1228)-SPACE.xl*2),Math.min(820,(geometry?.height??868)-SPACE.xl*2));window.set_title('VelaPulse');
     let config={},activities=[],syncing=false,proxy,signal,ownerSignal,closed=false,pending=0,lastConfigKey=null,lastAppearance=null;
     const box=(vertical=false,style='',spacing=0)=>new Gtk.Box({orientation:vertical?Gtk.Orientation.VERTICAL:Gtk.Orientation.HORIZONTAL,spacing,css_classes:style?style.split(/\s+/):[]});
     const text=(value,style='',expand=false)=>new Gtk.Label({label:value,xalign:0,hexpand:expand,ellipsize:3,max_width_chars:style==='preview-pill-title'?16:style==='preview-pill-detail'?14:100,css_classes:style?style.split(/\s+/):[]});
@@ -44,30 +46,30 @@ export function fillPreferences(window) {
     appearance.append(text('Live activities','section-title'));
     const previewRows=new Map(),toggles=new Map();
     for(const [id,title,icon] of PROVIDERS) {
-        const row=box(false,'preview-row',10);row.set_name(`preview-${id}`);const enabled=new Gtk.CheckButton({tooltip_text:`Show ${title}`,name:`enabled-${id}`});toggles.set(id,enabled);
+        const row=box(false,'preview-row',SPACE.sm);row.set_name(`preview-${id}`);const enabled=new Gtk.CheckButton({tooltip_text:`Show ${title}`,name:`enabled-${id}`});toggles.set(id,enabled);
         enabled.connect('toggled',()=>{if(syncing)return;const next=new Set(config.enabled??[]);if(enabled.active)next.add(id);else next.delete(id);save({enabled:[...next]});});row.append(enabled);
         const labels=box(false,'',8);labels.hexpand=true;labels.append(text(title,'preview-name'));const positionLabel=text('background','muted');labels.append(positionLabel);row.append(labels);
-        const pill=box(false,`pill-preview preview-${id}`,7);pill.set_size_request(230,30);
-        const well=box(false,'preview-well');well.append(new Gtk.Image({icon_name:icon,pixel_size:14}));pill.append(well);
+        const pill=box(false,`pill-preview preview-${id}`,LAYOUT.textGap);pill.set_size_request(230,-1);pill.valign=Gtk.Align.CENTER;
+        const well=new Gtk.CenterBox({css_classes:['preview-well'],valign:Gtk.Align.CENTER});well.set_center_widget(new Gtk.Image({icon_name:icon,pixel_size:LAYOUT.icon}));pill.append(well);
         const titleLabel=text('','preview-pill-title'),detail=text('','preview-pill-detail',true);pill.append(titleLabel);pill.append(detail);
         if(id==='media'||id==='timer')pill.append(new Gtk.Image({icon_name:'media-playback-pause-symbolic',pixel_size:13}));
         row.append(pill);appearance.append(row);previewRows.set(id,{row,titleLabel,detail,pill,positionLabel});
     }
     const sizes=box(true,'size-section',12);sizes.append(text('Pill size  ·  3 options','section-title'));appearance.append(sizes);
-    const sizeRow=box(false,'size-grid',12);sizes.append(sizeRow);const sizeButtons=new Map();
+    const sizeRow=new Gtk.FlowBox({selection_mode:Gtk.SelectionMode.NONE,column_spacing:SPACE.md,row_spacing:SPACE.md,homogeneous:true,max_children_per_line:3,min_children_per_line:1,css_classes:['size-grid']});sizes.append(sizeRow);const sizeButtons=new Map();
     for(const [id,title,width] of [['small','Small',76],['medium','Normal',96],['large','Large',112]]) {
         const b=new Gtk.ToggleButton({name:`size-${id}`,css_classes:['size-choice']});if(sizeButtons.size)b.set_group([...sizeButtons.values()][0]);
         const sample=box(true,'size-choice-content',17);sample.halign=Gtk.Align.CENTER;sample.valign=Gtk.Align.CENTER;
         const miniature=box(false,'mini-pill',6);miniature.valign=Gtk.Align.CENTER;miniature.set_size_request(width,20);miniature.append(box(false,'mini-disc'));
         const line=box(false,'mini-line');line.hexpand=true;line.valign=Gtk.Align.CENTER;miniature.append(line);sample.append(miniature);sample.append(text(title,'size-label'));b.set_child(sample);
-        b.connect('toggled',()=>{if(b.active&&!syncing)save({size:id});});sizeButtons.set(id,b);sizeRow.append(b);
+        b.connect('toggled',()=>{if(b.active&&!syncing)save({size:id});});sizeButtons.set(id,b);sizeRow.insert(b,-1);
     }
-    const cards=box(true,'size-section',12);cards.append(text('Card size  ·  2 options','section-title'));const cardRow=box(false,'size-grid',12);cards.append(cardRow);appearance.append(cards);const cardButtons=new Map();
+    const cards=box(true,'size-section',12);cards.append(text('Card size  ·  2 options','section-title'));const cardRow=new Gtk.FlowBox({selection_mode:Gtk.SelectionMode.NONE,column_spacing:SPACE.md,row_spacing:SPACE.md,homogeneous:true,max_children_per_line:2,min_children_per_line:1,css_classes:['size-grid']});cards.append(cardRow);appearance.append(cards);const cardButtons=new Map();
     for(const [id,title] of [['normal','Normal'],['large','Large']]) {
         const b=new Gtk.ToggleButton({name:`card-${id}`,css_classes:['card-choice']});if(cardButtons.size)b.set_group([...cardButtons.values()][0]);
         const sample=box(true,'card-choice-content',8);sample.halign=Gtk.Align.CENTER;const cover=box(true,'mini-cover');cover.set_size_request(id==='large'?90:72,id==='large'?70:55);sample.append(cover);
         const line=box(false,'mini-line');line.set_size_request(60,3);sample.append(line);sample.append(text(title,'size-label'));b.set_child(sample);
-        b.connect('toggled',()=>{if(b.active&&!syncing)save({card_size:id});});cardButtons.set(id,b);cardRow.append(b);
+        b.connect('toggled',()=>{if(b.active&&!syncing)save({card_size:id});});cardButtons.set(id,b);cardRow.insert(b,-1);
     }
     const status=text('Connecting to your activities…','settings-status');appearance.append(status);
     const general=page('general');general.append(text('General','page-title'));general.append(text('Startup, display and motion.','muted'));
@@ -148,8 +150,8 @@ export function fillPreferences(window) {
         }
         for(const [id,{row,titleLabel,detail,positionLabel}] of previewRows) {
             const a=activities.find(a=>a.id.split(':')[0]===id),p=present(a);
-            const title=a?p.compact:(id==='media'?'Media':'');
-            const subtitle=a?` · ${p.detail}`:(id==='media'?'Nothing playing':'Not running');
+            const title=a?p.compact:PROVIDERS.find(provider=>provider[0]===id)[1];
+            const subtitle=a?` · ${p.detail}`:(id==='media'?' · Nothing playing':' · Not running');
             if(titleLabel.label!==title)titleLabel.label=title;
             if(detail.label!==subtitle)detail.label=subtitle;
             const foreground=activities[0]?.id.split(':')[0]===id;

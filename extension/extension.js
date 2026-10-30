@@ -1,6 +1,7 @@
 import {createShellContextCard} from './context-shell.js';
 import {createMusicControls} from './music-shell.js';
-import {activePlayer,pillWidth} from './music-state.js';
+import {activePlayer} from './music-state.js';
+import {SPACE, LAYOUT, compactWidth} from './layout.js';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
@@ -31,16 +32,16 @@ export default class VelaPulse extends Extension {
         this._pillMain = new St.Button({style_class: 'vela-pill-main', x_expand: true, can_focus: true, accessible_name: 'Expand live activity'});
         const summary = new St.BoxLayout({style_class: 'vela-pill-summary', x_expand: true, x_align: Clutter.ActorAlign.FILL});
         this._pillWell = new St.Bin({style_class: 'vela-well', x_align: CENTER, y_align: CENTER});
-        this._pillIcon = new St.Icon({icon_name: 'weather-clear-night-symbolic', icon_size: 17});
+        this._pillIcon = new St.Icon({icon_name: 'weather-clear-night-symbolic', icon_size: LAYOUT.icon});
         this._pillWell.set_child(this._pillIcon);
-        const indicator = new St.Widget({layout_manager:new Clutter.BinLayout(),width:32,height:32,y_align:CENTER});
+        const indicator = this._pillIndicator = new St.Widget({layout_manager:new Clutter.BinLayout(),width:LAYOUT.indicator,height:LAYOUT.indicator,y_align:CENTER});
         indicator.add_child(this._pillWell);
         this._pillRing=new St.DrawingArea({width:32,height:32});
         this._pillRing.connect('repaint',area=>{const cr=area.get_context();const [w,h]=area.get_surface_size();const p=present(this._current());drawRing(cr,w,h,p.progress,p.accent);cr.$dispose();});
         indicator.add_child(this._pillRing);summary.add_child(indicator);
-        const lines = new St.BoxLayout({style_class: 'vela-pill-text', x_expand: true, y_align: CENTER});
-        this._pillTitle = this._label('VelaPulse', 'vela-pill-title');
-        this._pillDetail = this._label('Ready when you are', 'vela-pill-detail');
+        const lines = this._pillText = new St.BoxLayout({style_class: 'vela-pill-text', x_expand: true, y_align: CENTER});
+        this._pillTitle = this._label('VelaPulse', 'vela-pill-title', true);
+        this._pillDetail = this._label('Ready when you are', 'vela-pill-detail', true);
         lines.add_child(this._pillTitle); lines.add_child(this._pillDetail); summary.add_child(lines);
         this._pillMain.set_child(summary); this._pill.add_child(this._pillMain);
         this._pillControls = new St.BoxLayout({style_class: 'vela-inline-controls', y_align: CENTER});
@@ -91,7 +92,7 @@ export default class VelaPulse extends Extension {
     }
     _iconButton(icon, name, action, style = '') {
         const button = new St.Button({style_class: `vela-icon-button ${style}`, can_focus: true, accessible_name: name});
-        button.set_child(new St.Icon({icon_name: icon, icon_size: style.includes('primary') ? 24 : 17}));
+        button.set_child(new St.Icon({icon_name: icon, icon_size: style.includes('primary') ? 24 : LAYOUT.icon}));
         button.connect('clicked', action); return button;
     }
     _textButton(text, action, style = '') {
@@ -135,11 +136,13 @@ export default class VelaPulse extends Extension {
         this._pillRing.visible = a?.progress !== null && a?.progress !== undefined;
         if(this._pillRing.visible)this._pillRing.queue_repaint();
         this._pillTitle.text = p.compact;
-        this._pillDetail.text = `${p.type === 'media' ? '· ' : ''}${p.detail}`;
+        this._pillDetail.visible = Boolean(p.detail);
+        this._pillDetail.text = p.detail ? `· ${p.detail}` : '';
         const key = JSON.stringify([a?.id, a?.controls, a?.status]);
         if (key !== this._pillKey) {
             this._pillKey = key; this._pillControls.destroy_all_children();
             const actions = p.type === 'media' ? (a.controls ?? []) : (a?.controls ?? []).filter(c => c !== 'reset');
+            this._pillControls.visible=actions.length>0;
             for (const action of actions) {
                 const [icon, name] = actionInfo(action, a.status);
                 this._pillControls.add_child(this._iconButton(icon, name, () => this._command(a.id, action), 'vela-inline'));
@@ -284,6 +287,9 @@ export default class VelaPulse extends Extension {
     }
     _syncSurface() {
         const panel = this._state.config.surface === 'panel';
+        const iconSize=panel?LAYOUT.panelIndicator:LAYOUT.indicator;
+        this._pillIndicator.set_size(iconSize,iconSize);this._pillRing.set_size(iconSize,iconSize);
+        this._pillIcon.icon_size=panel?LAYOUT.panelIcon:LAYOUT.icon;
         if (panel === Boolean(this._panel)) return;
         this._pill.get_parent()?.remove_child(this._pill);
         if (panel) {
@@ -328,11 +334,13 @@ export default class VelaPulse extends Extension {
         const config = this._state.config, sizes = SIZES[config.size] ?? SIZES.medium;
         const monitor = this._panel ? Main.layoutManager.primaryMonitor : Main.layoutManager.monitors[config.monitor] ?? Main.layoutManager.primaryMonitor;
         if (!monitor) return;
-        const width = Math.min(this._expanded ? (config.card_size === 'large' ? 520 : sizes.card) : pillWidth(this._current(),sizes.pill), monitor.width - 32);
+        const textWidth=this._pillTitle.get_preferred_width(-1)[1]+(this._pillDetail.visible?LAYOUT.textGap+this._pillDetail.get_preferred_width(-1)[1]:0);
+        const preferred=compactWidth(textWidth,this._pillControls.get_n_children(),sizes.pill,Boolean(this._panel));
+        const width = Math.min(this._expanded ? (config.card_size === 'large' ? 520 : sizes.card) : preferred, monitor.width - 32);
         if (this._root.width !== width) this._root.width = width;
         if(this._expanded){const natural=this._card.get_preferred_height(width)[1];const height=Math.min(natural,Math.max(180,monitor.height-130));if(this._cardScroll.height!==height)this._cardScroll.height=height;}
         if (this._panel) {
-            const panelWidth = Math.min(sizes.pill, 280);
+            const panelWidth = Math.min(preferred, monitor.width-SPACE.xl*2);
             if (this._pill.width !== panelWidth) this._pill.width = panelWidth;
             const [px, py] = this._panel.get_transformed_position();
             const x = Math.round(Math.max(monitor.x + 12, Math.min(px + this._panel.width / 2 - width / 2, monitor.x + monitor.width - width - 12)));
@@ -340,8 +348,8 @@ export default class VelaPulse extends Extension {
             if (this._root.x !== x || this._root.y !== y) this._root.set_position(x,y);
             this._root.visible = this._expanded;return;
         }
-        const compactWidth = Math.min(pillWidth(this._current(),sizes.pill),width);
-        if (this._pill.width !== compactWidth) this._pill.width = compactWidth;
+        const pillAllocation = Math.min(preferred,width);
+        if (this._pill.width !== pillAllocation) this._pill.width = pillAllocation;
         const bottom = config.position === 'bottom';
         if (this._bottom !== bottom) {this._bottom = bottom;this._root.set_child_at_index(this._cardScroll, bottom ? 0 : 1);}
         const x = Math.round(monitor.x + (monitor.width - width) / 2);

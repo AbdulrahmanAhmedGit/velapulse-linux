@@ -14,8 +14,10 @@ jobs:
       - run: cargo test --locked
       - run: cargo build --locked --examples --bins
       - run: ./scripts/test-preferences-input.sh
+      - run: node scripts/generate-layout-css.mjs --check
       - run: ./scripts/test-context-ui.sh
         env:
+          VELAPULSE_TEST_LAYOUT_AUDIT: '1'
           VELAPULSE_TEST_GRIM: grim
       - run: node tests/context-cards.mjs
       - run: ./scripts/test-phase34.sh
