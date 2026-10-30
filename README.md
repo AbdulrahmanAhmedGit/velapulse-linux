@@ -10,7 +10,7 @@ Native Linux live activities with quiet floating pills and expressive activity c
 - Priority-ordered activities; bounded, connection-owned external activities over session D-Bus.
 - XDG configuration, themes, top/bottom placement, monitor selection, motion preference and daemon autostart.
 - Slim pills with independent icon controls, artwork-first media cards, large timer readouts, activity switching and reduced-motion support.
-- Native three-column preferences with live previews, pill and card sizes, appearance, opacity, floating placement or GNOME Top Bar, display, provider visibility and startup settings.
+- Adaptive native preferences with global settings search, live previews, pill and card sizes, appearance, opacity, floating placement or GNOME Top Bar, display, provider visibility and startup settings.
 - GNOME pill/card with outside-click collapse, Escape, focusable controls and lifecycle cleanup.
 - Automatic capability-based GTK layer-shell selection with renderer readiness, bounded retries and a connected GNOME fallback.
 - D-Bus activation backed by a systemd user service; `velapulse doctor` diagnostics.
@@ -100,3 +100,9 @@ its short resource sample is not a hardware performance certification.
 Original code: MIT. Conceptual inspiration: [nixesty/now-bar](https://github.com/nixesty/now-bar), an unrelated GPL-3.0 Windows project. No code or assets were copied and there is no affiliation. See [provenance](docs/LEGAL.md) and [dependency inventory](docs/DEPENDENCIES.md). VelaPulse is a provisional name; this is not trademark clearance.
 
 Weather, Now Brief and developer integrations are opt-in. See [setup and privacy](docs/WEATHER_AND_AGENTS.md), [Phase 3–4 evidence](docs/PHASE_3_4_REPORT.md), and the [roadmap](docs/PRODUCT_ROADMAP.md). Existing interactive agent sessions are not silently monitored, and VelaPulse never approves agent permissions.
+
+## Product UI overhaul
+
+The source-only redesign is documented in [the audit](docs/UI_REFACTOR_AUDIT.md),
+[design system](docs/DESIGN_SYSTEM.md) and [review report with genuine captures](docs/UI_REDESIGN_REPORT.md).
+It preserves the existing feature set; installation remains a separate explicit action.

@@ -1,0 +1,14 @@
+{
+  "before": {
+    "cpu_percent": 2.2,
+    "rss_kib": 71328.0,
+    "sample_seconds": 5.0,
+    "scope": "production GTK compact music, software compositor, two fixture MPRIS peers"
+  },
+  "after": {
+    "cpu_percent": 2.6,
+    "rss_kib": 71428.0,
+    "sample_seconds": 5.0,
+    "scope": "production GTK compact music, software compositor, two fixture MPRIS peers"
+  }
+}

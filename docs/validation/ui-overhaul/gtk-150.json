@@ -1,0 +1,172 @@
+[
+  {
+    "case": "brief",
+    "width": 187,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 1
+  },
+  {
+    "case": "music",
+    "width": 334,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 3
+  },
+  {
+    "case": "weather",
+    "width": 207,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 1
+  },
+  {
+    "case": "timer",
+    "width": 148,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 1
+  },
+  {
+    "case": "idle",
+    "width": 174,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "stopwatch",
+    "width": 166,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 1
+  },
+  {
+    "case": "battery",
+    "width": 130,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "volume",
+    "width": 145,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "developer",
+    "width": 136,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "short",
+    "width": 219,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 3
+  },
+  {
+    "case": "long",
+    "width": 310,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": true,
+    "subtitle_ellipsized": true,
+    "actions": 3
+  },
+  {
+    "case": "large-font",
+    "width": 301,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 3
+  },
+  {
+    "case": "rtl",
+    "width": 310,
+    "height": 68,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": true,
+    "subtitle_ellipsized": true,
+    "actions": 3
+  },
+  {
+    "case": "wide",
+    "width": 272,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 3
+  },
+  {
+    "case": "waiting",
+    "width": 134,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "completed",
+    "width": 152,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "failed",
+    "width": 126,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  }
+]
