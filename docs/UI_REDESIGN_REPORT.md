@@ -6,7 +6,7 @@ Branch: `refactor/product-ui-overhaul`, based on `7ee1ab6` from
 `feature/weather-ai-activities`. This is deliberately stacked on the newest
 feature branch: targeting old `main` directly would obscure the redesign with
 all earlier music/weather/developer work. No automatic merge or installation.
-Pull request: recorded below after branch publication.
+Pull request: [#4 — Refactor VelaPulse native UI](https://github.com/AbdulrahmanAhmedGit/velapulse-linux/pull/4).
 
 The Rust engine, D-Bus signatures, stored settings schema, provider opt-ins,
 command ownership and renderer supervision remain unchanged. The installed
