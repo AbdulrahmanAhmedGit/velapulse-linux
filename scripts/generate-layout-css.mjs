@@ -92,7 +92,7 @@ const prefs=`/* Native preferences; generated from the same semantic palette. */
 .preview-row { padding:8px 0;border-bottom:1px solid rgba(181,164,245,.08); }
 .preview-row-selected { background:rgba(181,164,245,.06);border-radius:10px; }
 .preview-name { font-size:13px;font-weight:500; }
-.pill-preview { min-height:28px;padding:6px 10px;border-radius:999px;background:#17181e; }
+.pill-preview { min-height:28px;padding:6px 10px;border-radius:999px;background:#17181e;color:${COLOR.dark.text}; }
 .preview-well { min-width:24px;min-height:24px;border-radius:12px;background:#393347;color:#d9ccff; }
 .preview-pill-title { font-size:11px;font-weight:600; }
 .preview-pill-detail { font-size:10px;color:${COLOR.dark.muted}; }
@@ -117,6 +117,8 @@ const prefs=`/* Native preferences; generated from the same semantic palette. */
 .settings-light .nav-button:checked { background:#ded7ef;color:#443368; }
 .settings-light .muted,.settings-light .section-title,.settings-light .provider-detail,.settings-light .settings-status,.settings-light .inspector-note,.settings-light .nav-section { color:${COLOR.light.muted}; }
 .settings-light .size-choice,.settings-light .card-choice { background:${COLOR.light.raised}; }
+.settings-light .pill-preview { background:${COLOR.light.raised};color:${COLOR.light.text}; }
+.settings-light .preview-pill-detail { color:${COLOR.light.muted}; }
 .settings-light .size-choice:checked,.settings-light .card-choice:checked { border-color:${COLOR.light.accent}; }
 .settings-glass { background:rgba(29,33,44,.9); }
 window.vela-preferences-glass { background:transparent;--window-bg-color:transparent; }

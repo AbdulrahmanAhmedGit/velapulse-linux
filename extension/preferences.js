@@ -110,11 +110,10 @@ export function fillPreferences(window) {
     const placement=new Adw.ComboRow({title:'Placement',subtitle:'Top Bar requires GNOME',model:Gtk.StringList.new(['Floating pill','GNOME Top Bar'])});inspectorGroup.add(placement);placement.connect('notify::selected',()=>{if(!syncing)save({surface:placement.selected?'panel':'floating'});});
     const theme=new Adw.ComboRow({title:'Appearance',model:Gtk.StringList.new(['Dark','Liquid Glass','Light'])});inspectorGroup.add(theme);theme.connect('notify::selected',()=>{if(!syncing)save({appearance:['dark','glass','light'][theme.selected]});});
     const position=new Adw.ComboRow({title:'Position',model:Gtk.StringList.new(['Top','Bottom'])});inspectorGroup.add(position);position.connect('notify::selected',()=>{if(!syncing)save({position:position.selected?'bottom':'top'});});
-    const opacityRow=box(true,'inspector-section',10);opacityRow.append(text('Opacity','inspector-label'));
-    const opacity=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,65,100,1);opacity.set_draw_value(true);opacity.set_value_pos(Gtk.PositionType.RIGHT);opacityRow.append(opacity);inspector.append(opacityRow);
+    const opacityRow=new Adw.ActionRow({title:'Surface opacity'});
+    const opacity=Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL,65,100,1);opacity.set_size_request(180,-1);opacity.valign=Gtk.Align.CENTER;opacity.set_draw_value(true);opacity.set_value_pos(Gtk.PositionType.RIGHT);opacity.set_format_value_func((_,v)=>`${Math.round(v)}%`);opacityRow.add_suffix(opacity);inspectorGroup.add(opacityRow);
     opacity.connect('value-changed',()=>{if(syncing)return;draft={opacity:Math.round(opacity.get_value())};if(pending)GLib.Source.remove(pending);pending=GLib.timeout_add(GLib.PRIORITY_DEFAULT,140,()=>{pending=0;const patch=draft;draft={};save(patch);return GLib.SOURCE_REMOVE;});});
-    const motionGroup=new Adw.PreferencesGroup({title:'Motion'});inspector.append(motionGroup);const motion=new Adw.SwitchRow({title:'Animations'});motionGroup.add(motion);motion.connect('notify::active',()=>{if(!syncing)save({animations:motion.active});});
-    inspector.append(text('Changes apply immediately','inspector-note'));
+    const motionGroup=inspectorGroup;const motion=new Adw.SwitchRow({title:'Animations'});motionGroup.add(motion);motion.connect('notify::active',()=>{if(!syncing)save({animations:motion.active});});
     const searchResults=new Gtk.ListBox({selection_mode:Gtk.SelectionMode.NONE,css_classes:['boxed-list','settings-search-results'],visible:false});
     const resultPanel=new Gtk.ScrolledWindow({child:searchResults,hscrollbar_policy:Gtk.PolicyType.NEVER,propagate_natural_height:true,max_content_height:220,visible:false});body.insert_child_after(resultPanel,search);
     const {applySearch,dispose:disposeSearch}=createSettingsSearch({window,search,results:searchResults,resultPanel,stack,navButtons,previewRows,PROVIDERS,sizes,cards,getActivities:()=>activities});
