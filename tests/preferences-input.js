@@ -44,8 +44,16 @@ async function toggle(row,field){const read=()=>field.split('.').reduce((o,k)=>o
 async function run(){
  inputProcess=Gio.Subprocess.new([GLib.getenv('VELAPULSE_TEST_INPUT')],Gio.SubprocessFlags.STDIN_PIPE|Gio.SubprocessFlags.STDOUT_PIPE|Gio.SubprocessFlags.STDERR_PIPE);inputReader=new Gio.DataInputStream({base_stream:inputProcess.get_stdout_pipe()});inputWriter=new Gio.DataOutputStream({base_stream:inputProcess.get_stdin_pipe()});assert(await readInput()==='READY','Input client not ready');
  await sleep(700);
+ if(GLib.getenv('VELAPULSE_TEST_SEARCH_ONLY')==='1'){
+  const split=window.get_content(),search=walk(window).find(w=>w instanceof Gtk.SearchEntry);
+  if(split.collapsed&&split.show_sidebar){await click(walk(window).find(w=>w instanceof Gtk.Button&&w.tooltip_text==='Show settings categories'));}
+  await type(search,'Temperature units');await key('ENTER');const stack=walk(window).find(w=>w instanceof Gtk.Stack);await until(()=>stack.visible_child_name==='weather','Adaptive global search destination');
+  assert(find(Adw.ComboRow,'Temperature units'),'Search destination control');await dropdown(find(Adw.ComboRow,'Temperature units'),1);await until(()=>config().weather.units==='fahrenheit','Search target writes settings');
+  if(GLib.getenv('VELAPULSE_TEST_GRIM'))await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_GLASS_IMAGE')]);
+  print('PASS adaptive preferences: collapsed sidebar, global search, actual target dropdown and persistence');return;
+ }
  if(GLib.getenv('VELAPULSE_TEST_LAYOUT_CAPTURE')==='1'){
-  await dropdown(find(Adw.ComboRow,'Appearance'),1);await sleep(300);
+  const themeIndex=Number(GLib.getenv('VELAPULSE_TEST_THEME_INDEX')??1);if(themeIndex===0)await dropdown(find(Adw.ComboRow,'Appearance'),1);await dropdown(find(Adw.ComboRow,'Appearance'),themeIndex);await sleep(300);
   await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_GLASS_IMAGE')]);
   print('PASS actual preferences capture after pointer/keyboard appearance selection');return;
  }
@@ -91,6 +99,8 @@ async function run(){
   const check=walk(window).find(w=>w.name===`enabled-${id}`);await until(()=>check.get_mapped(),`Search did not reveal ${id}`);const old=config().enabled.includes(id);await click(check);await until(()=>config().enabled.includes(id)!==old,`preview toggle ${id}`);await click(check);await until(()=>config().enabled.includes(id)===old,`preview restore ${id}`);
  }
  const search=walk(window).find(w=>w instanceof Gtk.SearchEntry);await type(search,'media');assert(!walk(window).find(w=>w.name==='preview-timer').visible,'Search did not filter');await type(search,'');
+ await page('General','general');await type(search,'Temperature units');await key('ENTER');await until(()=>stack.visible_child_name==='weather','Global search must open actual Weather settings');assert(find(Adw.ComboRow,'Temperature units'),'Global search destination missing');await page('Appearance','appearance');
+ print('PASS global settings search navigates to the existing native row');
  print('PASS pointer+keyboard: provider checkboxes, five size selectors, search input/filter/clear');
  await dropdown(find(Adw.ComboRow,'Appearance'),2);await until(()=>config().appearance==='light','theme persistence');assert(window.get_content().has_css_class('settings-light'),'Theme did not apply');await dropdown(find(Adw.ComboRow,'Appearance'),1);await until(()=>config().appearance==='glass','Glass persistence');assert(window.get_content().has_css_class('settings-glass')&&window.has_css_class('vela-preferences-glass'),'Transparent glass surfaces did not apply');
  if(GLib.getenv('VELAPULSE_TEST_GRIM')){await sleep(300);await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_GLASS_IMAGE')]);}
@@ -132,7 +142,7 @@ app.connect('activate',()=>{
  else if(mode==='legacy'){
   host.add(new Adw.PreferencesPage({title:'VelaPulse'}));window=new Adw.ApplicationWindow({application:app});fillPreferences(window);host.connect('map',()=>{host.hide();window.present();});window.connect('close-request',()=>{host.close();return false;});
  }else window=fillExtensionPreferences(host);
- window.set_decorated(false);window.set_default_size(Math.min(1280,screenWidth-32),Math.min(900,screenHeight-32));window.title='VelaPulse Preferences Input Test';
+ window.set_decorated(false);window.set_default_size(Math.min(Number(GLib.getenv('VELAPULSE_TEST_WINDOW_WIDTH')??940),screenWidth-32),Math.min(900,screenHeight-32));window.title='VelaPulse Preferences Input Test';
  for(const[w,isHost]of [[host,true],[window,false]]){const controller=new Gtk.EventControllerLegacy({propagation_phase:Gtk.PropagationPhase.CAPTURE});controller.connect('event',(_,event)=>{const type=event.get_event_type();if([2,3,4,5].includes(type)){if(isHost)hostEvents++;else if([2,3].includes(type))mouse++;else {keys++;}}return false;});w.add_controller(controller);}
  window.present();if(mode!=='standalone')host.show();run().catch(async e=>{printerr(e.message);printerr(e.stack);if(GLib.getenv('VELAPULSE_TEST_GRIM'))await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_GLASS_IMAGE').replace('liquid-glass','preferences-failure')]);failed=true;}).finally(()=>{inputProcess?.force_exit();window.close();host.close();app.release();app.quit();});
 });app.run([]);if(failed)throw new Error('Preferences input regression failed');
