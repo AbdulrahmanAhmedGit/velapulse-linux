@@ -218,3 +218,5 @@
 .vela-light .vela-agent-state StIcon { color:#23654e; }
 .vela-light .vela-state-waiting StIcon { color:#85521c; }
 .vela-light .vela-state-failed StIcon { color:#a13c46; }
+
+.vela-light .vela-rail-selected { background-color:rgba(95,80,130,.18); color:#433563; }

@@ -199,3 +199,5 @@ window.vela-window { background: transparent; color: #f4f2f8; font-family: "Adwa
 .vela-hour-scroll scrollbar { background:transparent; min-height:7px; }
 .vela-hour-scroll scrollbar trough { background:rgba(160,176,207,.12); border:none; border-radius:4px; }
 .vela-hour-scroll scrollbar slider { min-height:5px; min-width:24px; margin:2px 0; border:none; border-radius:4px; background:rgba(160,176,207,.48); box-shadow:none; }
+
+.vela-light .vela-rail-selected { background-color:rgba(95,80,130,.18); color:#433563; }

@@ -31,3 +31,22 @@ Phase 1–2 checks: build binaries and examples, then run `scripts/test-music.sh
 A real-player check is available through `tests/real_player.py` on a private bus with `VELAPULSE_TEST_MPV_MPRIS` pointing to a distribution mpv-mpris plugin. mpv uses generated silence and null audio/video sinks, without reading a user profile or playing sound. No fixture or private audio helper is copied by the installer. Optional test screenshots are captured only when `VELAPULSE_TEST_GRIM` points to grim; logs are in target/music-input and target/phase-1-2.
 
 Phase 3–4: `scripts/test-phase34.sh` runs deterministic private-bus command, hook privacy/config merge, ownership, deduplication, restart and settings checks and records short daemon resource samples. `VELAPULSE_TEST_LIVE_WEATHER=1` explicitly queries a test city; `VELAPULSE_TEST_REAL_AGENTS=1` invokes installed CLIs with a minimal test prompt, private working directory and no session persistence. These optional checks are not CI model/network claims. `VELAPULSE_TEST_WEATHER_UI=1 scripts/test-preferences-input.sh` adds actual city search/result selection through real input. `VELAPULSE_TEST_PHASE34=1` with `tests/gnome_smoke.py` captures weather/agent/brief cards using a previously saved live test forecast and synthetic agent UI events. Stock GNOME callback/render checks do not constitute physical input proof.
+
+
+## Structured context UI regression
+
+Run `node tests/context-cards.mjs` and `scripts/test-context-ui.sh`. The latter needs the same private Sway/Gtk4LayerShell setup as native music tests. Set `VELAPULSE_TEST_GRIM` for genuine screenshot capture, `VELAPULSE_TEST_SCALE=1.25` for fractional scaling, and optionally `VELAPULSE_TEST_ARTIFACTS` for a separate output directory. The test uses declared weather/agent fixtures and verifies private configuration persistence.
+
+For actual GNOME pointer/keyboard delivery, build the marked-private-runtime EIS helper with the libei development headers and existing runtime:
+
+```sh
+cc -Wall -Wextra -Werror tests/fixtures/gnome_input.c \
+  $(pkg-config --cflags --libs libei-1.0) -o target/gnome-input
+VELAPULSE_TEST_GNOME_INPUT=1 VELAPULSE_TEST_PHASE34=1 \
+  dbus-run-session --config-file=tests/fixtures/dbus-isolated.conf -- \
+  /usr/bin/python3 tests/gnome_smoke.py
+```
+
+Add `VELAPULSE_TEST_GNOME_SCALE=1.25` for the private fractional output. This mode delivers actual EIS events, checks the private Shell owns the remote-desktop bus, and does not activate widget signals. Never target the active user desktop. The default mode remains a callback/render smoke. Optional `VELAPULSE_TEST_REAL_CODEX_UI=1` runs a real minimal ephemeral Codex task and requires working model access; it is not a fixture or a default CI requirement. Do not infer real Claude permission validation from its explicitly synthetic UI card.
+
+See [UI quality report](PHASE_3_4_UI_REPORT.md) for results, screenshots and remaining limits. No dependency installation or host application replacement is performed by these checks.
