@@ -29,7 +29,7 @@ for(const shell of [true,false]){
  rule('.vela-caption',`font-size:${T.caption}px;font-weight:600;color:${COLOR.dark.muted};`);
  rule('.vela-quiet',`color:${COLOR.dark.muted};`);
  rule('.vela-artwork','border-radius:16px;background-color:#302a39;');
- if(shell)rule('.vela-cover-image','background-size:cover;background-position:center;border-radius:16px;');
+ if(shell)rule('.vela-cover-image','background-size:cover;border-radius:16px;');
  rule('.vela-track-identity',gap(S.xs));text('.vela-title',T.title,600);text('.vela-subtitle',T.body);rule('.vela-subtitle',`color:${COLOR.dark.muted};`);
  rule('.vela-provider-row',gap(S.sm));text('.vela-source',T.secondary,600);text('.vela-output',T.secondary);rule('.vela-provider-icon','color:#b5a4f5;');
  rule('.vela-music-tools',gap(S.md));rule('.vela-music-actions, .vela-audio-controls',gap(S.sm));

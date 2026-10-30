@@ -88,6 +88,8 @@ export default class VelaPulse extends Extension {
     _label(text, style, expand = false) {
         const label = new St.Label({text, style_class: style, x_expand: expand, y_align: CENTER});
         label.clutter_text.set_ellipsize(3);
+        label.clutter_text.line_wrap=['vela-title','vela-subtitle','vela-metric-title'].includes(style);
+        label.clutter_text.set_single_line_mode(!label.clutter_text.line_wrap);
         return label;
     }
     _iconButton(icon, name, action, style = '') {
@@ -207,7 +209,7 @@ export default class VelaPulse extends Extension {
         if(id.startsWith('media:'))this._musicRequest('SelectPlayer','(s)',[id]).catch(()=>this._error('Player selection unavailable'));
         this._update(JSON.stringify(this._state));
         this._card.opacity = this._motion() ? 180 : 255;
-        this._card.ease({opacity:255,duration:this._motion()?120:0,mode:Clutter.AnimationMode.EASE_OUT_CUBIC});
+        this._card.ease({opacity:255,duration:this._motion()?MOTION.feedback:0,mode:Clutter.AnimationMode.EASE_OUT_CUBIC});
     }
     _buildMedia(p) {
         const hero = new St.Widget({layout_manager:new Clutter.BinLayout(),style_class:'vela-artwork',height:176,clip_to_allocation:true});
@@ -278,7 +280,7 @@ export default class VelaPulse extends Extension {
         this._musicTools?.update();for(const {button,action}of this._transportButtons??[]){const[icon,name]=actionInfo(action,a?.status);button.get_child().icon_name=icon;button.accessible_name=name;}
         if (p.type === 'media') {
             const uri = a?.icon?.startsWith('file://')&&Gio.File.new_for_uri(a.icon).query_exists(null) ? Gio.File.new_for_uri(a.icon).get_uri() : this.dir.get_child('assets').get_child('orbit.svg').get_uri();
-            if (uri !== this._artUri) {if(this._oldCover){this._oldCover.destroy();this._oldCover=null;}if(this._artUri&&this._motion()){const faded=new St.Widget({x_expand:true,y_expand:true,style_class:'vela-cover-image',style:this._hero.get_style()});this._hero.insert_child_at_index(faded,0);this._oldCover=faded;faded.ease({opacity:0,duration:180,onComplete:()=>{if(this._oldCover===faded){this._oldCover=null;faded.destroy();}}});}this._artUri=uri;this._hero.set_style(`background-image: url("${uri.replace(/["\\\n\r]/g, c => `\\${c}`)}");`);}
+            if (uri !== this._artUri) {if(this._oldCover){this._oldCover.destroy();this._oldCover=null;}if(this._artUri&&this._motion()){const faded=new St.Widget({x_expand:true,y_expand:true,style_class:'vela-cover-image',style:this._hero.get_style()});this._hero.insert_child_at_index(faded,0);this._oldCover=faded;faded.ease({opacity:0,duration:MOTION.artwork,onComplete:()=>{if(this._oldCover===faded){this._oldCover=null;faded.destroy();}}});}this._artUri=uri;this._hero.set_style(`background-image: url("${uri.replace(/["\\\n\r]/g, c => `\\${c}`)}");`);}
             this._sourceLabel.text = p.source;
 
         } else this._artUri = null;

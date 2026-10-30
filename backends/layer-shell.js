@@ -33,12 +33,12 @@ const CompactPill = GObject.registerClass(class CompactPill extends Gtk.Widget {
 const CoverArtwork = GObject.registerClass(class CoverArtwork extends Gtk.Widget {
     _init() {
         super._init({hexpand:true, vexpand:true});
-        this._stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:180});this._pictures=[0,1].map(i=>{const picture=new Gtk.Picture({content_fit:Gtk.ContentFit.COVER,can_shrink:true});this._stack.add_named(picture,String(i));return picture;});this._index=0;this._stack.set_parent(this);
+        this._stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:MOTION.artwork});this._pictures=[0,1].map(i=>{const picture=new Gtk.Picture({content_fit:Gtk.ContentFit.COVER,can_shrink:true});this._stack.add_named(picture,String(i));return picture;});this._index=0;this._stack.set_parent(this);
     }
     vfunc_measure(orientation, _forSize) {return orientation === Gtk.Orientation.HORIZONTAL ? [0,0,-1,-1] : [176,176,-1,-1];}
     vfunc_size_allocate(width, height, baseline) {this._stack?.allocate(width,height,baseline,null);}
     vfunc_snapshot(snapshot) {if(this._stack)this.snapshot_child(this._stack,snapshot);}
-    set_file(file,motion=true) {if(!this._stack)return;this._index=1-this._index;this._stack.transition_duration=motion?180:0;this._pictures[this._index].set_file(file);this._stack.visible_child_name=String(this._index);}
+    set_file(file,motion=true) {if(!this._stack)return;this._index=1-this._index;this._stack.transition_duration=motion?MOTION.artwork:0;this._pictures[this._index].set_file(file);this._stack.visible_child_name=String(this._index);}
     release() {this._stack?.unparent();this._stack=null;this._pictures=[];}
 });
 
@@ -55,7 +55,7 @@ function call(method, signature, args, done = () => {}) {
 }
 function request(method,signature,args){return new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});}
 function command(id, action, seconds = 0) {if(action==='cancel'){call('DeveloperCancel','(s)',[id]);return;}if(action === 'start') {selected = id;launcherOpen = false;}call('Command', '(sst)', [id, action, seconds],()=>{if(id==='brief'){selected='brief';call('Snapshot','()',[],([json])=>render(json));}});}
-function label(text, style, expand = false) {return new Gtk.Label({label:text, xalign:0, ellipsize:3, max_width_chars:style.startsWith('vela-pill-')?-1:style==='vela-title'?25:42, hexpand:expand, css_classes:[style]});}
+function label(text, style, expand = false) {return new Gtk.Label({label:text, xalign:0, ellipsize:3, max_width_chars:style.startsWith('vela-pill-')?-1:style==='vela-title'?25:42, hexpand:expand, wrap:['vela-title','vela-subtitle','vela-metric-title'].includes(style),single_line_mode:style.startsWith('vela-pill-'),lines:style.startsWith('vela-pill-')?1:style==='vela-title'?2:3,css_classes:[style]});}
 function box(vertical = false, style = '', spacing = 0) {return new Gtk.Box({orientation:vertical ? Gtk.Orientation.VERTICAL : Gtk.Orientation.HORIZONTAL, spacing, css_classes:style ? [style] : []});}
 function clear(widget) {while(widget.get_first_child())widget.remove(widget.get_first_child());}
 function iconButton(icon, name, action, style = '') {

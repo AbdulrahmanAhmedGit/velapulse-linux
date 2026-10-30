@@ -4,8 +4,8 @@ import Gdk from 'gi://Gdk';
 
 // Discover native rows after every page has been built. Results lead to the
 // actual control, so there is only one setting widget and one persistence path.
-export function createSettingsSearch({window,search,results,stack,navButtons,previewRows,PROVIDERS,sizes,cards,getActivities}) {
-    const entries=[];
+export function createSettingsSearch({window,search,results,resultPanel,stack,navButtons,previewRows,PROVIDERS,sizes,cards,getActivities}) {
+    const entries=[];let lastQuery=null;
     function visit(widget,page) {
         if(widget instanceof Adw.PreferencesRow)entries.push({widget,page,title:widget.title,subtitle:widget.subtitle??''});
         for(let child=widget.get_first_child();child;child=child.get_next_sibling())visit(child,page);
@@ -20,13 +20,15 @@ export function createSettingsSearch({window,search,results,stack,navButtons,pre
     }
     function applySearch(){
         const q=search.text.trim().toLocaleLowerCase();
+        if(q!==lastQuery){lastQuery=q;
         while(results.get_first_child())results.remove(results.get_first_child());
         if(q){
-            const matches=entries.filter(e=>`${e.title} ${e.subtitle}`.toLocaleLowerCase().includes(q)).slice(0,4);
+            const matches=entries.filter(e=>`${e.title} ${e.subtitle}`.toLocaleLowerCase().includes(q));
             for(const entry of matches){const row=new Adw.ActionRow({title:entry.title,subtitle:entry.page==='volume'?'Audio':entry.page[0].toUpperCase()+entry.page.slice(1),activatable:true});row.add_suffix(new Gtk.Image({icon_name:'go-next-symbolic'}));row.connect('activated',()=>navigate(entry));results.append(row);}
             if(!matches.length)results.append(new Adw.ActionRow({title:'No matching settings',subtitle:'Try “location”, “motion”, “lyrics” or “display”.'}));
         }
-        results.visible=Boolean(q);
+        }
+        resultPanel.visible=Boolean(q);
         for(const [id,{row}]of previewRows){const match=!q||id.includes(q)||PROVIDERS.find(x=>x[0]===id)[1].toLowerCase().includes(q);row.visible=match&&(id!=='stopwatch'||getActivities().some(a=>a.id==='stopwatch')||Boolean(q));}
         sizes.visible=!q||'pill size'.includes(q);cards.visible=!q||'card size'.includes(q);
     }

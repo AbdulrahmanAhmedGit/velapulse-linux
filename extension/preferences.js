@@ -1,5 +1,5 @@
 import {createSettingsSearch} from './settings-search.js';
-import {SPACE, LAYOUT} from './layout.js';
+import {SPACE, LAYOUT, MOTION} from './layout.js';
 import {mergeSettings} from './context-state.js';
 import {addContextPreferences} from './context-preferences.js';
 import {addMusicPreferences} from './music-preferences.js';
@@ -27,7 +27,7 @@ export function fillPreferences(window) {
     const sidebar=box(true,'settings-sidebar',5);const sidebarScroll=new Gtk.ScrolledWindow({hscrollbar_policy:Gtk.PolicyType.NEVER});sidebarScroll.set_child(sidebar);root.set_sidebar(sidebarScroll);
     const breakpoint=new Adw.Breakpoint({condition:Adw.BreakpointCondition.parse('max-width: 720px')});breakpoint.add_setter(root,'collapsed',true);window.add_breakpoint(breakpoint);
     const brand=box(false,'settings-brand',10);brand.append(new Gtk.Image({icon_name:'media-record-symbolic',pixel_size:18}));brand.append(text('VelaPulse','brand-title'));sidebar.append(brand);
-    const stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:120,hexpand:true,vexpand:true});
+    const stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:MOTION.feedback,hexpand:true,vexpand:true});
     const body=box(true,'settings-body');body.hexpand=true;root.set_content(body);
     const header=new Adw.HeaderBar({show_start_title_buttons:false,css_classes:['flat','settings-header']});
     const navToggle=new Gtk.Button({icon_name:'sidebar-show-symbolic',tooltip_text:'Show settings categories'});navToggle.connect('clicked',()=>{root.show_sidebar=!root.show_sidebar;});navToggle.visible=root.collapsed;root.connect('notify::collapsed',()=>{navToggle.visible=root.collapsed;});header.pack_start(navToggle);
@@ -116,8 +116,8 @@ export function fillPreferences(window) {
     const motionGroup=new Adw.PreferencesGroup({title:'Motion'});inspector.append(motionGroup);const motion=new Adw.SwitchRow({title:'Animations'});motionGroup.add(motion);motion.connect('notify::active',()=>{if(!syncing)save({animations:motion.active});});
     inspector.append(text('Changes apply immediately','inspector-note'));
     const searchResults=new Gtk.ListBox({selection_mode:Gtk.SelectionMode.NONE,css_classes:['boxed-list','settings-search-results'],visible:false});
-    body.insert_child_after(searchResults,search);
-    const {applySearch,dispose:disposeSearch}=createSettingsSearch({window,search,results:searchResults,stack,navButtons,previewRows,PROVIDERS,sizes,cards,getActivities:()=>activities});
+    const resultPanel=new Gtk.ScrolledWindow({child:searchResults,hscrollbar_policy:Gtk.PolicyType.NEVER,propagate_natural_height:true,max_content_height:220,visible:false});body.insert_child_after(resultPanel,search);
+    const {applySearch,dispose:disposeSearch}=createSettingsSearch({window,search,results:searchResults,resultPanel,stack,navButtons,previewRows,PROVIDERS,sizes,cards,getActivities:()=>activities});
     function command(id,action,seconds) {proxy?.call('Command',new GLib.Variant('(sst)',[id,action,seconds]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{p.call_finish(r);}catch{status.label='This action is unavailable.';}});}
     let saving=false,queued={},inFlight={},draft={};
     function save(patch) {queued=mergeSettings(queued,patch);flush();}
