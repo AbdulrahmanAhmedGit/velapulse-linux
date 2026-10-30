@@ -29,3 +29,11 @@ export const MOTION = Object.freeze({feedback:120, artwork:180, expand:220, coll
 export function compactTextWidth(primary,secondary,panel=false) {
     return panel ? primary+(secondary?LAYOUT.textGap+secondary:0) : Math.max(primary,secondary);
 }
+
+// Opacity belongs to surfaces; text and keyboard focus always remain opaque.
+export function surfaceColor(appearance='dark',opacity=98) {
+    const color=appearance==='light'?COLOR.light.surface:COLOR.dark.surface;
+    const rgb=color.slice(1).match(/../g).map(c=>parseInt(c,16));
+    const alpha=Math.max(.65,Math.min(1,(Number(opacity)||98)/100))*(appearance==='glass'?.74:1);
+    return `rgba(${rgb.join(',')},${alpha.toFixed(3)})`;
+}

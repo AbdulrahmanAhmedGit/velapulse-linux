@@ -1,7 +1,7 @@
 import {createShellContextCard} from './context-shell.js';
 import {createMusicControls} from './music-shell.js';
 import {activePlayer} from './music-state.js';
-import {SPACE, LAYOUT, compactWidth, compactTextWidth, MOTION} from './layout.js';
+import {SPACE, LAYOUT, compactWidth, compactTextWidth, MOTION, surfaceColor} from './layout.js';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
@@ -128,8 +128,9 @@ export default class VelaPulse extends Extension {
             if(config.appearance===theme)this._panel.add_style_class_name(`vela-${theme}`);
             else this._panel.remove_style_class_name(`vela-${theme}`);
         }
-        this._root.opacity = Math.round((config.opacity ?? 98) * 2.55);
-        this._pill.opacity = this._panel ? this._root.opacity : 255;
+        const surface=`background-color:${surfaceColor(config.appearance,config.opacity)};`;
+        if(this._card.get_style()!==surface)this._card.set_style(surface);
+        const pillSurface=this._panel?'':surface;if(this._pill.get_style()!==pillSurface)this._pill.set_style(pillSurface);
         const wellStyle = `background-color: ${p.tint}; color: #ffffff;`;
         if (this._pillWell.get_style() !== wellStyle) this._pillWell.set_style(wellStyle);
         const artUri=p.type==='media'&&a.icon?.startsWith('file://')?a.icon:p.icon;if(this._pillArtUri!==artUri){this._pillArtUri=artUri;if(artUri.startsWith('file://')&&Gio.File.new_for_uri(artUri).query_exists(null))this._pillIcon.gicon=new Gio.FileIcon({file:Gio.File.new_for_uri(artUri)});else this._pillIcon.icon_name=p.icon;}

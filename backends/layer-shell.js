@@ -2,7 +2,7 @@
 import {createGtkContextCard} from '../extension/context-gtk.js';
 import {createMusicControls} from '../extension/music-controls.js';
 import {activePlayer} from '../extension/music-state.js';
-import {SPACE, LAYOUT, MOTION} from '../extension/layout.js';
+import {SPACE, LAYOUT, MOTION, surfaceColor} from '../extension/layout.js';
 import Gtk from 'gi://Gtk?version=4.0';
 import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio';
@@ -45,7 +45,7 @@ const CoverArtwork = GObject.registerClass(class CoverArtwork extends Gtk.Widget
 const BUS = 'io.github.velapulse.Service', PATH = '/io/github/velapulse/Service', IFACE = 'io.github.velapulse.Service1';
 const here = Gio.File.new_for_uri(import.meta.url).get_parent();
 const app = new Gtk.Application({application_id: 'io.github.velapulse.LayerShell'});
-let window, cardScroll, proxy, root, pill, pillIcon, pillTitle, pillDetail, pillControls, revealer, card, pillRing;
+let surfaceCss, surfaceKey, window, cardScroll, proxy, root, pill, pillIcon, pillTitle, pillDetail, pillControls, revealer, card, pillRing;
 let state = {activities: [], config: {}}, selected, expanded = false, launcherOpen = false;
 let pillArtUri,lastMonitor, lastPosition, cardKey, pillKey, refs = {}, signal = 0, ownerSignal = 0, preferencesWatch = 0, monitorSignal = 0, rendererOwner = 0;
 function call(method, signature, args, done = () => {}) {
@@ -94,7 +94,7 @@ function render(json) {
     const a = state.activities.find(a=>a.id===selected), p = present(a);
     root.set_css_classes(['vela-root', ...(['light','glass'].includes(state.config.appearance) ? [`vela-${state.config.appearance}`] : []), `vela-${p.type}`]);
     Gtk.Settings.get_default().gtk_application_prefer_dark_theme=state.config.appearance!=='light';
-    root.opacity = (state.config.opacity ?? 98)/100;
+    const surface=surfaceColor(state.config.appearance,state.config.opacity);if(surfaceKey!==surface){surfaceKey=surface;surfaceCss.load_from_string(`.vela-root .vela-pill,.vela-root .vela-card {background-color:${surface};}`);}
     pillRing.visible=a?.progress!==null && a?.progress!==undefined;if(pillRing.visible)pillRing.queue_draw();
     const artUri=p.type==='media'&&a.icon?.startsWith('file://')?a.icon:p.icon;if(pillArtUri!==artUri){pillArtUri=artUri;if(artUri.startsWith('file://')&&Gio.File.new_for_uri(artUri).query_exists(null))pillIcon.gicon=new Gio.FileIcon({file:Gio.File.new_for_uri(artUri)});else pillIcon.icon_name=p.icon;}pillTitle.label=p.compact;pill.content.get_first_child().update_property([Gtk.AccessibleProperty.LABEL],[`${p.compact}, ${p.detail}`]);pillDetail.label=p.detail;pillDetail.visible=Boolean(p.detail);
     const key = JSON.stringify([a?.id,a?.controls,a?.status]);
@@ -188,6 +188,7 @@ app.connect('activate',()=>{
     pillTitle=label('VelaPulse','vela-pill-title',true);pillDetail=label('Ready when you are','vela-pill-detail',true);lines.append(pillTitle);lines.append(pillDetail);summary.append(lines);main.set_child(summary);pill.append(main);
     pillControls=box(false,'vela-inline-controls',LAYOUT.actionGap);pillControls.valign=Gtk.Align.CENTER;pill.append(pillControls);root.append(pill);
     revealer=new Gtk.Revealer({transition_type:Gtk.RevealerTransitionType.SLIDE_DOWN,visible:false});revealer.connect('notify::child-revealed',()=>{if(!revealer.child_revealed&&!expanded)revealer.visible=false;});card=box(true,'vela-card',LAYOUT.cardGap);cardScroll=new Gtk.ScrolledWindow({hscrollbar_policy:Gtk.PolicyType.NEVER,propagate_natural_height:true,max_content_height:760});cardScroll.set_child(card);revealer.set_child(cardScroll);root.append(revealer);
+    surfaceCss=new Gtk.CssProvider();Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),surfaceCss,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION+1);
     const css=new Gtk.CssProvider();css.load_from_file(here.get_child('style.css'));Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     const keys=new Gtk.EventControllerKey();keys.connect('key-pressed',(_,key)=>{if(key===Gdk.KEY_Escape){setExpanded(false);return true;}return false;});window.add_controller(keys);
     const focus=new Gtk.EventControllerFocus();focus.connect('leave',()=>{GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE,()=>{
@@ -207,5 +208,5 @@ app.connect('activate',()=>{
     window.connect('map',()=>{if(!rendererOwner)rendererOwner=Gio.bus_own_name_on_connection(Gio.DBus.session,'io.github.velapulse.Renderer',Gio.BusNameOwnerFlags.DO_NOT_QUEUE,null,()=>app.quit());});
     window.present();
 });
-app.connect('shutdown',()=>{pill?.release();if(preferencesWatch)Gio.bus_unwatch_name(preferencesWatch);if(rendererOwner)Gio.bus_unown_name(rendererOwner);refs.music?.dispose();refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
+app.connect('shutdown',()=>{if(surfaceCss)Gtk.StyleContext.remove_provider_for_display(Gdk.Display.get_default(),surfaceCss);pill?.release();if(preferencesWatch)Gio.bus_unwatch_name(preferencesWatch);if(rendererOwner)Gio.bus_unown_name(rendererOwner);refs.music?.dispose();refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
 app.run([]);
