@@ -96,7 +96,7 @@ function render(json) {
     Gtk.Settings.get_default().gtk_application_prefer_dark_theme=state.config.appearance!=='light';
     root.opacity = (state.config.opacity ?? 98)/100;
     pillRing.visible=a?.progress!==null && a?.progress!==undefined;if(pillRing.visible)pillRing.queue_draw();
-    const artUri=p.type==='media'&&a.icon?.startsWith('file://')?a.icon:p.icon;if(pillArtUri!==artUri){pillArtUri=artUri;if(artUri.startsWith('file://')&&Gio.File.new_for_uri(artUri).query_exists(null))pillIcon.gicon=new Gio.FileIcon({file:Gio.File.new_for_uri(artUri)});else pillIcon.icon_name=p.icon;}pillTitle.label=p.compact;pillTitle.tooltip_text=p.compact;pillDetail.tooltip_text=p.detail;pillDetail.label=p.detail;pillDetail.visible=Boolean(p.detail);
+    const artUri=p.type==='media'&&a.icon?.startsWith('file://')?a.icon:p.icon;if(pillArtUri!==artUri){pillArtUri=artUri;if(artUri.startsWith('file://')&&Gio.File.new_for_uri(artUri).query_exists(null))pillIcon.gicon=new Gio.FileIcon({file:Gio.File.new_for_uri(artUri)});else pillIcon.icon_name=p.icon;}pillTitle.label=p.compact;pill.content.get_first_child().update_property([Gtk.AccessibleProperty.LABEL],[`${p.compact}, ${p.detail}`]);pillDetail.label=p.detail;pillDetail.visible=Boolean(p.detail);
     const key = JSON.stringify([a?.id,a?.controls,a?.status]);
     if(key !== pillKey) {
         pillKey=key;clear(pillControls);

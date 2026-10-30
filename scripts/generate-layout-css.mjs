@@ -1,71 +1,126 @@
+// Deterministic native design system. No cascade of historical overrides.
 import {readFileSync,writeFileSync} from 'node:fs';
-import {SPACE as S,LAYOUT as L} from '../extension/layout.js';
-const begin='/* BEGIN GENERATED LAYOUT: scripts/generate-layout-css.mjs */';
-const end='/* END GENERATED LAYOUT */';
-const px=n=>`${n}px`;
-for(const [file,shell,settings]of [['extension/stylesheet.css',true],['backends/style.css',false],['extension/preferences.css',false,true]]){
- const rule=(selector,props)=>`${selector} { ${Object.entries(props).map(([k,v])=>`${k}: ${typeof v==='number'&&k!=='font-weight'?px(v):v};`).join(' ')} }`;
- const size=(w,h)=>shell?{width:w,height:h}:{'min-width':w,'min-height':h};
- const gap=n=>shell?{spacing:n}:{};
- const rules=settings?[
-  rule('.settings-sidebar',{padding:`${S.lg}px ${S.md}px`,margin:S.sm}),
-  rule('.settings-page',{padding:`${S.lg}px ${S.xl}px ${S.xl}px`}),
-  rule('.settings-brand',{padding:`0 ${S.sm}px ${S.lg}px`}),
-  rule('.nav-button',{'min-height':L.hitArea,padding:`${S.sm}px ${S.md}px`}),
-  rule('.settings-search',{padding:`${S.sm}px ${S.md}px`}),
-  rule('.preview-row',{padding:S.sm,'margin-top':0}),
-  rule('.pill-preview',{'min-height':L.indicator,padding:`${L.pillPaddingY}px ${L.pillPaddingX}px`,'border-radius':L.pillRadius}),
-  rule('.preview-well',{'min-width':L.well,'min-height':L.well,padding:0,'border-radius':L.pillRadius}),
-  rule('.settings-inspector',{padding:`${S.lg}px ${S.md}px`}),
-  rule('.provider-controls button',{'min-height':L.hitArea,padding:`${S.sm}px ${S.md}px`}),
- ]:[
-  rule('.vela-root',gap(S.md)),
-  rule('.vela-pill',{'min-height':L.indicator,padding:`${L.pillPaddingY}px ${L.pillPaddingX}px`,'border-radius':L.pillRadius,...gap(S.sm)}),
-  rule('.vela-pill-main',{padding:0,'min-height':0,'border-radius':0,background:'transparent',border:'none','box-shadow':'none',...(!shell?{outline:'none'}:{})}),
-  rule('.vela-pill-main:hover, .vela-pill-main:active, .vela-pill-main:focus, .vela-light .vela-pill-main:hover, .vela-light .vela-pill-main:focus',{background:'transparent'}),
-  rule('.vela-pill-main:focus'+(shell?'': '-visible'),{'box-shadow':'inset 0 -2px #b5a4f5'}),
-  rule('.vela-pill-summary',gap(L.iconGap)),rule('.vela-pill-text',gap(L.textGap)),
-  rule('.vela-well',{...size(L.well,L.well),'border-radius':L.well/2}),
-  rule('.vela-inline-controls',{padding:0,...gap(L.actionGap)}),
-  rule('.vela-icon-button',{padding:0,...size(L.hitArea,L.hitArea),'border-radius':L.pillRadius}),
-  rule('.vela-inline, .vela-quiet, .vela-cover-button, .vela-rail-item, .vela-rail-selected',{...size(L.hitArea,L.hitArea)}),
-  rule('.vela-pill-title',{'font-size':'1em','font-weight':700}),
-  rule('.vela-pill-detail',{'font-size':'.92em',padding:0}),
-  rule('.vela-card',{padding:L.cardPadding,'border-radius':L.cardRadius,...gap(L.cardGap)}),
-  rule('.vela-card-header',{padding:0,...gap(S.xs)}),rule('.vela-tag',gap(S.sm)),
-  rule('.vela-transport',{padding:`${S.xs}px 0`,...gap(S.lg)}),
-  rule('.vela-primary, .vela-secondary',{...size(56,56),'border-radius':L.pillRadius}),
-  rule('.vela-provider-row',{padding:0,...gap(S.sm)}),rule('.vela-times',{padding:0}),
-  rule('.vela-metric-panel',{padding:`${S.sm}px 0`,...gap(S.sm)}),
-  rule('.vela-summary-panel',{padding:`${S.sm}px 0`,...gap(S.md)}),
-  rule('.vela-activity-rail',{padding:0,...gap(S.sm)}),
-  rule('.vela-text-button, .vela-context-button, .vela-new-activity',{padding:`${S.sm}px ${S.md}px`,'min-height':S.lg}),
-  rule('.vela-cover-caption',{padding:L.cardPadding,...gap(S.sm)}),
-  rule('.vela-cover-corners',{padding:S.md,...gap(S.sm)}),
-  rule('.vela-music-tools',gap(S.md)),rule('.vela-music-actions',gap(S.sm)),rule('.vela-audio-controls',gap(S.sm)),
-  rule('.vela-launcher',{'padding-top':S.sm,...gap(S.md)}),rule('.vela-presets',gap(S.sm)),
-  rule('.vela-lyrics',{padding:S.md,...gap(S.sm)}),
-  rule('.vela-context-footer',{'padding-top':S.sm}),
-  ...(shell?[
-   rule('.vela-context-card',gap(S.md)),
-   rule('.vela-context-card StBoxLayout',gap(S.sm)),
-   rule('.vela-panel-pill, .vela-light .vela-panel-pill, .vela-glass .vela-panel-pill',{border:'none',padding:`0 ${S.xs}px`,'min-height':0,'border-radius':L.pillRadius,'box-shadow':'none'}),
-   rule('.vela-panel-pill .vela-well',{width:L.panelWell,height:L.panelWell,'border-radius':L.panelWell/2}),
-   rule('.vela-panel-pill .vela-inline',{width:L.hitArea-2,height:L.hitArea-2}),
-   rule('.vela-panel-pill .vela-well StIcon, .vela-panel-pill .vela-inline StIcon',{'icon-size':L.panelIcon}),
-   rule('.vela-panel-pill .vela-pill-title, .vela-panel-pill .vela-pill-detail',{'font-size':'.85em'}),
-  ]:[]),
- ];
- const generated=begin+'\n'+rules.join('\n')+'\n'+end;
- let source=readFileSync(file,'utf8');
- if(source.includes(begin))source=source.slice(0,source.indexOf(begin)).trimEnd()+'\n';
- // Remove conflicting geometry for the selectors owned here, retaining palette
- // and interaction rules. This is a migration, not another cascade of overrides.
- const owned=new Map();for(const r of rules){const selectors=r.slice(0,r.indexOf(' {')).split(',').map(s=>s.trim());for(const sel of selectors){if(!owned.has(sel))owned.set(sel,new Set());for(const m of r.matchAll(/([\w-]+):/g))owned.get(sel).add(m[1]);}}
- source=source.replace(/([^{}]+)\{([^{}]*)\}/g,(whole,raw,body)=>{
-  const selector=raw.trim().replace(/^\/\*[\s\S]*?\*\/\s*/, '');const selectors=selector.split(',').map(s=>s.trim());if(!selectors.every(s=>owned.has(s)))return whole;const properties=new Set([...owned.get(selectors[0])].filter(key=>selectors.every(sel=>owned.get(sel).has(key))));
-  const kept=body.split(';').filter(decl=>!properties.has(decl.split(':')[0].trim())&&!(['padding','margin'].some(key=>properties.has(key)&&decl.split(':')[0].trim().startsWith(key+'-')))).join(';').trim();return kept?`${raw}{ ${kept} }`:'';
- });
- const result=source.trimEnd()+'\n\n'+generated+'\n';
- if(process.argv.includes('--check')){if(readFileSync(file,'utf8')!==result)throw new Error(`${file} layout CSS is stale`);}else writeFileSync(file,result);
+import {SPACE as S, LAYOUT as L, TYPE as T, COLOR} from '../extension/layout.js';
+const files=[];
+for(const shell of [true,false]){
+ const out=['/* Generated by scripts/generate-layout-css.mjs. Edit tokens or generator. */'];
+ const rule=(sel,body)=>out.push(`${sel} { ${body} }`);
+ const gap=n=>shell?`spacing:${n}px;`:'';
+ const size=(w,h)=>`${shell?'width':'min-width'}:${w}px;${shell?'height':'min-height'}:${h}px;`;
+ const text=(sel,size,weight=400)=>rule(sel,`font-size:${size}px;font-weight:${weight};`);
+ const bg=(sel,color)=>rule(sel,`background-color:${color};`);
+ rule(shell?'.vela-root':'window.vela-window',`font-family:"Adwaita Sans",sans-serif;color:${COLOR.dark.text};font-size:${T.body}px;`);
+ if(!shell)rule('window.vela-window','background:transparent;');
+ rule('.vela-root',`color:${COLOR.dark.text};${gap(S.md)}`);
+ rule('.vela-pill',`background-color:${COLOR.dark.surface};border:1px solid rgba(204,200,223,.16);border-radius:${L.pillRadius}px;min-height:${L.indicator}px;padding:${L.pillPaddingY}px ${L.pillPaddingX}px;${gap(S.sm)}`);
+ rule('.vela-pill-main','outline:none;background:transparent;border:none;box-shadow:none;padding:0;min-height:0;border-radius:8px;');
+ rule('.vela-pill-main:hover','background-color:rgba(181,164,245,.06);');
+ rule('.vela-pill-main:focus'+(shell?'': '-visible'),'box-shadow:inset 0 -2px #b5a4f5;');
+ rule('.vela-pill-summary',gap(L.iconGap));rule('.vela-pill-text',gap(L.textGap));
+ rule('.vela-well',`${size(L.well,L.well)}border-radius:12px;background-color:#393347;color:#d9ccff;`);
+ rule('.vela-inline-controls',gap(L.actionGap));
+ rule('.vela-icon-button',`${size(L.hitArea,L.hitArea)}padding:0;border:1px solid transparent;border-radius:999px;box-shadow:none;background:transparent;color:${COLOR.dark.text};`);
+ rule('.vela-icon-button:hover, .vela-text-button:hover, .vela-context-button:hover','background-color:rgba(181,164,245,.16);');
+ rule('.vela-icon-button:active, .vela-text-button:active','background-color:rgba(181,164,245,.24);');
+ rule('.vela-icon-button:focus'+(shell?'': '-visible')+', .vela-text-button:focus'+(shell?'': '-visible')+', .vela-context-button:focus','border:1px solid #b5a4f5;');
+ text('.vela-pill-title',T.primary,600);text('.vela-pill-detail',T.secondary);rule('.vela-pill-detail',`color:${COLOR.dark.muted};`);
+ rule('.vela-card',`background-color:${COLOR.dark.surface};color:${COLOR.dark.text};border:1px solid rgba(204,200,223,.14);padding:${L.cardPadding}px;border-radius:${L.cardRadius}px;${gap(L.cardGap)}`);
+ rule('.vela-card-header',gap(S.xs));rule('.vela-tag',gap(S.sm));
+ rule('.vela-caption',`font-size:${T.caption}px;font-weight:600;color:${COLOR.dark.muted};`);
+ rule('.vela-quiet',`color:${COLOR.dark.muted};`);
+ rule('.vela-artwork','border-radius:16px;background-color:#302a39;');
+ if(shell)rule('.vela-cover-image','background-size:cover;background-position:center;border-radius:16px;');
+ rule('.vela-track-identity',gap(S.xs));text('.vela-title',T.title,600);text('.vela-subtitle',T.body);rule('.vela-subtitle',`color:${COLOR.dark.muted};`);
+ rule('.vela-provider-row',gap(S.sm));text('.vela-source',T.secondary,600);text('.vela-output',T.secondary);rule('.vela-provider-icon','color:#b5a4f5;');
+ rule('.vela-music-tools',gap(S.md));rule('.vela-music-actions, .vela-audio-controls',gap(S.sm));
+ rule('.vela-times','padding:0;');rule('.vela-time-label',`font-size:${T.secondary}px;color:${COLOR.dark.muted};`);
+ rule('.vela-transport',`padding:4px 0;${gap(S.lg)}`);
+ rule('.vela-primary, .vela-secondary',`${size(48,48)}border-radius:999px;`);
+ bg('.vela-primary',COLOR.dark.accent);rule('.vela-primary','color:#211b30;');bg('.vela-primary:hover','#c8bafb');bg('.vela-secondary',COLOR.dark.raised);
+ rule('.vela-metric-panel',`padding:12px 0;${gap(S.sm)}`);text('.vela-metric',T.numeric,500);rule('.vela-metric',`letter-spacing:-1px;${shell?'font-feature-settings:"tnum";':'font-feature-settings:"tnum";'}`);text('.vela-metric-title',17,600);
+ rule('.vela-summary-panel',`padding:8px 0;${gap(S.md)}`);
+ rule('.vela-track','background-color:rgba(181,164,245,.18);border-radius:2px;');rule('.vela-progress','border-radius:2px;');
+ if(!shell){rule('.vela-progress trough','min-height:4px;border:none;border-radius:2px;background-color:rgba(181,164,245,.18);');rule('.vela-progress progress','min-height:4px;border:none;border-radius:2px;background-color:#b5a4f5;');}
+ rule('.vela-text-button, .vela-context-button, .vela-new-activity',`min-height:16px;padding:8px 12px;border-radius:10px;border:1px solid transparent;background-color:${COLOR.dark.raised};color:${COLOR.dark.text};font-size:12px;font-weight:500;box-shadow:none;`);
+ rule('.vela-new-activity','background:transparent;color:#b4b3c2;');
+ rule('.vela-activity-rail',gap(S.sm));bg('.vela-rail-selected','rgba(181,164,245,.2)');
+ rule('.vela-launcher',`padding-top:8px;${gap(S.md)}`);rule('.vela-presets',gap(S.sm));rule('.vela-lyrics',`padding:12px;border-radius:12px;background-color:rgba(181,164,245,.06);${gap(S.sm)}`);
+ rule('.vela-lyric-line','color:#b4b3c2;font-size:13px;padding:4px 0;');rule('.vela-lyric-active','color:#f4f3f8;font-size:16px;font-weight:600;');rule('.vela-control-status','color:#b4b3c2;font-size:11px;');
+ if(!shell){rule('.vela-music-tools scale','padding:6px 2px;');rule('.vela-music-tools scale trough','min-height:4px;background-color:rgba(181,164,245,.2);');rule('.vela-music-tools scale highlight','background-color:#b5a4f5;');rule('.vela-music-tools scale slider','min-width:14px;min-height:14px;margin:0;border:none;padding:0;');rule('.vela-music-tools button:not(.vela-icon-button)','border-radius:10px;min-height:24px;padding:4px 10px;');rule('.vela-music-tools button:disabled','opacity:.45;');}
+ rule('.vela-context-card',gap(S.md));
+ rule('.vela-weather-hero,.vela-condition-grid,.vela-day-row,.vela-agent-identity,.vela-agent-state,.vela-agent-event,.vela-brief-item,.vela-forecast-notice',gap(S.sm));
+ if(shell)rule('.vela-context-card StBoxLayout',gap(S.sm));
+ text('.vela-weather-location',17,600);text('.vela-weather-temperature',48,500);rule('.vela-weather-temperature','letter-spacing:-2px;');text('.vela-context-heading',22,600);
+ rule('.vela-context-muted,.vela-hour-time,.vela-day-low',`font-size:12px;color:${COLOR.dark.muted};`);text('.vela-context-body',13);text('.vela-context-section',12,600);rule('.vela-context-footnote','font-size:11px;color:#b4b3c2;');
+ rule('.vela-condition-grid','padding:12px;border-radius:12px;background-color:rgba(181,164,245,.06);');text('.vela-condition-value',16,600);
+ rule('.vela-hour-tile','min-width:48px;padding:8px 4px;border-radius:10px;background-color:rgba(181,164,245,.05);');text('.vela-hour-temperature',16,600);
+ rule('.vela-hour-rain,.vela-day-rain','font-size:11px;color:#a7c9e8;');rule('.vela-day-row','padding:3px 0;');rule('.vela-day-name','min-width:38px;font-size:12px;font-weight:600;');rule('.vela-day-low,.vela-day-high','min-width:24px;font-size:12px;');text('.vela-day-high',12,600);rule('.vela-day-rain','min-width:24px;');
+ rule('.vela-context-footer',`padding-top:8px;border-top:1px solid rgba(181,164,245,.12);${gap(S.xs)}`);
+ rule('.vela-hour-scroll:focus','outline:1px solid #b5a4f5;border-radius:10px;');
+ if(shell)rule('.vela-hour-scroll','height:140px;');
+ rule('.vela-forecast-notice,.vela-agent-attention','padding:12px;border-radius:12px;background-color:rgba(224,184,122,.08);');rule('.vela-notice-title','font-size:12px;font-weight:600;color:#edc893;');
+ rule('.vela-agent-identity','padding:4px 0;');rule('.vela-agent-state','padding:12px;border-radius:10px;background-color:rgba(137,206,173,.09);color:#99d5b8;');rule('.vela-state-waiting','background-color:rgba(224,184,122,.1);color:#edc893;');rule('.vela-state-failed','background-color:rgba(230,138,151,.1);color:#efa3af;');rule('.vela-state-disconnected,.vela-state-cancelled','color:#b4b3c2;background-color:rgba(180,179,194,.08);');text('.vela-state-label',13,600);text('.vela-agent-elapsed',12);
+ rule('.vela-agent-status,.vela-agent-history','padding:4px 0;');rule('.vela-agent-event','padding:2px 0;');rule('.vela-brief-item','padding:10px 0;border-bottom:1px solid rgba(181,164,245,.1);');text('.vela-brief-heading',14,600);rule('.vela-context-empty','padding:20px 0;');
+ // Each theme overrides semantics once, rather than restyling activity layouts.
+ rule('.vela-light',`color:${COLOR.light.text};`);
+ rule('.vela-light .vela-pill, .vela-light .vela-card',`background-color:${COLOR.light.surface};color:${COLOR.light.text};border-color:rgba(60,45,80,.15);`);
+ rule('.vela-light .vela-icon-button, .vela-light .vela-title, .vela-light .vela-context-body',`color:${COLOR.light.text};`);
+ rule('.vela-light .vela-pill-detail, .vela-light .vela-subtitle, .vela-light .vela-caption, .vela-light .vela-context-muted, .vela-light .vela-context-footnote, .vela-light .vela-time-label, .vela-light .vela-hour-time, .vela-light .vela-day-low, .vela-light .vela-control-status, .vela-light .vela-lyric-line',`color:${COLOR.light.muted};`);
+ rule('.vela-light .vela-secondary, .vela-light .vela-text-button, .vela-light .vela-context-button',`background-color:${COLOR.light.raised};color:${COLOR.light.text};`);
+ rule('.vela-light .vela-primary',`background-color:${COLOR.light.accent};color:#ffffff;`);rule('.vela-light .vela-lyric-active','color:#443368;');rule('.vela-light .vela-hour-rain,.vela-light .vela-day-rain','color:#356485;');rule('.vela-light .vela-agent-state','color:#29634c;');rule('.vela-light .vela-state-waiting,.vela-light .vela-notice-title','color:#81551c;');rule('.vela-light .vela-state-failed','color:#a13c50;');
+ rule('.vela-glass .vela-pill, .vela-glass .vela-card','background-color:rgba(29,33,44,.74);border-color:rgba(224,230,247,.3);');
+ if(shell){rule('.vela-panel-pill, .vela-light .vela-panel-pill, .vela-glass .vela-panel-pill',`border:none;padding:0 4px;min-height:0;border-radius:999px;box-shadow:none;background:transparent;`);rule('.vela-panel-pill .vela-well',`${size(L.panelWell,L.panelWell)}border-radius:10px;`);rule('.vela-panel-pill .vela-pill-text','spacing:8px;');rule('.vela-panel-pill .vela-pill-title,.vela-panel-pill .vela-pill-detail','font-size:11px;');}
+ files.push([shell?'extension/stylesheet.css':'backends/style.css',out.join('\n')+'\n']);
 }
+const prefs=`/* Native preferences; generated from the same semantic palette. */
+.vela-settings { background:${COLOR.dark.surface};color:${COLOR.dark.text};--accent-color:${COLOR.dark.accent};--accent-bg-color:${COLOR.dark.accent};--accent-fg-color:#211b30;font-family:"Adwaita Sans",sans-serif; }
+.settings-sidebar { padding:16px 8px;background:#191a20;border-right:1px solid rgba(181,164,245,.1); }
+.settings-brand { padding:4px 12px 20px;color:${COLOR.dark.accent}; }
+.brand-title { font-size:16px;font-weight:600; }
+.nav-section { font-size:11px;color:${COLOR.dark.muted};margin:12px 12px 4px; }
+.nav-button { min-height:32px;padding:4px 12px;background:transparent;border:none;box-shadow:none;border-radius:10px;font-size:13px; }
+.nav-button:hover { background:rgba(181,164,245,.08); }
+.nav-button:checked { background:rgba(181,164,245,.16);color:#e3daff; }
+.nav-button:focus-visible,.size-choice:focus-visible,.card-choice:focus-visible { outline:2px solid ${COLOR.dark.accent};outline-offset:-2px; }
+.settings-header { background:transparent;box-shadow:none; }
+.header-title { font-size:14px;font-weight:600; }
+.settings-search { margin:0 20px 12px;border-radius:10px; }
+.settings-page { padding:12px 24px 24px; }
+.page-title { font-size:26px;font-weight:600; }
+.muted,.section-title,.provider-detail { color:${COLOR.dark.muted};font-size:12px; }
+.section-title { font-weight:600; }
+.preview-row { padding:8px 0;border-bottom:1px solid rgba(181,164,245,.08); }
+.preview-row-selected { background:rgba(181,164,245,.06);border-radius:10px; }
+.preview-name { font-size:13px;font-weight:500; }
+.pill-preview { min-height:28px;padding:6px 10px;border-radius:999px;background:#17181e; }
+.preview-well { min-width:24px;min-height:24px;border-radius:12px;background:#393347;color:#d9ccff; }
+.preview-pill-title { font-size:11px;font-weight:600; }
+.preview-pill-detail { font-size:10px;color:${COLOR.dark.muted}; }
+.size-choice,.card-choice { min-width:80px;min-height:72px;padding:8px;border-radius:12px;border:2px solid transparent;background:${COLOR.dark.raised};box-shadow:none; }
+.size-choice:checked,.card-choice:checked { border-color:${COLOR.dark.accent};background:#353140; }
+.size-choice:hover,.card-choice:hover { background:#383741; }
+.size-choice-content,.card-choice-content { padding:4px; }
+.size-label { font-size:12px; }
+.mini-pill { padding:3px;border-radius:16px;background:#493d5c; }
+.mini-disc { min-width:16px;min-height:16px;border-radius:8px;background:${COLOR.dark.accent}; }
+.mini-line { min-height:3px;border-radius:2px;background:#c5bdd4; }
+.mini-cover { border-radius:8px;background:#594b70; }
+.size-grid flowboxchild { padding:0;background:transparent; }
+.settings-status { padding:8px 24px;font-size:11px;color:${COLOR.dark.muted}; }
+.settings-inspector { padding:0;background:transparent; }
+.inspector-title { font-size:18px;font-weight:600; }
+.inspector-section { padding:8px 0; }
+.inspector-note { font-size:11px;color:${COLOR.dark.muted}; }
+.provider-controls button { min-height:32px;padding:4px 12px; }
+.settings-light { background:${COLOR.light.surface};color:${COLOR.light.text};--accent-color:${COLOR.light.accent};--accent-bg-color:${COLOR.light.accent};--accent-fg-color:#ffffff; }
+.settings-light .settings-sidebar { background:${COLOR.light.raised}; }
+.settings-light .nav-button:checked { background:#ded7ef;color:#443368; }
+.settings-light .muted,.settings-light .section-title,.settings-light .provider-detail,.settings-light .settings-status,.settings-light .inspector-note,.settings-light .nav-section { color:${COLOR.light.muted}; }
+.settings-light .size-choice,.settings-light .card-choice { background:${COLOR.light.raised}; }
+.settings-light .size-choice:checked,.settings-light .card-choice:checked { border-color:${COLOR.light.accent}; }
+.settings-glass { background:rgba(29,33,44,.9); }
+window.vela-preferences-glass { background:transparent;--window-bg-color:transparent; }
+.settings-search-results { margin:0 24px 12px; }
+`;
+files.push(['extension/preferences.css',prefs]);
+for(const [path,result] of files){if(process.argv.includes('--check')){if(readFileSync(path,'utf8')!==result)throw new Error(`${path} design CSS is stale`);}else writeFileSync(path,result);}

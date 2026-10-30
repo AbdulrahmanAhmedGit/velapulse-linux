@@ -1,101 +1,49 @@
-.vela-settings { background:#171717; color:#f3f1ec; --accent-bg-color:#ffdf70; --accent-fg-color:#242018; font-family: "Adwaita Sans",sans-serif; }
-.settings-sidebar { background:linear-gradient(135deg,#282826,#20201f); border:1px solid #383836; border-radius:22px; }
-.settings-brand { color:#ffdf70; }
-.brand-title { font-size:16px; font-weight:700; color:#f5f3ec; }
-.nav-section { color:#aaa69e; font-size:12px; margin:12px 10px 6px; }
-.nav-button { background:transparent; border:none; box-shadow:none; border-radius:12px; font-size:13px; font-weight:500; }
-.nav-button:checked { background:#393937; color:#fff; }
-.nav-button:hover { background:#30302e; }
-.settings-header { background:transparent; box-shadow:none; }
-.header-title { font-size:14px; font-weight:600; }
-.settings-search { border-radius:14px; background:#20201f; box-shadow:none; border:1px solid #33332f; }
-.muted { color:#96928a; font-size:12px; }
-.section-title { color:#aaa69c; font-size:12px; font-weight:500; }
-.preview-row { border-radius:12px; }
-.preview-row-selected { background:#383324; }
-.preview-name { font-size:13px; font-weight:500; }
-.pill-preview { background:#101010; color:#faf9f7; }
-.preview-well { background:#6156ce; color:#fff; }
-.preview-media .preview-well { background:#592e42; }
-.preview-battery .preview-well { background:#26bf59; }
-.preview-volume .preview-well { background:#3979ef; }
-.preview-stopwatch .preview-well { background:#307a9d; }
-.preview-pill-title { font-size:11px; font-weight:700; }
-.preview-pill-detail { font-size:10px; color:#b1aca9; }
-.size-choice,.card-choice { background:#222221; border:2px solid transparent; border-radius:16px; box-shadow:none; padding:8px; min-width:130px; min-height:117px; }
-.size-choice:checked,.card-choice:checked { border-color:#dec77a; background:#242421; }
-.size-choice:hover,.card-choice:hover { background:#2a2a27; }
-.size-choice-content { padding:15px 0; }
-.size-label { font-size:12px; color:#d4cfc6; }
-.mini-pill { background:#53232f; border-radius:18px; padding:3px; }
-.mini-disc { background:radial-gradient(circle at 35% 30%,#ffb7a1,#aa283e 55%,#4e142a); border-radius:15px; min-width:16px; min-height:16px; }
-.mini-line { background:#cdb8be; border-radius:4px; min-height:3px; }
-.card-choice { min-width:196px; min-height:136px; }
-.card-choice-content { padding:10px 0; }
-.mini-cover { background:radial-gradient(circle at 20% 15%,#d19b71,transparent 65%),radial-gradient(circle at 90% 30%,#bd3977,transparent 65%),#3d284d; border-radius:12px; }
-.settings-status { font-size:11px; color:#c1b69a; padding-top:8px; }
-.settings-inspector { background:#121212; border-left:1px solid #272725; }
-.inspector-title { font-size:14px; font-weight:600; margin-bottom:14px; }
-.inspector-label { font-size:13px; }
-.inspector-section { padding:12px 4px; border-bottom:1px solid #282825; }
-.inspector-note { font-size:11px; color:#8e887c; margin-top:18px; }
-.settings-inspector list { background:transparent; border:none; box-shadow:none; }
-.settings-inspector row { padding:6px 2px; border-bottom:1px solid #282825; }
-.settings-inspector row .title { font-size:12px; }
-.settings-inspector scale highlight { background:#ffdf70; }
-.vela-settings switch:checked { background:#ffdf70; color:#25211b; }
-.vela-settings checkbutton check:checked { background:#ffdf70; color:#242018; border-color:#ffdf70; }
-.page-title { font-size:27px; font-weight:700; }
-.provider-detail { color:#aba69d; font-size:14px; }
-.provider-controls { margin-top:18px; }
-.settings-light { background:#eceae3; color:#24221e; }
-.settings-light .settings-sidebar { background:#e1dfd7; border-color:#cecabf; }
-.settings-light .brand-title { color:#25231f; }
-.settings-light .nav-button:checked { background:#ccc8bc; color:#25231f; }
-.settings-light .settings-inspector { background:#e0ddd4; border-color:#cbc7bb; }
-.settings-light .preview-row-selected { background:#ddd3b4; }
-.settings-light .size-choice,.settings-light .card-choice { background:#e3dfd5; }
-.settings-light .settings-search { background:#f8f6ef; color:#25231f; border-color:#c7c1b5; }
-.settings-light .size-label { color:#625d52; }
-.settings-light .muted,.settings-light .section-title,.settings-light .inspector-note { color:#80796c; }
-.settings-light .settings-inspector row { border-bottom-color:#c7c1b5; }
-
-/* Liquid Glass: real alpha surfaces, a silver rim, and soft reflected light. */
-window.vela-preferences-glass { background:transparent; --window-bg-color:transparent; --view-bg-color:transparent; }
-.settings-glass { background:linear-gradient(130deg,rgba(216,235,255,.1),rgba(129,157,199,.02) 45%,rgba(180,145,220,.08)),rgba(19,27,43,.76); color:#f4f6ff; --accent-bg-color:#c8d8ff; --accent-fg-color:#172337; }
-.settings-glass .settings-sidebar { background:linear-gradient(145deg,rgba(233,242,255,.1),rgba(100,119,150,.06)); border-color:rgba(235,244,255,.26); border-top-color:rgba(255,255,255,.52); box-shadow:inset 0 1px rgba(255,255,255,.13),0 8px 24px rgba(7,13,29,.12); }
-.settings-glass .settings-inspector { background:rgba(22,30,46,.22); border-color:rgba(233,242,255,.16); }
-.settings-glass .settings-brand { color:#d6e3ff; }
-.settings-glass .brand-title,.settings-glass .size-label { color:#f4f6ff; }
-.settings-glass .nav-button:hover { background:rgba(224,237,255,.1); }
-.settings-glass .nav-button:checked { background:linear-gradient(120deg,rgba(232,243,255,.26),rgba(188,207,249,.12)); color:#fff; box-shadow:inset 0 1px rgba(255,255,255,.3); }
-.settings-glass .settings-search { background:rgba(16,25,43,.28); color:#f5f8ff; border-color:rgba(221,235,255,.25); box-shadow:inset 0 1px 4px rgba(9,15,30,.1); }
-.settings-glass .preview-row-selected { background:rgba(187,210,255,.12); }
-.settings-glass .pill-preview { background:linear-gradient(145deg,rgba(226,240,255,.2),rgba(35,42,60,.42)); box-shadow:inset 0 1px rgba(255,255,255,.34),0 3px 10px rgba(7,13,29,.14); }
-.settings-glass .size-choice,.settings-glass .card-choice { background:linear-gradient(145deg,rgba(226,239,255,.12),rgba(29,40,60,.2)); box-shadow:inset 0 1px rgba(255,255,255,.2); }
-.settings-glass .size-choice:hover,.settings-glass .card-choice:hover { background:rgba(214,231,255,.18); }
-.settings-glass .size-choice:checked,.settings-glass .card-choice:checked { border-color:#c8d8ff; background:rgba(187,210,255,.18); }
-.settings-glass .muted,.settings-glass .section-title,.settings-glass .inspector-note,.settings-glass .nav-section,.settings-glass .provider-detail { color:#c0cada; }
-.settings-glass .settings-status { color:#d3def2; }
-.settings-glass .settings-inspector row,.settings-glass .inspector-section { border-bottom-color:rgba(227,240,255,.13); }
-.settings-glass .settings-page list { background:rgba(23,33,51,.3); box-shadow:inset 0 1px rgba(235,246,255,.2); }
-.settings-glass .settings-page row { background:transparent; }
-.settings-glass switch:checked,.settings-glass checkbutton check:checked,.settings-glass scale highlight { background:#c8d8ff; color:#172337; border-color:#c8d8ff; }
-.settings-glass .nav-button:focus-visible,.settings-glass .size-choice:focus-visible,.settings-glass .card-choice:focus-visible { outline:2px solid #d6e5ff; outline-offset:2px; }
-.settings-glass row:focus-visible { outline-color:#c8d8ff; }
-
-.size-grid flowboxchild { padding:0; background:transparent; }
-.preview-row checkbutton, .preview-row image, .preview-row label { min-height:24px; }
-
-/* BEGIN GENERATED LAYOUT: scripts/generate-layout-css.mjs */
-.settings-sidebar { padding: 16px 12px; margin: 8px; }
-.settings-page { padding: 16px 24px 24px; }
-.settings-brand { padding: 0 8px 16px; }
-.nav-button { min-height: 32px; padding: 8px 12px; }
-.settings-search { padding: 8px 12px; }
-.preview-row { padding: 8px; margin-top: 0px; }
-.pill-preview { min-height: 32px; padding: 6px 12px; border-radius: 999px; }
-.preview-well { min-width: 24px; min-height: 24px; padding: 0px; border-radius: 999px; }
-.settings-inspector { padding: 16px 12px; }
-.provider-controls button { min-height: 32px; padding: 8px 12px; }
-/* END GENERATED LAYOUT */
+/* Native preferences; generated from the same semantic palette. */
+.vela-settings { background:#202127;color:#f4f3f8;--accent-color:#b5a4f5;--accent-bg-color:#b5a4f5;--accent-fg-color:#211b30;font-family:"Adwaita Sans",sans-serif; }
+.settings-sidebar { padding:16px 8px;background:#191a20;border-right:1px solid rgba(181,164,245,.1); }
+.settings-brand { padding:4px 12px 20px;color:#b5a4f5; }
+.brand-title { font-size:16px;font-weight:600; }
+.nav-section { font-size:11px;color:#b4b3c2;margin:12px 12px 4px; }
+.nav-button { min-height:32px;padding:4px 12px;background:transparent;border:none;box-shadow:none;border-radius:10px;font-size:13px; }
+.nav-button:hover { background:rgba(181,164,245,.08); }
+.nav-button:checked { background:rgba(181,164,245,.16);color:#e3daff; }
+.nav-button:focus-visible,.size-choice:focus-visible,.card-choice:focus-visible { outline:2px solid #b5a4f5;outline-offset:-2px; }
+.settings-header { background:transparent;box-shadow:none; }
+.header-title { font-size:14px;font-weight:600; }
+.settings-search { margin:0 20px 12px;border-radius:10px; }
+.settings-page { padding:12px 24px 24px; }
+.page-title { font-size:26px;font-weight:600; }
+.muted,.section-title,.provider-detail { color:#b4b3c2;font-size:12px; }
+.section-title { font-weight:600; }
+.preview-row { padding:8px 0;border-bottom:1px solid rgba(181,164,245,.08); }
+.preview-row-selected { background:rgba(181,164,245,.06);border-radius:10px; }
+.preview-name { font-size:13px;font-weight:500; }
+.pill-preview { min-height:28px;padding:6px 10px;border-radius:999px;background:#17181e; }
+.preview-well { min-width:24px;min-height:24px;border-radius:12px;background:#393347;color:#d9ccff; }
+.preview-pill-title { font-size:11px;font-weight:600; }
+.preview-pill-detail { font-size:10px;color:#b4b3c2; }
+.size-choice,.card-choice { min-width:80px;min-height:72px;padding:8px;border-radius:12px;border:2px solid transparent;background:#2c2d36;box-shadow:none; }
+.size-choice:checked,.card-choice:checked { border-color:#b5a4f5;background:#353140; }
+.size-choice:hover,.card-choice:hover { background:#383741; }
+.size-choice-content,.card-choice-content { padding:4px; }
+.size-label { font-size:12px; }
+.mini-pill { padding:3px;border-radius:16px;background:#493d5c; }
+.mini-disc { min-width:16px;min-height:16px;border-radius:8px;background:#b5a4f5; }
+.mini-line { min-height:3px;border-radius:2px;background:#c5bdd4; }
+.mini-cover { border-radius:8px;background:#594b70; }
+.size-grid flowboxchild { padding:0;background:transparent; }
+.settings-status { padding:8px 24px;font-size:11px;color:#b4b3c2; }
+.settings-inspector { padding:0;background:transparent; }
+.inspector-title { font-size:18px;font-weight:600; }
+.inspector-section { padding:8px 0; }
+.inspector-note { font-size:11px;color:#b4b3c2; }
+.provider-controls button { min-height:32px;padding:4px 12px; }
+.settings-light { background:#f8f7fb;color:#252431;--accent-color:#6558c4;--accent-bg-color:#6558c4;--accent-fg-color:#ffffff; }
+.settings-light .settings-sidebar { background:#eceaf2; }
+.settings-light .nav-button:checked { background:#ded7ef;color:#443368; }
+.settings-light .muted,.settings-light .section-title,.settings-light .provider-detail,.settings-light .settings-status,.settings-light .inspector-note,.settings-light .nav-section { color:#625e70; }
+.settings-light .size-choice,.settings-light .card-choice { background:#eceaf2; }
+.settings-light .size-choice:checked,.settings-light .card-choice:checked { border-color:#6558c4; }
+.settings-glass { background:rgba(29,33,44,.9); }
+window.vela-preferences-glass { background:transparent;--window-bg-color:transparent; }
+.settings-search-results { margin:0 24px 12px; }
