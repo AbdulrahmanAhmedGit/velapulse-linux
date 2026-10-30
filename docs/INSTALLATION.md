@@ -34,7 +34,12 @@ velapulse preferences
 This installs/replaces the user binary, extension and renderer, adds a settings
 launcher, installs a systemd **Type=dbus** unit and D-Bus activation file, reloads
 the user manager, and starts/reuses the service. It also enables the extension.
-A newly installed or cached extension may require logout/login. An active timer
+GNOME 50 keeps imported extension code for the lifetime of the Shell process.
+Updating an already loaded extension requires logout/login for the new pill/card
+code to run; toggling enablement is not a reliable reload. `ReloadExtension` is
+deprecated and reports NotSupported. Preferences launches in a fresh process and
+can use the update immediately. Do not restart the desktop to force an update.
+An active timer
 can defer replacement of a running daemon; the installer says when this happens.
 
 For a supported native Wayland session without GNOME:
