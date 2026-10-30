@@ -47,10 +47,12 @@ async function run(){
  if(GLib.getenv('VELAPULSE_TEST_SEARCH_ONLY')==='1'){
   const split=window.get_content(),search=walk(window).find(w=>w instanceof Gtk.SearchEntry);
   if(split.collapsed&&split.show_sidebar){await click(walk(window).find(w=>w instanceof Gtk.Button&&w.tooltip_text==='Show settings categories'));}
+  await key('CTRL+F');let searchFocused=false;for(let w=window.get_focus();w;w=w.get_parent())if(w===search)searchFocused=true;assert(searchFocused,'Ctrl+F must focus global search');
   await type(search,'Temperature units');await key('ENTER');const stack=walk(window).find(w=>w instanceof Gtk.Stack);await until(()=>stack.visible_child_name==='weather','Adaptive global search destination');
   assert(find(Adw.ComboRow,'Temperature units'),'Search destination control');await dropdown(find(Adw.ComboRow,'Temperature units'),1);await until(()=>config().weather.units==='fahrenheit','Search target writes settings');
   if(GLib.getenv('VELAPULSE_TEST_GRIM'))await process([GLib.getenv('VELAPULSE_TEST_GRIM'),GLib.getenv('VELAPULSE_TEST_GLASS_IMAGE')]);
-  print('PASS adaptive preferences: collapsed sidebar, global search, actual target dropdown and persistence');return;
+  await type(search,'card size');await key('ENTER');await until(()=>stack.visible_child_name==='appearance','Search must also index custom size controls');await click(walk(window).find(w=>w.name==='card-large'));await until(()=>config().card_size==='large','Search custom size control persistence');
+  print('PASS adaptive preferences: collapsed sidebar, Ctrl+F, global row/custom size search, actual controls and persistence');return;
  }
  if(GLib.getenv('VELAPULSE_TEST_LAYOUT_CAPTURE')==='1'){
   const themeIndex=Number(GLib.getenv('VELAPULSE_TEST_THEME_INDEX')??1);if(themeIndex===0)await dropdown(find(Adw.ComboRow,'Appearance'),1);await dropdown(find(Adw.ComboRow,'Appearance'),themeIndex);await sleep(300);

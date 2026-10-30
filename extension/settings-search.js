@@ -12,6 +12,12 @@ export function createSettingsSearch({window,search,results,resultPanel,stack,na
     }
     const pages=stack.get_pages();
     for(let i=0;i<pages.get_n_items();i++){const page=pages.get_item(i);visit(page.child,page.name);}
+    function first(widget,Type){if(widget instanceof Type)return widget;for(let c=widget.get_first_child();c;c=c.get_next_sibling()){const found=first(c,Type);if(found)return found;}return null;}
+    // The three custom setting groups also point at their existing native controls.
+    entries.push({widget:first(sizes,Gtk.ToggleButton),page:'appearance',title:'Pill size',subtitle:'Small, normal or large'},
+        {widget:first(cards,Gtk.ToggleButton),page:'appearance',title:'Card size',subtitle:'Normal or large'});
+    const duration=first(stack.get_child_by_name('timer'),Gtk.SpinButton);
+    if(duration)entries.push({widget:duration,page:'timer',title:'Timer duration',subtitle:'Minutes'});
     function navigate(entry){
         search.text='';stack.visible_child_name=entry.page;
         const nav=navButtons.find(b=>b._settingsPage===entry.page);if(nav)nav.active=true;

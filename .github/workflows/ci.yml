@@ -44,3 +44,4 @@ jobs:
       - run: node tests/presentation.mjs
 
       - run: node --check extension/context-state.js && node --check extension/context-preferences.js
+      - run: node --check extension/settings-search.js && node --check extension/card-tree.js
