@@ -1,3 +1,6 @@
+import {SPACE, LAYOUT} from './layout.js';
+import {mergeSettings} from './context-state.js';
+import {addContextPreferences} from './context-preferences.js';
 import {addMusicPreferences} from './music-preferences.js';
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
@@ -11,7 +14,8 @@ const PROVIDERS = [
     ['stopwatch','Stopwatch','preferences-system-time-symbolic'],['battery','Battery','battery-good-symbolic'],['volume','Audio','audio-volume-high-symbolic'],
 ];
 export function fillPreferences(window) {
-    window.set_default_size(1180,820);window.set_title('VelaPulse');
+    const geometry=Gdk.Display.get_default().get_monitors().get_item(0)?.get_geometry();
+    window.set_default_size(Math.min(1180,(geometry?.width??1228)-SPACE.xl*2),Math.min(820,(geometry?.height??868)-SPACE.xl*2));window.set_title('VelaPulse');
     let config={},activities=[],syncing=false,proxy,signal,ownerSignal,closed=false,pending=0,lastConfigKey=null,lastAppearance=null;
     const box=(vertical=false,style='',spacing=0)=>new Gtk.Box({orientation:vertical?Gtk.Orientation.VERTICAL:Gtk.Orientation.HORIZONTAL,spacing,css_classes:style?style.split(/\s+/):[]});
     const text=(value,style='',expand=false)=>new Gtk.Label({label:value,xalign:0,hexpand:expand,ellipsize:3,max_width_chars:style==='preview-pill-title'?16:style==='preview-pill-detail'?14:100,css_classes:style?style.split(/\s+/):[]});
@@ -42,30 +46,30 @@ export function fillPreferences(window) {
     appearance.append(text('Live activities','section-title'));
     const previewRows=new Map(),toggles=new Map();
     for(const [id,title,icon] of PROVIDERS) {
-        const row=box(false,'preview-row',10);row.set_name(`preview-${id}`);const enabled=new Gtk.CheckButton({tooltip_text:`Show ${title}`,name:`enabled-${id}`});toggles.set(id,enabled);
+        const row=box(false,'preview-row',SPACE.sm);row.set_name(`preview-${id}`);const enabled=new Gtk.CheckButton({tooltip_text:`Show ${title}`,name:`enabled-${id}`});toggles.set(id,enabled);
         enabled.connect('toggled',()=>{if(syncing)return;const next=new Set(config.enabled??[]);if(enabled.active)next.add(id);else next.delete(id);save({enabled:[...next]});});row.append(enabled);
         const labels=box(false,'',8);labels.hexpand=true;labels.append(text(title,'preview-name'));const positionLabel=text('background','muted');labels.append(positionLabel);row.append(labels);
-        const pill=box(false,`pill-preview preview-${id}`,7);pill.set_size_request(230,30);
-        const well=box(false,'preview-well');well.append(new Gtk.Image({icon_name:icon,pixel_size:14}));pill.append(well);
+        const pill=box(false,`pill-preview preview-${id}`,LAYOUT.textGap);pill.set_size_request(230,-1);pill.valign=Gtk.Align.CENTER;
+        const well=new Gtk.CenterBox({css_classes:['preview-well'],valign:Gtk.Align.CENTER});well.set_center_widget(new Gtk.Image({icon_name:icon,pixel_size:LAYOUT.icon}));pill.append(well);
         const titleLabel=text('','preview-pill-title'),detail=text('','preview-pill-detail',true);pill.append(titleLabel);pill.append(detail);
         if(id==='media'||id==='timer')pill.append(new Gtk.Image({icon_name:'media-playback-pause-symbolic',pixel_size:13}));
         row.append(pill);appearance.append(row);previewRows.set(id,{row,titleLabel,detail,pill,positionLabel});
     }
     const sizes=box(true,'size-section',12);sizes.append(text('Pill size  ·  3 options','section-title'));appearance.append(sizes);
-    const sizeRow=box(false,'size-grid',12);sizes.append(sizeRow);const sizeButtons=new Map();
+    const sizeRow=new Gtk.FlowBox({selection_mode:Gtk.SelectionMode.NONE,column_spacing:SPACE.md,row_spacing:SPACE.md,homogeneous:true,max_children_per_line:3,min_children_per_line:1,css_classes:['size-grid']});sizes.append(sizeRow);const sizeButtons=new Map();
     for(const [id,title,width] of [['small','Small',76],['medium','Normal',96],['large','Large',112]]) {
         const b=new Gtk.ToggleButton({name:`size-${id}`,css_classes:['size-choice']});if(sizeButtons.size)b.set_group([...sizeButtons.values()][0]);
         const sample=box(true,'size-choice-content',17);sample.halign=Gtk.Align.CENTER;sample.valign=Gtk.Align.CENTER;
         const miniature=box(false,'mini-pill',6);miniature.valign=Gtk.Align.CENTER;miniature.set_size_request(width,20);miniature.append(box(false,'mini-disc'));
         const line=box(false,'mini-line');line.hexpand=true;line.valign=Gtk.Align.CENTER;miniature.append(line);sample.append(miniature);sample.append(text(title,'size-label'));b.set_child(sample);
-        b.connect('toggled',()=>{if(b.active&&!syncing)save({size:id});});sizeButtons.set(id,b);sizeRow.append(b);
+        b.connect('toggled',()=>{if(b.active&&!syncing)save({size:id});});sizeButtons.set(id,b);sizeRow.insert(b,-1);
     }
-    const cards=box(true,'size-section',12);cards.append(text('Card size  ·  2 options','section-title'));const cardRow=box(false,'size-grid',12);cards.append(cardRow);appearance.append(cards);const cardButtons=new Map();
+    const cards=box(true,'size-section',12);cards.append(text('Card size  ·  2 options','section-title'));const cardRow=new Gtk.FlowBox({selection_mode:Gtk.SelectionMode.NONE,column_spacing:SPACE.md,row_spacing:SPACE.md,homogeneous:true,max_children_per_line:2,min_children_per_line:1,css_classes:['size-grid']});cards.append(cardRow);appearance.append(cards);const cardButtons=new Map();
     for(const [id,title] of [['normal','Normal'],['large','Large']]) {
         const b=new Gtk.ToggleButton({name:`card-${id}`,css_classes:['card-choice']});if(cardButtons.size)b.set_group([...cardButtons.values()][0]);
         const sample=box(true,'card-choice-content',8);sample.halign=Gtk.Align.CENTER;const cover=box(true,'mini-cover');cover.set_size_request(id==='large'?90:72,id==='large'?70:55);sample.append(cover);
         const line=box(false,'mini-line');line.set_size_request(60,3);sample.append(line);sample.append(text(title,'size-label'));b.set_child(sample);
-        b.connect('toggled',()=>{if(b.active&&!syncing)save({card_size:id});});cardButtons.set(id,b);cardRow.append(b);
+        b.connect('toggled',()=>{if(b.active&&!syncing)save({card_size:id});});cardButtons.set(id,b);cardRow.insert(b,-1);
     }
     const status=text('Connecting to your activities…','settings-status');appearance.append(status);
     const general=page('general');general.append(text('General','page-title'));general.append(text('Startup, display and motion.','muted'));
@@ -87,12 +91,14 @@ export function fillPreferences(window) {
         }
         providerPages.set(id,{description,visible,priority});
     }
-    const request=(method,signature,args)=>new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});
+    const request=(method,signature,args)=>new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,method==='WeatherSearch'?15000:6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});
     const musicSettings=addMusicPreferences(stack.get_child_by_name('media'),window,{request,save,getConfig:()=>config,getActivities:()=>activities});
     const about=page('about');about.append(text('VelaPulse','page-title'));about.append(text('Live activities for your Linux desktop.','muted'));about.append(text('Independent implementation · MIT licensed','muted'));about.append(button('Project and source',()=>Gio.AppInfo.launch_default_for_uri_async('https://github.com/AbdulrahmanAhmedGit/velapulse-linux',null,null,()=>{})));
+    const weatherPage=page('weather'),developerPage=page('developer');const contextSettings=addContextPreferences(weatherPage,developerPage,window,{request,save,getConfig:()=>config});
     nav('Appearance','preferences-desktop-appearance-symbolic','appearance','Settings').active=true;
     nav('General','emblem-system-symbolic','general');
     for(const [id,title,icon] of PROVIDERS)nav(title,icon,id,id==='media'?'Activities':null);
+    nav('Weather & clock','weather-few-clouds-symbolic','weather');nav('Developer integrations','utilities-terminal-symbolic','developer');
     const spacer=box();spacer.vexpand=true;sidebar.append(spacer);nav('About','help-about-symbolic','about');
     inspector.append(text('Appearance','inspector-title'));
     const inspectorGroup=new Adw.PreferencesGroup();inspector.append(inspectorGroup);
@@ -115,17 +121,17 @@ export function fillPreferences(window) {
     search.connect('search-changed',applySearch);
     function command(id,action,seconds) {proxy?.call('Command',new GLib.Variant('(sst)',[id,action,seconds]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{p.call_finish(r);}catch{status.label='This action is unavailable.';}});}
     let saving=false,queued={},inFlight={},draft={};
-    function save(patch) {queued={...queued,...patch};flush();}
+    function save(patch) {queued=mergeSettings(queued,patch);flush();}
     function flush() {
         if(closed||saving||!Object.keys(queued).length)return;
         if(!proxy?.g_name_owner){status.label='Start VelaPulse to change settings.';return;}
-        const patch=queued;queued={};inFlight=patch;config={...config,...patch};saving=true;
+        const patch=queued;queued={};inFlight=patch;config=mergeSettings(config,patch);saving=true;
         proxy.call('Configure',new GLib.Variant('(s)',[JSON.stringify(config)]),Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{saving=false;inFlight={};if(closed)return;try{p.call_finish(r);status.label='Changes apply immediately';}catch{status.label='Settings could not be saved.';refresh();}flush();});
     }
     function update(json) {
         if(closed)return;let s;try{s=JSON.parse(json);}catch{return;}
         if(lastConfigKey===null)status.label='Changes apply immediately';
-        config={...s.config,...inFlight,...queued,...draft};activities=s.activities;syncing=true;
+        config=mergeSettings(s.config,inFlight,queued,draft);activities=s.activities;syncing=true;
         const configKey=JSON.stringify(config);
         if(configKey!==lastConfigKey) {
             lastConfigKey=configKey;
@@ -144,8 +150,8 @@ export function fillPreferences(window) {
         }
         for(const [id,{row,titleLabel,detail,positionLabel}] of previewRows) {
             const a=activities.find(a=>a.id.split(':')[0]===id),p=present(a);
-            const title=a?p.compact:(id==='media'?'Media':'');
-            const subtitle=a?` · ${p.detail}`:(id==='media'?'Nothing playing':'Not running');
+            const title=a?p.compact:PROVIDERS.find(provider=>provider[0]===id)[1];
+            const subtitle=a?` · ${p.detail}`:(id==='media'?' · Nothing playing':' · Not running');
             if(titleLabel.label!==title)titleLabel.label=title;
             if(detail.label!==subtitle)detail.label=subtitle;
             const foreground=activities[0]?.id.split(':')[0]===id;
@@ -157,7 +163,7 @@ export function fillPreferences(window) {
             const description=a?`${a.title} · ${a.description}`:'No activity right now.';
             const refs=providerPages.get(id);if(refs.description.label!==description)refs.description.label=description;
         }
-        musicSettings.update();applySearch();syncing=false;
+        musicSettings.update();contextSettings.update();applySearch();syncing=false;
     }
     function refresh() {if(!proxy?.g_name_owner){status.label='Activity service unavailable';return;}proxy.call('Snapshot',null,Gio.DBusCallFlags.NONE,3000,null,(p,r)=>{try{update(p.call_finish(r).deep_unpack()[0]);}catch{status.label='Activity service unavailable';}});}
     Gio.DBusProxy.new_for_bus(Gio.BusType.SESSION,Gio.DBusProxyFlags.NONE,null,'io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',null,(_,result)=>{if(closed)return;try{proxy=Gio.DBusProxy.new_for_bus_finish(result);}catch{status.label='Activity service unavailable';return;}signal=proxy.connect('g-signal',(_,__,name,args)=>{if(name==='Changed')update(args.deep_unpack()[0]);});ownerSignal=proxy.connect('notify::g-name-owner',refresh);refresh();});

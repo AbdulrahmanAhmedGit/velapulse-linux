@@ -17,6 +17,11 @@ pub struct Config {
     pub opacity: u8,
     pub selected_player: String,
     pub listening_history: bool,
+    pub weather: crate::weather::Settings,
+    pub developer: crate::developer::Settings,
+    pub idle_clock: bool,
+    pub clock_24h: bool,
+    pub clock_temperature: bool,
 }
 impl Default for Config {
     fn default() -> Self {
@@ -42,6 +47,11 @@ impl Default for Config {
             opacity: 98,
             selected_player: String::new(),
             listening_history: false,
+            weather: Default::default(),
+            developer: Default::default(),
+            idle_clock: false,
+            clock_24h: true,
+            clock_temperature: true,
         }
     }
 }
@@ -66,6 +76,7 @@ impl Config {
         }
     }
     pub fn validate(&self) -> anyhow::Result<()> {
+        self.weather.validate()?;
         anyhow::ensure!(
             self.selected_player.is_empty()
                 || (self

@@ -1,6 +1,11 @@
+import {temperature,weatherCondition} from './context-cards.js';
 import {musicColor} from './music-state.js';
 // Pure presentation rules shared by the two native renderers.
 export const PALETTE = {
+    weather:{accent:"#88cafa",tint:"#245784",icon:"weather-few-clouds-symbolic",label:"Weather"},
+    clock:{accent:"#b5a4f5",tint:"#493e64",icon:"preferences-system-time-symbolic",label:"Local time"},
+    brief:{accent:"#f0ce87",tint:"#51432a",icon:"view-list-symbolic",label:"Now Brief"},
+    developer:{accent:"#89ddbc",tint:"#245946",icon:"utilities-terminal-symbolic",label:"Developer activity"},
     media: {accent: '#b778a7', tint: '#4a2539', icon: 'audio-x-generic-symbolic', label: 'Now playing'},
     timer: {accent: '#6558d8', tint: '#6558d8', icon: 'alarm-symbolic', label: 'Timer'},
     stopwatch: {accent: '#347bfa', tint: '#347bfa', icon: 'preferences-system-time-symbolic', label: 'Stopwatch'},
@@ -23,6 +28,8 @@ export function actionInfo(action, status) {
         PlayPause: [status === 'active' ? 'media-playback-pause-symbolic' : 'media-playback-start-symbolic', status === 'active' ? 'Pause' : 'Play'],
         pause: ['media-playback-pause-symbolic', 'Pause'],
         resume: ['media-playback-start-symbolic', 'Resume'],
+        cancel:['process-stop-symbolic','Cancel owned task'],
+        refresh:['view-refresh-symbolic','Refresh'],
         reset: ['view-refresh-symbolic', 'Reset'],
     };
     return names[action] ?? ['dialog-information-symbolic', action];
@@ -30,12 +37,18 @@ export function actionInfo(action, status) {
 export function present(a) {
     const type = kind(a), p = {...PALETTE[type]};
     if (a?.status === 'warning') {p.accent = '#f0bd7e'; p.tint = '#392e23';}
+    if(type==='weather'&&a?.icon)p.icon=a.icon;
+    if(type==='developer'&&a?.developer?.state==='waiting'){p.accent='#f0bd7e';p.icon='dialog-warning-symbolic';}
     if(type==='media'&&a.music){p.accent=musicColor(a);p.tint=a.music.color||p.tint;}
     const progress = Math.max(0, Math.min(1, a?.progress ?? 0));
     let title = a?.title ?? 'Make room for the moment';
     let subtitle = a?.description || 'Your live activities, in one quiet place.';
     let compact = type === 'idle' ? 'VelaPulse' : title;
     let detail = type === 'idle' ? 'Ready when you are' : a?.status === 'paused' ? 'Paused' : p.label;
+    if(type==='developer'&&a?.developer){const d=a.developer;detail=`${d.state} · ${clock(d.elapsed)}`;const symbols={waiting:'dialog-warning-symbolic',failed:'dialog-error-symbolic',completed:'emblem-ok-symbolic',cancelled:'process-stop-symbolic',disconnected:'network-offline-symbolic'};p.icon=symbols[d.state]??p.icon;}
+    if(type==='clock'){const parts=subtitle.split(' · ');detail=parts.length>1?`${parts.at(-1)} · ${parts[0]}`:subtitle;}
+    if(type==='weather'&&a?.weather){const w=a.weather;detail=`${w.stale?'Cached · ':''}${w.location.name}`;if(Number.isFinite(w.temperature)&&Number.isFinite(w.code))compact=`${temperature(w.temperature,w.units,true)} · ${weatherCondition(w.code)}`;}
+    if(type==='brief')detail='Daily overview';
     let metric = '';
     if (type === 'timer' || type === 'stopwatch') {
         metric = timeText(a.description);

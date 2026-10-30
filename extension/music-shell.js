@@ -1,3 +1,4 @@
+import {SPACE} from './layout.js';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';

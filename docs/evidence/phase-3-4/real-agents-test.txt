@@ -1,0 +1,4 @@
+Real Codex process exit: 0
+Real Claude process exit: 1
+Actual agent observer states: [{'provider': 'claude', 'state': 'disconnected', 'event_count': 3}, {'provider': 'codex', 'state': 'completed', 'event_count': 5}]
+PASS Phase 3/4: opt-in defaults, idle clock, brief, real command success/failure/concurrency/cancel, hook state/dedup/privacy, permission limits, persistence/restart, hook merge/removal

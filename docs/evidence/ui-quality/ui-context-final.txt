@@ -1,0 +1,3 @@
+PASS private Sway output scale: 1.0
+PASS native structured cards: actual pointer select/refresh/expand/Now Brief, keyboard forecast scroll and Escape; Dark/Light/Glass; synthetic weather and Codex/Claude states
+PASS private configuration persisted across service restart; host installation untouched

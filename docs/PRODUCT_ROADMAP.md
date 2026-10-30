@@ -23,13 +23,13 @@ Existing integration provides these foundations. Preferences modal input capture
 
 Implementation and evidence, including fixture-only coverage and real-player gaps, are tracked in PHASE_1_2_REPORT.md. Optional enhancements must preserve working playback.
 
-## Phase 3 — Weather and Now Brief (planned, not implemented)
+## Phase 3 — Weather and Now Brief (implemented with documented limits)
 
-Current/feels-like weather, humidity/wind, hourly/daily forecasts, contextual icons/backgrounds and permitted weather alerts. Manual location, explicit location permission, rate limits and caching; no continuous location tracking. Now Brief combines date/time, weather, explicitly connected events, timers, music and selected activities. Configurable idle clock/weather behavior.
+Implemented: opt-in Open-Meteo current/feels-like weather, humidity/wind, hourly/daily forecasts, manual city search, cached/offline state and configurable derived forecast notices. Official severe warnings and automatic location are unavailable. Manual location, explicit location permission, rate limits and caching; no continuous location tracking. Now Brief combines date/time, weather, explicitly connected events, timers, music and selected activities. Configurable idle clock/weather behavior.
 
-## Phase 4 — AI agents and developer activities (planned, not implemented)
+## Phase 4 — AI agents and developer activities (implemented with verification limits)
 
-Documented Codex/Claude/public tool hooks for task started/running/waiting/completed/failed, elapsed time and real progress. Approval actions only through authenticated, supported mechanisms; no fabricated permissions or security bypass. Cargo/Python/Node/build/test/CI/deployment status through supported interfaces. An optional API-based assistant must protect credentials and require consent before sharing private content. Existing explicit local-task wrappers are not a completed agent integration.
+Implemented: Codex exec JSONL wrapper, Claude observer hooks, explicit owned command monitoring, persistent states/elapsed/recent events, safe attention notices and per-provider settings. Real Codex completed a test turn; the installed Claude CLI invoked hooks but model completion was blocked by missing login. Approval actions only through authenticated, supported mechanisms; no fabricated permissions or security bypass. Cargo/Python/Node/build/test/CI/deployment status through supported interfaces. An optional API-based assistant must protect credentials and require consent before sharing private content. Interactive Codex desktop sessions and authenticated Claude model completion remain outside verified coverage; see the report.
 
 ## Phase 5 — Smart Shelf and file activities (planned, not implemented)
 
@@ -45,4 +45,6 @@ Authorized application/activity notifications, grouping, priorities, safe action
 
 ## Boundaries and release gates
 
-This development session implements only Phases 1–2. No Galaxy Buds-specific APIs, battery/case statistics, noise cancellation or ambient mode. Standard output/volume remains in scope. No Mutter/compositor modifications, GDM restarts, host logout or reboot. Changes to the installed user app, active activities or autostart/service settings require approval. No merging main automatically. A buildable branch, tests, real screenshots, measured performance and honest evidence precede completion claims.
+Phases 1–4 now have implementations and evidence reports; the current development session implements only Phases 3–4. No Galaxy Buds-specific APIs, battery/case statistics, noise cancellation or ambient mode. Standard output/volume remains in scope. No Mutter/compositor modifications, GDM restarts, host logout or reboot. Changes to the installed user app, active activities or autostart/service settings require approval. No merging main automatically. A buildable branch, tests, real screenshots, measured performance and honest evidence precede completion claims.
+
+See [PHASE_3_4_REPORT.md](PHASE_3_4_REPORT.md) for the exact tested subset and remaining acceptance work. Phases 5–7 remain planned.

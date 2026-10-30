@@ -1,0 +1,132 @@
+[
+  {
+    "case": "brief",
+    "width": 283,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 1
+  },
+  {
+    "case": "music",
+    "width": 380,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": true,
+    "subtitle_ellipsized": true,
+    "actions": 3
+  },
+  {
+    "case": "weather",
+    "width": 334,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 1
+  },
+  {
+    "case": "timer",
+    "width": 203,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 1
+  },
+  {
+    "case": "developer",
+    "width": 207,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "short",
+    "width": 270,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 3
+  },
+  {
+    "case": "long",
+    "width": 310,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": true,
+    "subtitle_ellipsized": true,
+    "actions": 3
+  },
+  {
+    "case": "large-font",
+    "width": 310,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": true,
+    "subtitle_ellipsized": true,
+    "actions": 3
+  },
+  {
+    "case": "rtl",
+    "width": 310,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": true,
+    "subtitle_ellipsized": true,
+    "actions": 3
+  },
+  {
+    "case": "wide",
+    "width": 394,
+    "height": 48,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 3
+  },
+  {
+    "case": "waiting",
+    "width": 205,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "completed",
+    "width": 226,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  },
+  {
+    "case": "failed",
+    "width": 195,
+    "height": 46,
+    "left": 13,
+    "right": 13,
+    "title_ellipsized": false,
+    "subtitle_ellipsized": false,
+    "actions": 0
+  }
+]

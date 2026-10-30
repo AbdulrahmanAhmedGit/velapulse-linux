@@ -1,0 +1,4 @@
+PASS private Sway output scale: 1.25
+PASS gtk layout matrix: five pill types, short/long text, 18px font, Arabic RTL, three sizes, agent states, small/large cards; balanced padding, centered icons/actions, >=32px targets, bounded labels; actual pointer expansion and keyboard Escape
+PASS native structured cards: actual pointer select/refresh/expand/Now Brief, keyboard forecast scroll and Escape; Dark/Light/Glass; synthetic weather and Codex/Claude states
+PASS private configuration persisted across service restart; host installation untouched

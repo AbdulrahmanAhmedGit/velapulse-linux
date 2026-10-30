@@ -98,3 +98,5 @@ its short resource sample is not a hardware performance certification.
 ## License and inspiration
 
 Original code: MIT. Conceptual inspiration: [nixesty/now-bar](https://github.com/nixesty/now-bar), an unrelated GPL-3.0 Windows project. No code or assets were copied and there is no affiliation. See [provenance](docs/LEGAL.md) and [dependency inventory](docs/DEPENDENCIES.md). VelaPulse is a provisional name; this is not trademark clearance.
+
+Weather, Now Brief and developer integrations are opt-in. See [setup and privacy](docs/WEATHER_AND_AGENTS.md), [Phase 3–4 evidence](docs/PHASE_3_4_REPORT.md), and the [roadmap](docs/PRODUCT_ROADMAP.md). Existing interactive agent sessions are not silently monitored, and VelaPulse never approves agent permissions.
