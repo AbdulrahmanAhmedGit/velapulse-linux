@@ -62,6 +62,8 @@ def run_layout_audit(kind,repo,fixture_path,frame,activate,key,capture,base_conf
   ('wide','Evening song','An original artist','large',14,False),
  ]:
   a=copy.deepcopy(cases['music']);a.update(title=title,description=detail);load(name,a,size,font,rtl);check(name);capture(kind+'-'+name+'-pill-preview.png')
+  if name in ['long','large-font','rtl']:
+   activate('Expand live activity');wait(lambda:frame()['expanded'],'expanded text stress case '+name);time.sleep(.35);card=node('vela-card');art=node('vela-artwork');heading=node('vela-title');assert abs(art['width']-art['height'])<=1 and art['width']<=90,('Artwork must remain square',art);assert heading['x']>=card['x']and heading['x']+heading['width']<=card['x']+card['width']+1,('Expanded heading overflow',heading,card);capture(kind+'-'+name+'-card-preview.png');key('ESC');wait(lambda:not frame()['expanded'],'text stress collapse')
  for state in ['waiting','completed','failed']:
   a=copy.deepcopy(cases['developer']);a['developer']['state']=state;load(state,a);check(state);capture(kind+'-'+state+'-pill-preview.png')
  # Explicit small / large card allocation, not just text-driven compact widths.

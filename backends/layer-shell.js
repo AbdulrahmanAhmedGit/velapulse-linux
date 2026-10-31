@@ -125,7 +125,7 @@ function renderCard() {
         if(['weather','developer','brief'].includes(p.type)){refs.context=createGtkContextCard(a,action=>command(a.id,action));card.append(refs.context.widget);}
         else if(p.type==='media') {
             const identity=box(false,'vela-media-identity',SPACE.lg);
-            const hero=new Gtk.Overlay({css_classes:['vela-artwork'],overflow:Gtk.Overflow.HIDDEN,width_request:88,height_request:88,hexpand:false});
+            const hero=new Gtk.Overlay({css_classes:['vela-artwork'],overflow:Gtk.Overflow.HIDDEN,width_request:88,height_request:88,hexpand:false,valign:Gtk.Align.CENTER});
             refs.art=new CoverArtwork();hero.set_child(refs.art);identity.append(hero);
             const caption=box(true,'vela-track-identity',SPACE.xs);caption.hexpand=true;caption.valign=Gtk.Align.CENTER;
             refs.title=label(p.title,'vela-title');caption.append(refs.title);

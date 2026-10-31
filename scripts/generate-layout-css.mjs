@@ -64,6 +64,7 @@ for(const shell of [true,false]){
  rule('.vela-forecast-tabs',`padding:3px;border-radius:12px;background-color:rgba(160,153,180,.08);${gap(4)}`);
  rule(shell?'.vela-forecast-tab':'.vela-forecast-tabs button','padding:7px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:#b4b3c2;box-shadow:none;min-height:18px;');
  rule(shell?'.vela-tab-selected':'.vela-forecast-tabs button:checked','background-color:rgba(181,164,245,.18);color:#f4f3f8;');
+ rule(shell?'.vela-forecast-tab:focus':'.vela-forecast-tabs button:focus-visible','border-color:#b5a4f5;');
  rule('.vela-light .vela-forecast-tab,.vela-light .vela-forecast-tabs button','color:#625e70;');
  rule('.vela-light .vela-tab-selected,.vela-light .vela-forecast-tabs button:checked','background-color:#e2dced;color:#302442;');
  // Each theme overrides semantics once, rather than restyling activity layouts.
