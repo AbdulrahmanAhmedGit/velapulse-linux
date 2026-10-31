@@ -1,5 +1,8 @@
 # Product UI overhaul — 2026-10-30
 
+The expanded cards in this report were subsequently rejected. See the
+[current card rebuild and interaction regressions](CARD_REDESIGN_REPORT.md).
+
 ## Review scope
 
 Branch: `refactor/product-ui-overhaul`, based on `7ee1ab6` from

@@ -21,9 +21,9 @@ Run the generator and its `--check` mode after token changes.
 - Cards: 20 px content inset, 12 px section rhythm, 24 px outer radius. Common
   header with category, Preferences and Collapse; native scrolling only when the
   available monitor height requires it. Width settings are ceilings.
-- Music: shared header, bounded artwork, separate track/artist identity, source,
+- Music: shared header, 88 px square artwork beside track/artist identity, source,
   native player/seek/transport, optional lyrics and audio. No metadata over art.
-- Weather: current conditions hero, three metrics, horizontal hours, five day
+- Weather: current conditions hero, three metrics, persistent Hourly / 5 days tabs with horizontal hours and daily
   rows, attribution and stale/error notices. No forecast text dumps.
 - Brief: compact section rows with a single divider rhythm, no nested card stack.
 - Developer: identity, semantic status strip, elapsed time, current update and
@@ -60,3 +60,7 @@ sizes, dark/light/glass, 100/125/150% and reduced motion. Exercise pointer and
 keyboard actions against the real D-Bus service on a private bus. Keep limitations
 explicit; headless software-rendered evidence does not certify physical monitors,
 suspend or GPU performance.
+
+Expanded-card lifecycle and current layouts supersede the original card composition:
+see [CARD_REDESIGN_REPORT.md](CARD_REDESIGN_REPORT.md). Card identity excludes
+unrelated activity membership and pause/resume control labels.
