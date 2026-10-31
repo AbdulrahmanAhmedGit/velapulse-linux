@@ -64,10 +64,10 @@ window.vela-window { background:transparent; }
 .vela-lyric-line { color:#b4b3c2;font-size:13px;padding:4px 0; }
 .vela-lyric-active { color:#f4f3f8;font-size:16px;font-weight:600; }
 .vela-control-status { color:#b4b3c2;font-size:11px; }
-.vela-music-tools scale { padding:6px 2px; }
-.vela-music-tools scale trough { min-height:4px;background-color:rgba(181,164,245,.2); }
-.vela-music-tools scale highlight { background-color:#b5a4f5; }
-.vela-music-tools scale slider { min-width:14px;min-height:14px;margin:0;border:none;padding:0; }
+.vela-music-tools scale { padding:8px 2px;min-height:16px; }
+.vela-music-tools scale trough { min-height:4px;border-radius:2px;background-color:rgba(181,164,245,.2); }
+.vela-music-tools scale highlight { min-height:4px;border-radius:2px;background-color:#b5a4f5; }
+.vela-music-tools scale slider { min-width:14px;min-height:14px;margin:-5px 0;border:none;padding:0; }
 .vela-music-tools button:not(.vela-icon-button) { border-radius:10px;min-height:24px;padding:4px 10px; }
 .vela-music-tools button:disabled { opacity:.45; }
 .vela-context-card {  }

@@ -205,10 +205,10 @@ export default class VelaPulse extends Extension {
     }
     _buildMedia(p) {
         const row=new St.BoxLayout({style_class:'vela-media-identity'});
-        const hero=new St.Widget({layout_manager:new Clutter.BinLayout(),style_class:'vela-artwork',width:88,height:88,clip_to_allocation:true});
+        const hero=new St.Widget({layout_manager:new Clutter.BinLayout(),style_class:'vela-artwork',width:88,height:88,y_align:CENTER,clip_to_allocation:true});
         this._hero=new St.Widget({style_class:'vela-cover-image',x_expand:true,y_expand:true});hero.add_child(this._hero);row.add_child(hero);
         const identity=new St.BoxLayout({vertical:true,style_class:'vela-track-identity',x_expand:true,y_align:CENTER});
-        this._title=this._label(p.title,'vela-title');this._detail=this._label(p.subtitle,'vela-subtitle');this._sourceLabel=this._label(p.source,'vela-source');
+        this._title=this._label(p.title,'vela-title');this._detail=this._label(p.subtitle,'vela-subtitle');for(const label of [this._title,this._detail]){label.clutter_text.line_wrap=false;label.clutter_text.set_single_line_mode(true);}this._sourceLabel=this._label(p.source,'vela-source');
         identity.add_child(this._title);identity.add_child(this._detail);identity.add_child(this._sourceLabel);row.add_child(identity);this._card.add_child(row);
         this._musicTools=createMusicControls({request:(...args)=>this._musicRequest(...args),getActivity:()=>this._current(),getActivities:()=>this._state.activities,getConfig:()=>this._state.config,onSelect:id=>{this._state.config.selected_player=id;this._selected=id||activePlayer(this._state.activities)?.id;this._renderCard();},attachLyrics:()=>{const a=this._current();if(a?.music)Gio.Subprocess.new(['gjs','-m',this.dir.get_child('lyrics-picker.js').get_path(),a.id,a.music.track_id],Gio.SubprocessFlags.NONE);}});this._card.add_child(this._musicTools.actor);
     }

@@ -128,8 +128,8 @@ function renderCard() {
             const hero=new Gtk.Overlay({css_classes:['vela-artwork'],overflow:Gtk.Overflow.HIDDEN,width_request:88,height_request:88,hexpand:false,valign:Gtk.Align.CENTER});
             refs.art=new CoverArtwork();hero.set_child(refs.art);identity.append(hero);
             const caption=box(true,'vela-track-identity',SPACE.xs);caption.hexpand=true;caption.valign=Gtk.Align.CENTER;
-            refs.title=label(p.title,'vela-title');caption.append(refs.title);
-            refs.detail=label(p.subtitle,'vela-subtitle');caption.append(refs.detail);identity.append(caption);card.append(identity);
+            refs.title=label(p.title,'vela-title');refs.title.wrap=false;refs.title.single_line_mode=true;refs.title.lines=1;caption.append(refs.title);
+            refs.detail=label(p.subtitle,'vela-subtitle');refs.detail.wrap=false;refs.detail.single_line_mode=true;refs.detail.lines=1;caption.append(refs.detail);identity.append(caption);card.append(identity);
             refs.source=label(p.source,'vela-source');caption.append(refs.source);
             refs.music=createMusicControls({request,getActivity:()=>state.activities.find(a=>a.id===selected),getActivities:()=>state.activities,getConfig:()=>state.config,onSelect:id=>{state.config.selected_player=id;selected=id||activePlayer(state.activities)?.id;render(JSON.stringify(state));},window});card.append(refs.music.widget);
         } else if(['timer','stopwatch','battery','volume'].includes(p.type)) {
