@@ -5,6 +5,7 @@ export const LAYOUT = Object.freeze({
     pillPaddingX:12, pillPaddingY:6, iconGap:10, textGap:2,
     actionGap:4, hitArea:32, indicator:32, well:24, icon:16,
     cardPadding:20, cardGap:12, cardRadius:24, pillRadius:999,
+    forecastViewport:124, navigationViewport:52,
     panelIndicator:24, panelWell:20, panelIcon:14,
 });
 

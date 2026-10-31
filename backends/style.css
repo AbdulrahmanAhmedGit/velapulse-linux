@@ -18,13 +18,14 @@ window.vela-window { background:transparent; }
 .vela-pill-detail { font-size:11px;font-weight:400; }
 .vela-pill-detail { color:#b4b3c2; }
 .vela-card { background-color:#202127;color:#f4f3f8;border:1px solid rgba(204,200,223,.14);padding:20px;border-radius:24px; }
-.vela-card-header {  }
+.vela-card-header { padding-bottom:8px;border-bottom:1px solid rgba(160,153,180,.12); }
 .vela-tag {  }
 .vela-caption { font-size:11px;font-weight:600;color:#b4b3c2; }
 .vela-quiet { color:#b4b3c2; }
 .vela-artwork { border-radius:16px;background-color:#302a39; }
+.vela-media-identity {  }
 .vela-track-identity {  }
-.vela-title { font-size:22px;font-weight:600; }
+.vela-title { font-size:20px;font-weight:600; }
 .vela-subtitle { font-size:13px;font-weight:400; }
 .vela-subtitle { color:#b4b3c2; }
 .vela-provider-row {  }
@@ -41,7 +42,7 @@ window.vela-window { background:transparent; }
 .vela-primary { color:#211b30; }
 .vela-primary:hover { background-color:#c8bafb; }
 .vela-secondary { background-color:#2c2d36; }
-.vela-metric-panel { padding:12px 0; }
+.vela-metric-panel { padding:8px 0; }
 .vela-metric { font-size:52px;font-weight:500; }
 .vela-metric { letter-spacing:-1px;font-feature-settings:"tnum"; }
 .vela-metric-title { font-size:17px;font-weight:600; }
@@ -52,7 +53,10 @@ window.vela-window { background:transparent; }
 .vela-progress progress { min-height:4px;border:none;border-radius:2px;background-color:#b5a4f5; }
 .vela-text-button, .vela-context-button, .vela-new-activity { min-height:16px;padding:8px 12px;border-radius:10px;border:1px solid transparent;background-color:#2c2d36;color:#f4f3f8;font-size:12px;font-weight:500;box-shadow:none; }
 .vela-new-activity { background:transparent;color:#b4b3c2; }
+.vela-navigation-scroll { min-height:52px; }
 .vela-activity-rail {  }
+.vela-card-footer { padding-top:8px;border-top:1px solid rgba(160,153,180,.12); }
+.vela-footer-action { background:transparent; }
 .vela-rail-selected { background-color:rgba(181,164,245,.2); }
 .vela-launcher { padding-top:8px; }
 .vela-presets {  }
@@ -68,20 +72,22 @@ window.vela-window { background:transparent; }
 .vela-music-tools button:disabled { opacity:.45; }
 .vela-context-card {  }
 .vela-weather-hero,.vela-condition-grid,.vela-day-row,.vela-agent-identity,.vela-agent-state,.vela-agent-event,.vela-brief-item,.vela-forecast-notice {  }
+.vela-context-card .vela-hour-tile {  }
 .vela-weather-location { font-size:17px;font-weight:600; }
 .vela-weather-temperature { font-size:48px;font-weight:500; }
 .vela-weather-temperature { letter-spacing:-2px; }
+.vela-weather-reading {  }
 .vela-context-heading { font-size:22px;font-weight:600; }
 .vela-context-muted,.vela-hour-time,.vela-day-low { font-size:12px;color:#b4b3c2; }
 .vela-context-body { font-size:13px;font-weight:400; }
 .vela-context-section { font-size:12px;font-weight:600; }
 .vela-context-footnote { font-size:11px;color:#b4b3c2; }
-.vela-condition-grid { padding:12px;border-radius:12px;background-color:rgba(181,164,245,.06); }
+.vela-condition-grid { padding:8px 0;border-radius:12px;background-color:rgba(181,164,245,.06); }
 .vela-condition-value { font-size:16px;font-weight:600; }
-.vela-hour-tile { min-width:48px;padding:8px 4px;border-radius:10px;background-color:rgba(181,164,245,.05); }
+.vela-hour-tile { min-width:48px;padding:6px 4px;border-radius:10px;background-color:rgba(181,164,245,.05); }
 .vela-hour-temperature { font-size:16px;font-weight:600; }
 .vela-hour-rain,.vela-day-rain { font-size:11px;color:#a7c9e8; }
-.vela-day-row { padding:3px 0; }
+.vela-day-row { padding:1px 0; }
 .vela-day-name { min-width:38px;font-size:12px;font-weight:600; }
 .vela-day-low,.vela-day-high { min-width:24px;font-size:12px; }
 .vela-day-high { font-size:12px;font-weight:600; }
@@ -102,11 +108,17 @@ window.vela-window { background:transparent; }
 .vela-brief-item { padding:10px 0;border-bottom:1px solid rgba(181,164,245,.1); }
 .vela-brief-heading { font-size:14px;font-weight:600; }
 .vela-context-empty { padding:20px 0; }
+.vela-forecast-tabs { padding:3px;border-radius:12px;background-color:rgba(160,153,180,.08); }
+.vela-forecast-tabs button { padding:7px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:#b4b3c2;box-shadow:none;min-height:18px; }
+.vela-forecast-tabs button:checked { background-color:rgba(181,164,245,.18);color:#f4f3f8; }
+.vela-light .vela-forecast-tab,.vela-light .vela-forecast-tabs button { color:#625e70; }
+.vela-light .vela-tab-selected,.vela-light .vela-forecast-tabs button:checked { background-color:#e2dced;color:#302442; }
 .vela-light { color:#252431; }
 .vela-light .vela-pill, .vela-light .vela-card { background-color:#f8f7fb;color:#252431;border-color:rgba(60,45,80,.15); }
 .vela-light .vela-icon-button, .vela-light .vela-title, .vela-light .vela-context-body { color:#252431; }
 .vela-light .vela-pill-detail, .vela-light .vela-subtitle, .vela-light .vela-caption, .vela-light .vela-context-muted, .vela-light .vela-context-footnote, .vela-light .vela-time-label, .vela-light .vela-hour-time, .vela-light .vela-day-low, .vela-light .vela-control-status, .vela-light .vela-lyric-line { color:#625e70; }
 .vela-light .vela-secondary, .vela-light .vela-text-button, .vela-light .vela-context-button { background-color:#eceaf2;color:#252431; }
+.vela-light .vela-footer-action { background:transparent; }
 .vela-light .vela-primary { background-color:#6558c4;color:#ffffff; }
 .vela-light .vela-lyric-active { color:#443368; }
 .vela-light .vela-hour-rain,.vela-light .vela-day-rain { color:#356485; }
