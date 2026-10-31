@@ -1,0 +1,441 @@
+{
+  "source_commit": "f9dfebaa9b038edcfbf10ffd349128776cc80fd2",
+  "capture": "Unedited native session captures. UI fixtures are synthetic test data. Scaled runs preceded the final bounded metadata and seek-track refinements; final runs include expanded long, RTL and enlarged metadata at 100%.",
+  "files": [
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-music-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-music-card-preview.png",
+      "sha256": "eff713c11065f7cd47bb63be78bde79c8af773e7d70156cb2ee5f3ebb3102914"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-idle-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-idle-card-preview.png",
+      "sha256": "d4a0241424c9504806e13c9f2d375bf31a4be1e2733700718f445348f8ce1ba1"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-reduced-motion-preview.png",
+      "source": "target/cards-final-gtk/gtk-reduced-motion-preview.png",
+      "sha256": "d72fc0f704ef5440a847c5cb5b0df1b45f533b7d7bb2ca69e54aed491876a828"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-wide-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-wide-pill-preview.png",
+      "sha256": "ce2260e12340c7557618f8d6c731e6c710b654f42d9625e89fb0dbfcc843d014"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-volume-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-volume-pill-preview.png",
+      "sha256": "da99034ab15ea1b3478f76212243f7219e530a91a29204c636066781e2f00aad"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-brief-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-brief-card-preview.png",
+      "sha256": "d72fc0f704ef5440a847c5cb5b0df1b45f533b7d7bb2ca69e54aed491876a828"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-timer-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-timer-pill-preview.png",
+      "sha256": "b53f8910f921ffcbdbc69c2656a945936f6f359579d965897b699fd29e2e593f"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-timer-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-timer-card-preview.png",
+      "sha256": "12111e5fc0020850ea455b9886408e0cf71785e2d4e3486a7160bbe50fbcd2d4"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-weather-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-weather-pill-preview.png",
+      "sha256": "3f15d2e1a83311a492b63770d605a8cd3981ec41a318143488f7a80f61bcaa6e"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-completed-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-completed-pill-preview.png",
+      "sha256": "4e4a8e68280241953cbfcc4e23c69bda2479dc438d8a2e9990a862f8b145a72a"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-idle-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-idle-pill-preview.png",
+      "sha256": "ff9d6e799c701ff3641d045aac39a47a73bc93fb728b3dc2d67e2d88c5d7a0c9"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-volume-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-volume-card-preview.png",
+      "sha256": "df0067d2e5427de17572e4cf0633544f1532e776e66ac297c098fcd5a21a61cf"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-small-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-small-card-preview.png",
+      "sha256": "fda9d91903d040806e237bca002e55871b52d6cd677c961092b3d5d92f537349"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-short-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-short-pill-preview.png",
+      "sha256": "47853116355fdda75ed96fd28ff3ee60ca93a18edbeef69dfde46cd78f65d7be"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-music-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-music-pill-preview.png",
+      "sha256": "a417ce9a42f5fed5d9a9e41b9e86fbe2705c70baa64b0e85bcb0af09380195f9"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-large-font-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-large-font-card-preview.png",
+      "sha256": "21637bbdd0159126c8db87af11db54e502e2aa71dcda5065247181e2e6a4513e"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-long-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-long-pill-preview.png",
+      "sha256": "002b7e0415e074cf5ed3c997db8518dc271bf15cecb77652933c2684828c6011"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-brief-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-brief-pill-preview.png",
+      "sha256": "1eadb820a35bfae43f490da70fad160e5b87bfcb90076dda6d6185a03fc0a080"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-developer-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-developer-pill-preview.png",
+      "sha256": "0faac115b1fe102c00247f597960be338fa9d4d995a1b3e523ab18b829c97645"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-rtl-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-rtl-card-preview.png",
+      "sha256": "7aef5a7160765799d98f8d8c1ef6207458797196c0863759afb5d1ce425e0c0b"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-large-font-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-large-font-pill-preview.png",
+      "sha256": "43a672ba0e216117a7553e64db0fd13c7e839b431981e12dcf778cb41e9d1c36"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-rtl-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-rtl-pill-preview.png",
+      "sha256": "3204ca9efc13a4765ab95823d128cfee8e9d5e52acc3b6581b20933a24fe5750"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-large-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-large-card-preview.png",
+      "sha256": "4bacf7bf0d48b6829e83b0faf4c775258ddda10c2c3af70e5c20a8ab1a101779"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-developer-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-developer-card-preview.png",
+      "sha256": "302844c4f60a3c53e1f9ff7af54c904aac717523a93402a5c8b8a403806a322d"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-battery-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-battery-pill-preview.png",
+      "sha256": "01de05ca9e140d136f7fb16da25c85d06c1455e2507fc7b832928fa3d0e5281a"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-stopwatch-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-stopwatch-pill-preview.png",
+      "sha256": "3e704ec7f378e78f30c2a7e5ab3114cd470c020fdb5f87db9ee6e0e4c1fdb25c"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-long-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-long-card-preview.png",
+      "sha256": "963d1d80cbcdf92bb32f107bb3fff93b80b17cb67777322e701b5a813a09f6ff"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-stopwatch-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-stopwatch-card-preview.png",
+      "sha256": "47ec73a6940551b127af2fbf11791f05ef09c00d6d3054855438e32cd2e78c92"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-battery-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-battery-card-preview.png",
+      "sha256": "cee3b42e779530dded498bf028b28a7cdd271b0d1b15a811cf6ffba506952483"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-failed-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-failed-pill-preview.png",
+      "sha256": "f5f78acfc604c097f07b145273649544c29b03f3f2eee018eb5a932c9d6d8fa4"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-weather-card-preview.png",
+      "source": "target/cards-final-gtk/gtk-weather-card-preview.png",
+      "sha256": "77184e2b6a8cd6c7f974e0afecd3540e4d4f30bbd3c0b905000c25293fa3ae69"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-waiting-pill-preview.png",
+      "source": "target/cards-final-gtk/gtk-waiting-pill-preview.png",
+      "sha256": "c9f17830b55e0cfbfe12fbe41621aafbbca801effef4cc626168dfb7800d49a5"
+    },
+    {
+      "file": "docs/validation/card-rebuild/gtk-layout-matrix.json",
+      "source": "target/cards-final-gtk/gtk-layout-matrix.json",
+      "sha256": "c4ec109f4db5e3180b98eb708b8cda1af5b4be0431786e44701fb3630858c149"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-long-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-long-pill-preview.png",
+      "sha256": "56ab920461ad7f5f5a47fc8c2b2530b71e4f70ad21ddcf13e55a60cde099e13b"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-volume-card-preview.png",
+      "source": "target/cards-final-shell/gnome-volume-card-preview.png",
+      "sha256": "a15e8c7289c4762afae3e2efeddca189e19cb1ffb2ba975abeec2a93e0e179eb"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-music-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-music-pill-preview.png",
+      "sha256": "cd63a8d5a5b1a05fa8e5bda2a77f94a741bd592641ecdb5746ea0ea69c8c6208"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-developer-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-developer-pill-preview.png",
+      "sha256": "947088379e25e36ff167b84066f67b43a7193a81b6101377c591fdaaa3b92080"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-reduced-motion-preview.png",
+      "source": "target/cards-final-shell/gnome-reduced-motion-preview.png",
+      "sha256": "6ef62252ed40fcd30746768dec9ca53c72fdc8f2c7a984748431dd5b466b3e2f"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-brief-card-preview.png",
+      "source": "target/cards-final-shell/gnome-brief-card-preview.png",
+      "sha256": "8740d27960bbb6ae0a772a48057715df2b69db5f2bf6ba4260e412b55e452fe4"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-stopwatch-card-preview.png",
+      "source": "target/cards-final-shell/gnome-stopwatch-card-preview.png",
+      "sha256": "08a53fe05461c6e30d5ad477b25af7f878ea36b87820051f52256ef50f1cf06f"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-wide-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-wide-pill-preview.png",
+      "sha256": "08426116fd0913609f3c60917dbd83adf30cbe35e368716b24f7db209dbe555a"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-brief-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-brief-pill-preview.png",
+      "sha256": "eedefa3288f03795ecc81272d21c8cd702195b61fc4569776f50f8adfa05f802"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-completed-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-completed-pill-preview.png",
+      "sha256": "b7d6366344aac0c9a090bb4a4c66004bb30e9976634fd50e53506bbfc1047372"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-idle-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-idle-pill-preview.png",
+      "sha256": "e3163fbcda4277a7e4f4455a0be8f27b1e6ccb53da8a703cfa0128dfc5f86439"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-developer-card-preview.png",
+      "source": "target/cards-final-shell/gnome-developer-card-preview.png",
+      "sha256": "0ccfa2b9b3e8de1586d9d3c2ef87bdacf1d0b78b414539e6f8ded9c382df6166"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-small-card-preview.png",
+      "source": "target/cards-final-shell/gnome-small-card-preview.png",
+      "sha256": "24fc55c64a77f6cc9374e942845435b8592a2994cd84857ce791bd5beab2ee55"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-large-font-card-preview.png",
+      "source": "target/cards-final-shell/gnome-large-font-card-preview.png",
+      "sha256": "9de96fce6e0cb96476abfe4e867a2a715fb8ca17a881c9cbafd5a366f7025fa1"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-large-font-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-large-font-pill-preview.png",
+      "sha256": "98702b78b0c274ac9fb8b34147242947d2267286a54119d09e2212c380696d69"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-timer-card-preview.png",
+      "source": "target/cards-final-shell/gnome-timer-card-preview.png",
+      "sha256": "5a03ab08c9725ec26c004bc486707dbcade81a1b048ac31fb7aab64b40971676"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-idle-card-preview.png",
+      "source": "target/cards-final-shell/gnome-idle-card-preview.png",
+      "sha256": "00fd4427762d5ad26ecddad68c33c90a306dbbc47fa6e4d778797c2a51ec3a4c"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-short-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-short-pill-preview.png",
+      "sha256": "50127a7bd062e2bbbf6bdb49cc758a46148ff2b102c8d2be4d442ff469057d86"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-weather-card-preview.png",
+      "source": "target/cards-final-shell/gnome-weather-card-preview.png",
+      "sha256": "0af8bc1936d9ecb06739a16a9d7d19864fe62750f8bbc8d30d73c4d0f44deba1"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-large-card-preview.png",
+      "source": "target/cards-final-shell/gnome-large-card-preview.png",
+      "sha256": "02e4a7884a33fa4663e97c922d69c8f5d09c07f4c78eed36d7d400bcbbaeed64"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-music-card-preview.png",
+      "source": "target/cards-final-shell/gnome-music-card-preview.png",
+      "sha256": "27bfb10c2858ad0ce9342e5b6237f930b761aabfb26bff2129a13edd338a6259"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-timer-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-timer-pill-preview.png",
+      "sha256": "d7df6c4ca8d5365300e1c66b756e68c3f77f6975aed4c1e2bc4d831d2cea686d"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-failed-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-failed-pill-preview.png",
+      "sha256": "656e8e2657f0ba58b3b6a96b9ef373189e2f8878d2acce0e11b2ec46f3780ea8"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-battery-card-preview.png",
+      "source": "target/cards-final-shell/gnome-battery-card-preview.png",
+      "sha256": "4a9662ed6d2e57d1465a1c710ec7816f3e81aa18e52c7511da9fa5b4422a63e4"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-rtl-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-rtl-pill-preview.png",
+      "sha256": "bdb6a788830ee573f44a8f8f7cff83e2912135cca0ca28c9a98d0b31791772e8"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-volume-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-volume-pill-preview.png",
+      "sha256": "82790c6c709d0c31172e3bed65cdb6f25fbde3ad1ac0eae14f9d6ce21c7fae53"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-battery-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-battery-pill-preview.png",
+      "sha256": "7519f0fbb281de69a68f9874a3540b560f758579b1c47c17690503610484634e"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-long-card-preview.png",
+      "source": "target/cards-final-shell/gnome-long-card-preview.png",
+      "sha256": "55f07d4be3423baa4674fd085d0fcf62ea618beb4f32c863725001cbc9a67272"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-weather-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-weather-pill-preview.png",
+      "sha256": "0c94533e41d1dc490f3d366503d82b94cc55184079b7ec546ed8d4dd6852f78b"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-stopwatch-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-stopwatch-pill-preview.png",
+      "sha256": "5b9f4983850ec0815f72e6b9918ce9c21f84ce47986a5c3d46f15029b83487e3"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-rtl-card-preview.png",
+      "source": "target/cards-final-shell/gnome-rtl-card-preview.png",
+      "sha256": "c20956e8e13a53d76466e0a48f5adeb23298f8cd8a79906eec071cdc9f0b40b6"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-waiting-pill-preview.png",
+      "source": "target/cards-final-shell/gnome-waiting-pill-preview.png",
+      "sha256": "003988f483fb2709f8c300cbccf28a0dbf2d87986e2e66daec0ba15a9d4e13f9"
+    },
+    {
+      "file": "docs/validation/card-rebuild/gnome-layout-matrix.json",
+      "source": "target/cards-final-shell/gnome-layout-matrix.json",
+      "sha256": "a5ab6235252e5fe1c8a10c9b49aede2c1a509b00f73bebf74a494e05f42ce86f"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-weather-daily.png",
+      "source": "target/cards-final-gtk/native-weather-daily.png",
+      "sha256": "c39e5b0b7b36c832a6b9c08777e55a095716d7cbe8dbcf782c02c31640f0fa55"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gnome-weather-daily.png",
+      "source": "target/phase-3-4/gnome-weather-daily.png",
+      "sha256": "ae5e756e8d69f84ab5b18079d0dacfd0a5a96cdfb2e0234ea12ac9a3cd367a2a"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-music-input.png",
+      "source": "target/music-input/native-music-card.png",
+      "sha256": "510bed0f2fc4cbd731069883f670cc1d6e0d9b1224878854752eaf0f227af387"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-weather-dark.png",
+      "source": "target/cards-final-gtk/native-weather-dark.png",
+      "sha256": "8d4107c27e508337af33ac3382150c93105054db9766b532d55c7072ea43c91b"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-weather-light.png",
+      "source": "target/cards-final-gtk/native-weather-light.png",
+      "sha256": "bb229dc45b039ea2423034b8e687ef7eed9cd2de76b14b4af6bf510a0f78b12c"
+    },
+    {
+      "file": "docs/screenshots/card-rebuild/gtk-weather-glass.png",
+      "source": "target/cards-final-gtk/native-weather-glass.png",
+      "sha256": "53829fb16ddac4b6321b8a0a29cd4b53dca53d280f83d8f425cd8fca2779f66f"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-music.log",
+      "source": "../../work/cards-music.log",
+      "sha256": "d5a123170aadb62e7f915e97022810159e407bb46216abb432f8ca941fd7c440"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-final-gtk.log",
+      "source": "../../work/cards-final-gtk.log",
+      "sha256": "05bcb9a315ca2c1df2a7639d30419ddfac9840708a2d947b38bb6890ffd5aa01"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-final-shell.log",
+      "source": "../../work/cards-final-shell.log",
+      "sha256": "f79a6e78f83a2c89ba96a9a395c958fb7bf96487539a12f16f36f477abcf5a80"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-release-checks.log",
+      "source": "../../work/cards-release-checks.log",
+      "sha256": "e6b58a8a680aaa592824b1e1ce5be6ae33f1ad856e30a426c227134285a513ef"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-regression.log",
+      "source": "../../work/cards-regression.log",
+      "sha256": "3f3b103ca12223b660850b4aeb79f503b719a1d3786e33232007362dc64264ad"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-gtk-1.25.log",
+      "source": "../../work/cards-gtk-1.25.log",
+      "sha256": "c7399124658cfdbc26a41d442faa6c9d9965a5c742bb596d2f5562817aea54f2"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-gtk-1.5.log",
+      "source": "../../work/cards-gtk-1.5.log",
+      "sha256": "4fa1d6bc7acc8c8795e5fcdd115605aaadd5a0ad9486768df2a399769c309f0c"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-shell-1.25.log",
+      "source": "../../work/cards-shell-1.25.log",
+      "sha256": "dce623706246c04115dcad845112b63b738789eea70c7829b067ef7e674fe4ef"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-shell-1.5.log",
+      "source": "../../work/cards-shell-1.5.log",
+      "sha256": "4c7ef1c98d6bb453ff821cd1e72ae0feed8c00989f847b18602ecbf3a5a7acc2"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-installed-preferences.log",
+      "source": "../../work/cards-installed-preferences.log",
+      "sha256": "e721da65f12a4a3865f538dca6ca92680636dd2df845984433e145f1cffb0fef"
+    },
+    {
+      "file": "docs/validation/card-rebuild/installed-verification.json",
+      "source": "../../work/cards-installed-final.json",
+      "sha256": "d29102ac7d7ab3cad16eae2299cda7e680a1fd6c3a84e4ad9666dd5ee7e7e17a"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-gtk-1.25-matrix.json",
+      "source": "target/cards-gtk-1.25/gtk-layout-matrix.json",
+      "sha256": "c4ec109f4db5e3180b98eb708b8cda1af5b4be0431786e44701fb3630858c149"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-gtk-1.5-matrix.json",
+      "source": "target/cards-gtk-1.5/gtk-layout-matrix.json",
+      "sha256": "c4ec109f4db5e3180b98eb708b8cda1af5b4be0431786e44701fb3630858c149"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-shell-1.25-matrix.json",
+      "source": "target/cards-shell-1.25/gnome-layout-matrix.json",
+      "sha256": "451bc5b232865b4d22bfe8ee645061f5acc34084b5de6adc877727f5809bc3ff"
+    },
+    {
+      "file": "docs/validation/card-rebuild/cards-shell-1.5-matrix.json",
+      "source": "target/cards-shell-1.5/gnome-layout-matrix.json",
+      "sha256": "451bc5b232865b4d22bfe8ee645061f5acc34084b5de6adc877727f5809bc3ff"
+    }
+  ]
+}

@@ -220,6 +220,7 @@ fn main() -> anyhow::Result<()> {
                         "TAB" => (0, 15),
                         "SHIFT+TAB" => (1, 15),
                         "CTRL+A" => (4, 30),
+                        "CTRL+F" => (4, 33),
                         "CTRL+L" => (4, 38),
                         "ALT+O" => (8, 24),
                         "SPACE" => (0, 57),

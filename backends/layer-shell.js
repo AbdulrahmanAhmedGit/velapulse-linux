@@ -1,8 +1,9 @@
 #!/usr/bin/gjs -m
+import {cardIdentity,navigationTree,controlsTree} from '../extension/card-state.js';
 import {createGtkContextCard} from '../extension/context-gtk.js';
 import {createMusicControls} from '../extension/music-controls.js';
 import {activePlayer} from '../extension/music-state.js';
-import {SPACE, LAYOUT} from '../extension/layout.js';
+import {SPACE, LAYOUT, MOTION, surfaceColor} from '../extension/layout.js';
 import Gtk from 'gi://Gtk?version=4.0';
 import Gdk from 'gi://Gdk?version=4.0';
 import Gio from 'gi://Gio';
@@ -32,30 +33,30 @@ const CompactPill = GObject.registerClass(class CompactPill extends Gtk.Widget {
 // An artwork's intrinsic pixel size must never dictate the surface width.
 const CoverArtwork = GObject.registerClass(class CoverArtwork extends Gtk.Widget {
     _init() {
-        super._init({hexpand:true, vexpand:true});
-        this._stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:180});this._pictures=[0,1].map(i=>{const picture=new Gtk.Picture({content_fit:Gtk.ContentFit.COVER,can_shrink:true});this._stack.add_named(picture,String(i));return picture;});this._index=0;this._stack.set_parent(this);
+        super._init({width_request:88,height_request:88});
+        this._stack=new Gtk.Stack({transition_type:Gtk.StackTransitionType.CROSSFADE,transition_duration:MOTION.artwork});this._pictures=[0,1].map(i=>{const picture=new Gtk.Picture({content_fit:Gtk.ContentFit.COVER,can_shrink:true});this._stack.add_named(picture,String(i));return picture;});this._index=0;this._stack.set_parent(this);
     }
-    vfunc_measure(orientation, _forSize) {return orientation === Gtk.Orientation.HORIZONTAL ? [0,0,-1,-1] : [220,220,-1,-1];}
+    vfunc_measure(orientation, _forSize) {return orientation === Gtk.Orientation.HORIZONTAL ? [0,0,-1,-1] : [88,88,-1,-1];}
     vfunc_size_allocate(width, height, baseline) {this._stack?.allocate(width,height,baseline,null);}
     vfunc_snapshot(snapshot) {if(this._stack)this.snapshot_child(this._stack,snapshot);}
-    set_file(file,motion=true) {if(!this._stack)return;this._index=1-this._index;this._stack.transition_duration=motion?180:0;this._pictures[this._index].set_file(file);this._stack.visible_child_name=String(this._index);}
+    set_file(file,motion=true) {if(!this._stack)return;this._index=1-this._index;this._stack.transition_duration=motion?MOTION.artwork:0;this._pictures[this._index].set_file(file);this._stack.visible_child_name=String(this._index);}
     release() {this._stack?.unparent();this._stack=null;this._pictures=[];}
 });
 
 const BUS = 'io.github.velapulse.Service', PATH = '/io/github/velapulse/Service', IFACE = 'io.github.velapulse.Service1';
 const here = Gio.File.new_for_uri(import.meta.url).get_parent();
 const app = new Gtk.Application({application_id: 'io.github.velapulse.LayerShell'});
-let window, cardScroll, proxy, root, pill, pillIcon, pillTitle, pillDetail, pillControls, revealer, card, pillRing;
+let surfaceCss, surfaceKey, window, cardScroll, proxy, root, pill, pillIcon, pillTitle, pillDetail, pillControls, revealer, card, pillRing;
 let state = {activities: [], config: {}}, selected, expanded = false, launcherOpen = false;
 let pillArtUri,lastMonitor, lastPosition, cardKey, pillKey, refs = {}, signal = 0, ownerSignal = 0, preferencesWatch = 0, monitorSignal = 0, rendererOwner = 0;
 function call(method, signature, args, done = () => {}) {
     proxy?.call(method, new GLib.Variant(signature, args), Gio.DBusCallFlags.NONE, 3000, null, (p,r) => {
-        try {done(p.call_finish(r).deep_unpack());} catch {pillDetail.label = 'This control is unavailable';}
+        try {const result=p.call_finish(r).deep_unpack();if(refs.error)refs.error.visible=false;done(result);} catch {pillDetail.label='This control is unavailable';if(refs.error){refs.error.label='This action could not be completed. Try again.';refs.error.visible=true;}}
     });
 }
 function request(method,signature,args){return new Promise((resolve,reject)=>{if(!proxy?.g_name_owner){reject(new Error('Activity service unavailable'));return;}proxy.call(method,new GLib.Variant(signature,args),Gio.DBusCallFlags.NONE,6000,null,(p,r)=>{try{resolve(p.call_finish(r).deep_unpack());}catch(e){reject(e);}});});}
 function command(id, action, seconds = 0) {if(action==='cancel'){call('DeveloperCancel','(s)',[id]);return;}if(action === 'start') {selected = id;launcherOpen = false;}call('Command', '(sst)', [id, action, seconds],()=>{if(id==='brief'){selected='brief';call('Snapshot','()',[],([json])=>render(json));}});}
-function label(text, style, expand = false) {return new Gtk.Label({label:text, xalign:0, ellipsize:3, max_width_chars:style.startsWith('vela-pill-')?-1:style==='vela-title'?25:42, hexpand:expand, css_classes:[style]});}
+function label(text, style, expand = false) {return new Gtk.Label({label:text, xalign:0, ellipsize:3, max_width_chars:style.startsWith('vela-pill-')?-1:style==='vela-title'?25:42, hexpand:expand, wrap:['vela-title','vela-subtitle','vela-metric-title'].includes(style),single_line_mode:style.startsWith('vela-pill-'),lines:style.startsWith('vela-pill-')?1:style==='vela-title'?2:3,css_classes:[style]});}
 function box(vertical = false, style = '', spacing = 0) {return new Gtk.Box({orientation:vertical ? Gtk.Orientation.VERTICAL : Gtk.Orientation.HORIZONTAL, spacing, css_classes:style ? [style] : []});}
 function clear(widget) {while(widget.get_first_child())widget.remove(widget.get_first_child());}
 function iconButton(icon, name, action, style = '') {
@@ -94,9 +95,9 @@ function render(json) {
     const a = state.activities.find(a=>a.id===selected), p = present(a);
     root.set_css_classes(['vela-root', ...(['light','glass'].includes(state.config.appearance) ? [`vela-${state.config.appearance}`] : []), `vela-${p.type}`]);
     Gtk.Settings.get_default().gtk_application_prefer_dark_theme=state.config.appearance!=='light';
-    root.opacity = (state.config.opacity ?? 98)/100;
+    const surface=surfaceColor(state.config.appearance,state.config.opacity);if(surfaceKey!==surface){surfaceKey=surface;surfaceCss.load_from_string(`.vela-root .vela-pill,.vela-root .vela-card {background-color:${surface};}`);}
     pillRing.visible=a?.progress!==null && a?.progress!==undefined;if(pillRing.visible)pillRing.queue_draw();
-    const artUri=p.type==='media'&&a.icon?.startsWith('file://')?a.icon:p.icon;if(pillArtUri!==artUri){pillArtUri=artUri;if(artUri.startsWith('file://')&&Gio.File.new_for_uri(artUri).query_exists(null))pillIcon.gicon=new Gio.FileIcon({file:Gio.File.new_for_uri(artUri)});else pillIcon.icon_name=p.icon;}pillTitle.label=p.compact;pillDetail.label=p.detail?`· ${p.detail}`:'';pillDetail.visible=Boolean(p.detail);
+    const artUri=p.type==='media'&&a.icon?.startsWith('file://')?a.icon:p.icon;if(pillArtUri!==artUri){pillArtUri=artUri;if(artUri.startsWith('file://')&&Gio.File.new_for_uri(artUri).query_exists(null))pillIcon.gicon=new Gio.FileIcon({file:Gio.File.new_for_uri(artUri)});else pillIcon.icon_name=p.icon;}pillTitle.label=p.compact;pill.content.get_first_child().update_property([Gtk.AccessibleProperty.LABEL],[`${p.compact}, ${p.detail}`]);pillDetail.label=p.detail;pillDetail.visible=Boolean(p.detail);
     const key = JSON.stringify([a?.id,a?.controls,a?.status]);
     if(key !== pillKey) {
         pillKey=key;clear(pillControls);
@@ -104,7 +105,7 @@ function render(json) {
         pillControls.visible=actions.length>0;
         for(const action of actions) {const [icon,name]=actionInfo(action,a.status);pillControls.append(iconButton(icon,name,()=>command(a.id,action),'vela-inline'));}
     }
-    revealer.transition_duration=state.config.animations!==false && Gtk.Settings.get_default().gtk_enable_animations ? 240 : 0;
+    revealer.transition_duration=state.config.animations!==false && Gtk.Settings.get_default().gtk_enable_animations ? MOTION.expand : 0;
     renderCard();position();
 }
 function buildProgress(wave=false) {
@@ -115,23 +116,22 @@ function buildProgress(wave=false) {
 function renderCard() {
     if(!expanded)return;
     const a=state.activities.find(a=>a.id===selected),p=present(a);
-    const key=JSON.stringify([a?.id,a?.controls,state.activities.map(a=>a.id),launcherOpen]);
+    const key=cardIdentity(a);
     if(key !== cardKey) {
         cardKey=key;refs.music?.dispose();refs.art?.release();clear(card);refs={};
         const header=box(false,'vela-card-header',SPACE.xs),tag=box(false,'vela-tag',SPACE.sm);
         tag.hexpand=true;tag.valign=Gtk.Align.CENTER;tag.append(new Gtk.Image({icon_name:p.icon,pixel_size:13}));tag.append(label(p.label,'vela-caption'));
-        header.append(tag);header.append(iconButton('emblem-system-symbolic','Preferences',preferences,'vela-quiet'));header.append(iconButton('window-close-symbolic','Collapse activity',()=>setExpanded(false),'vela-quiet'));if(['weather','brief'].includes(p.type))header.insert_child_after(iconButton('view-refresh-symbolic','Refresh',()=>command(a.id,'refresh'),'vela-quiet'),tag);if(p.type!=='media')card.append(header);
+        header.append(tag);header.append(iconButton('emblem-system-symbolic','Preferences',preferences,'vela-quiet'));header.append(iconButton('window-close-symbolic','Collapse activity',()=>setExpanded(false),'vela-quiet'));if(['weather','brief'].includes(p.type))header.insert_child_after(iconButton('view-refresh-symbolic','Refresh',()=>command(a.id,'refresh'),'vela-quiet'),tag);card.append(header);
         if(['weather','developer','brief'].includes(p.type)){refs.context=createGtkContextCard(a,action=>command(a.id,action));card.append(refs.context.widget);}
         else if(p.type==='media') {
-            const hero=new Gtk.Overlay({css_classes:['vela-artwork'],overflow:Gtk.Overflow.HIDDEN,height_request:220});
-            refs.art=new CoverArtwork();hero.set_child(refs.art);
-            const caption=box(true,'vela-cover-caption',5);caption.valign=Gtk.Align.END;
-            refs.title=label(p.title,'vela-title');caption.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');caption.append(refs.detail);hero.add_overlay(caption);
-            const corners=box(false,'vela-cover-corners');corners.valign=Gtk.Align.START;
-            corners.append(iconButton('emblem-system-symbolic','Preferences',preferences,'vela-cover-button'));const spacer=box();spacer.hexpand=true;corners.append(spacer);corners.append(iconButton('window-close-symbolic','Collapse',()=>setExpanded(false),'vela-cover-button'));hero.add_overlay(corners);card.append(hero);
-            const source=box(false,'vela-provider-row',SPACE.sm);source.append(new Gtk.Image({icon_name:p.icon,pixel_size:18,css_classes:['vela-provider-icon']}));refs.source=label(p.source,'vela-source',true);source.append(refs.source);
-            if(state.activities.some(a=>a.id==='volume')) {source.append(new Gtk.Image({icon_name:'audio-headphones-symbolic',pixel_size:15}));source.append(label('System audio','vela-output'));}card.append(source);
-            refs.music=createMusicControls({request,getActivity:()=>state.activities.find(a=>a.id===selected),getActivities:()=>state.activities,getConfig:()=>state.config,onSelect:id=>{state.config.selected_player=id;selected=id||activePlayer(state.activities)?.id;cardKey=null;render(JSON.stringify(state));},window});card.append(refs.music.widget);
+            const identity=box(false,'vela-media-identity',SPACE.lg);
+            const hero=new Gtk.Overlay({css_classes:['vela-artwork'],overflow:Gtk.Overflow.HIDDEN,width_request:88,height_request:88,hexpand:false,valign:Gtk.Align.CENTER});
+            refs.art=new CoverArtwork();hero.set_child(refs.art);identity.append(hero);
+            const caption=box(true,'vela-track-identity',SPACE.xs);caption.hexpand=true;caption.valign=Gtk.Align.CENTER;
+            refs.title=label(p.title,'vela-title');refs.title.wrap=false;refs.title.single_line_mode=true;refs.title.lines=1;caption.append(refs.title);
+            refs.detail=label(p.subtitle,'vela-subtitle');refs.detail.wrap=false;refs.detail.single_line_mode=true;refs.detail.lines=1;caption.append(refs.detail);identity.append(caption);card.append(identity);
+            refs.source=label(p.source,'vela-source');caption.append(refs.source);
+            refs.music=createMusicControls({request,getActivity:()=>state.activities.find(a=>a.id===selected),getActivities:()=>state.activities,getConfig:()=>state.config,onSelect:id=>{state.config.selected_player=id;selected=id||activePlayer(state.activities)?.id;render(JSON.stringify(state));},window});card.append(refs.music.widget);
         } else if(['timer','stopwatch','battery','volume'].includes(p.type)) {
             const panel=box(true,'vela-metric-panel',SPACE.sm);refs.metric=label(p.metric,'vela-metric');panel.append(refs.metric);
             refs.title=label(p.title,'vela-metric-title');panel.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');panel.append(refs.detail);card.append(panel);buildProgress();
@@ -140,30 +140,32 @@ function renderCard() {
             refs.title=label(p.title,'vela-title');panel.append(refs.title);refs.detail=label(p.subtitle,'vela-subtitle');panel.append(refs.detail);card.append(panel);buildProgress();
         }
 
-        if(a?.controls.length&&!['media','weather','developer','brief'].includes(p.type)) {
-            const controls=box(false,'vela-transport',SPACE.lg);controls.halign=Gtk.Align.CENTER;
-            const ordered=['timer','stopwatch'].includes(p.type) ? [...a.controls].reverse() : a.controls;
-            refs.transport=[];for(const action of ordered) {const [icon,name]=actionInfo(action,a.status);const b=iconButton(icon,name,()=>command(a.id,action),['PlayPause','pause','resume'].includes(action)?'vela-primary':'vela-secondary');controls.append(b);refs.transport.push({button:b,action});}card.append(controls);
+        if(!['media','weather','developer','brief'].includes(p.type)){
+            refs.controls=createGtkContextCard(a,action=>command(selected,action),controlsTree);card.append(refs.controls.widget);
         }
-        if(p.type!=='brief')card.append(textButton('Now Brief',()=>{selected='brief';command('brief','open');}));
-        if(state.activities.length>1&&!['weather','developer'].includes(p.type)) {
-            const rail=box(false,'vela-activity-rail',SPACE.sm);rail.halign=Gtk.Align.CENTER;
-            for(const activity of state.activities.slice(0,5))rail.append(iconButton(present(activity).icon,`Show ${activity.title}`,()=>{selected=activity.id;launcherOpen=false;if(activity.music)request('SelectPlayer','(s)',[activity.id]).then(()=>render(JSON.stringify(state))).catch(()=>{});else render(JSON.stringify(state));},activity.id===a?.id?'vela-rail-selected':'vela-rail-item'));
-            card.append(rail);
-        }
-        if(!['weather','developer','brief'].includes(p.type)&&(!a || launcherOpen)) {
-            const launcher=box(true,'vela-launcher',10);launcher.append(label('Start something','vela-caption'));
-            const presets=box(false,'vela-presets',8);
-            for(const minutes of [5,15,25])presets.append(textButton(`${minutes} min`,()=>command('timer','start',minutes*60),'vela-preset'));
-            launcher.append(presets);launcher.append(textButton('Start a stopwatch',()=>command('stopwatch','start'),'vela-stopwatch-launch'));card.append(launcher);
-        } else if(!['weather','developer','brief'].includes(p.type))card.append(textButton('+  New activity',()=>{launcherOpen=!launcherOpen;renderCard();},'vela-new-activity'));
+        refs.navigation=createGtkContextCard({activities:state.activities,selected},id=>{
+            const select=()=>{selected=id;launcherOpen=false;render(JSON.stringify(state));};
+            if(id.startsWith('media:'))request('SelectPlayer','(s)',[id]).then(()=>{state.config.selected_player=id;select();}).catch(()=>{refs.error.label='Player is unavailable. Choose another activity.';refs.error.visible=true;});
+            else select();
+        },navigationTree);card.append(refs.navigation.widget);
+        const footer=box(false,'vela-card-footer',SPACE.sm);
+        const brief=textButton('Now Brief',()=>command('brief','open'),'vela-footer-action');brief.hexpand=true;brief.visible=p.type!=='brief';footer.append(brief);
+        const add=textButton('New activity',()=>{launcherOpen=!launcherOpen;renderCard();},'vela-footer-action');add.visible=Boolean(a);add.hexpand=p.type==='brief';footer.append(add);card.append(footer);
+        refs.launcher=box(true,'vela-launcher',SPACE.sm);refs.launcher.append(label('Start a timer','vela-caption'));
+        const presets=box(false,'vela-presets',SPACE.sm);
+        for(const minutes of [5,15,25]){const b=textButton(`${minutes} min`,()=>command('timer','start',minutes*60));b.hexpand=true;presets.append(b);}
+        refs.launcher.append(presets);refs.launcher.append(textButton('Start a stopwatch',()=>command('stopwatch','start')));card.append(refs.launcher);
+        refs.error=label('','vela-control-status');refs.error.wrap=true;refs.error.visible=false;card.append(refs.error);
+
     }
-    for(const {button,action}of refs.transport??[]){const[icon,name]=actionInfo(action,a?.status);button.icon_name=icon;button.tooltip_text=name;button.update_property([Gtk.AccessibleProperty.LABEL],[name]);}
+    refs.controls?.update(a);
+    refs.navigation?.update({activities:state.activities,selected});if(refs.navigation)refs.navigation.widget.visible=state.activities.length>1;
+    if(refs.launcher)refs.launcher.visible=!a||launcherOpen;
     // A removed action must not leave the active window without a keyboard target.
     if(expanded&&window.is_active&&!window.get_focus())pill.content.get_first_child().grab_focus();
-    if(refs.title)refs.title.label=p.type==='timer' ? (p.state==='completed'?'A moment well spent':'Time to focus') : p.title;
+    if(refs.title)refs.title.label=p.title;
     refs.context?.update(a);
-    if(refs.detail)refs.detail.label=p.subtitle;if(refs.metric)refs.metric.label=p.metric;
+    if(refs.title)refs.title.tooltip_text=p.title;if(refs.detail){refs.detail.label=p.subtitle;refs.detail.tooltip_text=p.subtitle;}if(refs.metric)refs.metric.label=p.metric;
     if(refs.progress){if(refs.wave)refs.progress.queue_draw();else refs.progress.fraction=p.progress;refs.progress.visible=a?.progress!==null && a?.progress!==undefined;}refs.music?.update();
     if(refs.art) {
         const uri=a?.icon?.startsWith('file://')&&Gio.File.new_for_uri(a.icon).query_exists(null) ? a.icon : here.get_parent().get_child('extension/assets/orbit.svg').get_uri();
@@ -185,10 +187,11 @@ app.connect('activate',()=>{
     pillRing=new Gtk.DrawingArea({width_request:LAYOUT.indicator,height_request:LAYOUT.indicator,can_target:false});
     pillRing.set_draw_func((_,cr,w,h)=>{const p=present(state.activities.find(a=>a.id===selected));drawRing(cr,w,h,p.progress,p.accent);});
     indicator.add_overlay(pillRing);summary.append(indicator);
-    const lines=box(false,'vela-pill-text',LAYOUT.textGap);lines.hexpand=true;lines.valign=Gtk.Align.CENTER;
+    const lines=box(true,'vela-pill-text',LAYOUT.textGap);lines.hexpand=true;lines.valign=Gtk.Align.CENTER;
     pillTitle=label('VelaPulse','vela-pill-title',true);pillDetail=label('Ready when you are','vela-pill-detail',true);lines.append(pillTitle);lines.append(pillDetail);summary.append(lines);main.set_child(summary);pill.append(main);
     pillControls=box(false,'vela-inline-controls',LAYOUT.actionGap);pillControls.valign=Gtk.Align.CENTER;pill.append(pillControls);root.append(pill);
     revealer=new Gtk.Revealer({transition_type:Gtk.RevealerTransitionType.SLIDE_DOWN,visible:false});revealer.connect('notify::child-revealed',()=>{if(!revealer.child_revealed&&!expanded)revealer.visible=false;});card=box(true,'vela-card',LAYOUT.cardGap);cardScroll=new Gtk.ScrolledWindow({hscrollbar_policy:Gtk.PolicyType.NEVER,propagate_natural_height:true,max_content_height:760});cardScroll.set_child(card);revealer.set_child(cardScroll);root.append(revealer);
+    surfaceCss=new Gtk.CssProvider();Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),surfaceCss,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION+1);
     const css=new Gtk.CssProvider();css.load_from_file(here.get_child('style.css'));Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(),css,Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
     const keys=new Gtk.EventControllerKey();keys.connect('key-pressed',(_,key)=>{if(key===Gdk.KEY_Escape){setExpanded(false);return true;}return false;});window.add_controller(keys);
     const focus=new Gtk.EventControllerFocus();focus.connect('leave',()=>{GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE,()=>{
@@ -208,5 +211,5 @@ app.connect('activate',()=>{
     window.connect('map',()=>{if(!rendererOwner)rendererOwner=Gio.bus_own_name_on_connection(Gio.DBus.session,'io.github.velapulse.Renderer',Gio.BusNameOwnerFlags.DO_NOT_QUEUE,null,()=>app.quit());});
     window.present();
 });
-app.connect('shutdown',()=>{pill?.release();if(preferencesWatch)Gio.bus_unwatch_name(preferencesWatch);if(rendererOwner)Gio.bus_unown_name(rendererOwner);refs.music?.dispose();refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
+app.connect('shutdown',()=>{if(surfaceCss)Gtk.StyleContext.remove_provider_for_display(Gdk.Display.get_default(),surfaceCss);pill?.release();if(preferencesWatch)Gio.bus_unwatch_name(preferencesWatch);if(rendererOwner)Gio.bus_unown_name(rendererOwner);refs.music?.dispose();refs.art?.release();if(signal)proxy.disconnect(signal);if(ownerSignal)proxy.disconnect(ownerSignal);if(monitorSignal)Gdk.Display.get_default().get_monitors().disconnect(monitorSignal);});
 app.run([]);

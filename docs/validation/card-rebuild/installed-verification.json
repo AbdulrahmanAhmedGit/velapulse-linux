@@ -1,0 +1,9 @@
+{
+  "/home/abdulrahman/.local/share/gnome-shell/extensions/velapulse@velapulse.local": 21,
+  "/home/abdulrahman/.local/share/velapulse/extension": 15,
+  "/home/abdulrahman/.local/share/velapulse/backends": 3,
+  "binary_sha256": "357e46a2fc830d321964dcf7d9e577adc6947a7990e3e779ddaa4e7d4c85a699",
+  "settings_preserved": true,
+  "service": "active",
+  "source_commit": "f9dfebaa9b038edcfbf10ffd349128776cc80fd2"
+}

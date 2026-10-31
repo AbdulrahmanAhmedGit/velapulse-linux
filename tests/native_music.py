@@ -15,10 +15,12 @@ env['LD_PRELOAD']='libgtk4-layer-shell.so.0'
 driver_env=dict(env);driver_env.pop('LD_PRELOAD',None);driver_env.pop('WAYLAND_DEBUG',None)
 assert env.get('VELAPULSE_ISOLATED_TEST')=='1'and(base/'velapulse-test-session').is_file()
 source=(repo/'backends/layer-shell.js').read_text();recorder='''
+let widgetSerial=0;
+function buttonLabel(w){for(let c=w.get_first_child();c;c=c.get_next_sibling()){if(c instanceof Gtk.Label)return c.label;const label=buttonLabel(c);if(label)return label;}return '';}
 const originalExpand=setExpanded;setExpanded=open=>{print('EXPAND',open);originalExpand(open);};
 GLib.timeout_add(GLib.PRIORITY_DEFAULT,100,()=>{
  if(!window?.get_mapped())return GLib.SOURCE_CONTINUE;
- const widgets=[];function visit(w){if(w.get_mapped()){const[ok,b]=w.compute_bounds(window);if(ok)widgets.push({name:w.name,classes:w.get_css_classes(),label:w.label??'',button:w instanceof Gtk.Button,tooltip:w.tooltip_text??'',sensitive:w.is_sensitive(),x:b.origin.x,y:b.origin.y,width:b.size.width,height:b.size.height});}for(let c=w.get_first_child();c;c=c.get_next_sibling())visit(c);}visit(window);
+ const widgets=[];function visit(w){if(w.get_mapped()){const[ok,b]=w.compute_bounds(window);if(ok)widgets.push({serial:w._testSerial??(w._testSerial=++widgetSerial),active:w instanceof Gtk.ToggleButton?w.active:false,name:w.name,classes:w.get_css_classes(),label:w instanceof Gtk.Button?(w.label||buttonLabel(w)):(w.label??''),button:w instanceof Gtk.Button,tooltip:w.tooltip_text??'',sensitive:w.is_sensitive(),x:b.origin.x,y:b.origin.y,width:b.size.width,height:b.size.height});}for(let c=w.get_first_child();c;c=c.get_next_sibling())visit(c);}visit(window);
  GLib.file_set_contents(GLib.getenv('VELAPULSE_TEST_LAYOUT'),JSON.stringify({width:window.get_width(),height:window.get_height(),bottom:state.config.position==='bottom',topAnchor:Layer.get_anchor(window,Layer.Edge.TOP),bottomAnchor:Layer.get_anchor(window,Layer.Edge.BOTTOM),expanded,selected,state,active:window.is_active,focus:window.get_focus()?.name??'',widgets}));return GLib.SOURCE_CONTINUE;
 });
 '''
@@ -33,7 +35,8 @@ def wait(fn,message):
  raise AssertionError(message)
 def current():return json.loads(layout.read_text())
 def widget(name=None,style=None):return next(w for w in current()['widgets']if(w['name']==name if name else style in w['classes'])and w['width']>0 and w['height']>0)
-def call(method,sig='()',args=()):return Gio.bus_get_sync(Gio.BusType.SESSION,None).call_sync('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',method,GLib.Variant(sig,args),None,Gio.DBusCallFlags.NONE,5000,None).unpack()
+connection=Gio.bus_get_sync(Gio.BusType.SESSION,None)
+def call(method,sig='()',args=()):return connection.call_sync('io.github.velapulse.Service','/io/github/velapulse/Service','io.github.velapulse.Service1',method,GLib.Variant(sig,args),None,Gio.DBusCallFlags.NONE,5000,None).unpack()
 def snapshot():return json.loads(call('Snapshot')[0])
 with (artifacts/'native-renderer.log').open('w')as log:
  process=subprocess.Popen(['gjs','-m',str(path)],env=env,stdout=log,stderr=log)
@@ -43,7 +46,18 @@ with (artifacts/'native-renderer.log').open('w')as log:
   def send(*args):driver.stdin.write(' '.join(map(str,args))+'\n');driver.stdin.flush();assert driver.stdout.readline().strip()=='OK'
   def coordinates(w,fx=.5):
    frame=current();x=(1600-frame['width'])/2+w['x']+w['width']*fx;y=(1000-28-frame['height']if frame['bottom']else 28)+w['y']+w['height']/2;return round(x),round(y)
-  def click(w):x,y=coordinates(w);send('click',x,y,1600,1000);time.sleep(.25)
+  def click(w):
+   # Observe target and bottom-anchored surface in the same settled frame.
+   last=None;stable=0
+   for _ in range(40):
+    f=current();target=next((n for n in f['widgets']if n['height']>0 and(n['tooltip']==w['tooltip']if w['tooltip']else n['button']and n['label']==w['label']if w['label']else w['classes'][0]in n['classes'])),None)
+    if target:
+     x=round((1600-f['width'])/2+target['x']+target['width']/2);y=round((1000-28-f['height']if f['bottom']else 28)+target['y']+target['height']/2);point=(x,y,f['width'],f['height'],f['selected'])
+     stable=stable+1 if point==last else 0;last=point
+     if stable>=2:break
+    time.sleep(.1)
+   else:raise AssertionError('Input target did not settle: '+str(w))
+   send('click',x,y,1600,1000);time.sleep(.25)
   # GTK may report mapped before the first allocation and async Snapshot reply.
   # Wait for the actual pointer target, not merely a non-empty widget inventory.
   pill=wait(lambda:widget(style='vela-pill-main')if current()['state']['activities']and current()['width']>0 and current()['height']>0 else None,'native pill was not allocated with activity state')
@@ -51,10 +65,38 @@ with (artifacts/'native-renderer.log').open('w')as log:
   wait(lambda:widget(name='music-player'),'music controls missing');time.sleep(.3)
   cfg=snapshot()['config'];old=cfg['selected_player'];click(widget(name='music-player'));send('key','HOME');send('key','DOWN');send('key','DOWN');send('key','ENTER');wait(lambda:snapshot()['config']['selected_player']!=old,'native player selection');wait(lambda:current()['selected']==snapshot()['config']['selected_player'],'renderer selected player');time.sleep(.45)
   frame=current();a=next(a for a in frame['state']['activities']if a['id']==frame['selected']);status=a['status'];click(widget(name='music-PlayPause'));wait(lambda:next(a for a in snapshot()['activities']if a['id']==current()['selected'])['status']!=status,'native transport')
+  # Another activity must never discard the open music subtree or disclosure.
+  click(widget(name='music-lyrics'));wait(lambda:widget(name='music-lyrics')['active'],'open lyrics before activity mutation')
+  identity=widget(name='music-seek')['serial'];lyrics_identity=widget(name='music-lyrics')['serial']
+  call('Command','(sst)',['stopwatch','start',0]);wait(lambda:any(a['id']=='stopwatch'for a in current()['state']['activities']),'unrelated activity insertion')
+  assert widget(name='music-seek')['serial']==identity and widget(name='music-lyrics')['serial']==lyrics_identity and widget(name='music-lyrics')['active'],'Unrelated insertion rebuilt music or reset lyrics'
+  call('Command','(sst)',['stopwatch','reset',0]);wait(lambda:not any(a['id']=='stopwatch'for a in current()['state']['activities']),'unrelated activity removal')
+  assert widget(name='music-seek')['serial']==identity and widget(name='music-lyrics')['active'],'Unrelated removal rebuilt music'
+  click(widget(name='music-lyrics'));time.sleep(.3)
+  print('PASS music identity and open lyrics survive unrelated activity insertion/removal',flush=True)
   # Pause before seeking to make the observed result stable.
   if next(a for a in snapshot()['activities']if a['id']==current()['selected'])['status']=='active':click(widget(name='music-PlayPause'))
   w=widget(name='music-seek');x,y=coordinates(w,.2);end,_=coordinates(w,.65);send('drag',x,y,end,y,1600,1000);wait(lambda:next(a for a in snapshot()['activities']if a['id']==current()['selected'])['position_seconds']>50,'native seek')
   if env.get('VELAPULSE_TEST_GRIM'):subprocess.run([env['VELAPULSE_TEST_GRIM'],str(artifacts/'native-music-card.png')],env=env,check=True)
+  # The primary timer target survives a status change, and Space executes its
+  # updated command rather than the stale callback from the pre-pause snapshot.
+  call('Command','(sst)',['timer','start',120]);wait(lambda:any(a['id']=='timer'for a in current()['state']['activities']),'timer insertion')
+  click(next(w for w in current()['widgets']if w['tooltip']=='Show Timer'));wait(lambda:current()['selected']=='timer','timer navigation from music')
+  pause=wait(lambda:next((w for w in current()['widgets']if w['tooltip']=='Pause'),None),'timer pause target');identity=pause['serial'];click(pause)
+  wait(lambda:next(a for a in snapshot()['activities']if a['id']=='timer')['status']=='paused','timer pause command');wait(lambda:any(w['tooltip']=='Resume'for w in current()['widgets']),'resume allocation')
+  assert next(w for w in current()['widgets']if w['tooltip']=='Resume')['serial']==identity,'Pause replaced the focused control'
+  send('key','SPACE');wait(lambda:next(a for a in snapshot()['activities']if a['id']=='timer')['status']=='active','keyboard resume executes updated action')
+  click(next(w for w in current()['widgets']if w['tooltip']=='Reset'));wait(lambda:not any(a['id']=='timer'for a in snapshot()['activities']),'timer reset')
+  print('PASS actual timer pause, preserved focused target, keyboard resume and reset',flush=True)
+  # Every live activity remains reachable when the switcher exceeds its viewport.
+  overflow=[]
+  for i in range(8):overflow.append(call('Push','(s)',[json.dumps({'id':'overflow-'+str(i),'title':'Overflow '+str(i),'description':'UI fixture','status':'active','progress':None,'controls':[],'expires_in':60})])[0])
+  wait(lambda:len([a for a in current()['state']['activities']if a['id']in overflow])==8,'overflow activity insertion')
+  nav=widget(style='vela-navigation-scroll');x,y=coordinates(nav,.2);send('click',x,round(y+nav['height']/2-3),1600,1000);send('key','END');time.sleep(.3)
+  last=next(a for a in current()['state']['activities'][::-1]if a['id']in overflow);click(next(w for w in current()['widgets']if w['tooltip']=='Show '+last['title']));wait(lambda:current()['selected']==last['id'],'selection beyond the former five-item limit')
+  for id in overflow:call('Remove','(s)',[id])
+  wait(lambda:not any(a['id']in overflow for a in current()['state']['activities']),'overflow cleanup')
+  print('PASS actual horizontal navigation reaches activities beyond the old five-item limit',flush=True)
   brief=wait(lambda:next((w for w in current()['widgets']if w.get('button')and w['label']=='Now Brief'and w['height']>0),None),'Now Brief pointer target');click(brief);wait(lambda:current()['selected']=='brief','native Now Brief selected');wait(lambda:any('Today' in w['label']or'Fixture track'in w['label']for w in current()['widgets']),'native Now Brief content')
   task=subprocess.Popen([str(repo/'target/debug/velapulse'),'run','Pointer task','--','/usr/bin/sleep','30'],env=driver_env)
   try:

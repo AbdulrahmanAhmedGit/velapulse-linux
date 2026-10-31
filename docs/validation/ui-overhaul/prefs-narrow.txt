@@ -1,0 +1,4 @@
+Running real input mode: standalone
+PASS adaptive preferences: collapsed sidebar, Ctrl+F, global row/custom size search, actual controls and persistence
+
+PASS private configuration persisted across service restart; host installation untouched

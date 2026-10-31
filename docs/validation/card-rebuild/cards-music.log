@@ -1,0 +1,11 @@
+Running real input mode: music
+PASS actual input: player chooser, pause, pointer drag and keyboard seek
+PASS actual input: native file chooser, LRC attachment, lyric synchronization and Follow
+PASS actual input: default output, volume, mute, Next and stable selection
+
+PASS music identity and open lyrics survive unrelated activity insertion/removal
+PASS actual timer pause, preserved focused target, keyboard resume and reset
+PASS actual horizontal navigation reaches activities beyond the old five-item limit
+PASS actual native pointer: Now Brief open and owned-task selection/cancellation
+PASS production native renderer: mapped layer surface, pill expand, player chooser, transport, seek and Escape collapse
+PASS private configuration persisted across service restart; host installation untouched

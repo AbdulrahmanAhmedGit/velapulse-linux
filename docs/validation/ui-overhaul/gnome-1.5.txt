@@ -1,0 +1,6 @@
+PASS private stock GNOME logical output scale: 1.5
+PASS card appearance: Liquid Glass has a translucent background; Dark restores an opaque background.
+PASS stock GNOME Phase 3/4 weather, attention card and Now Brief content/actions/screenshots; weather test cache and synthetic agent UI event.
+PASS gnome layout matrix: nine pill types, short/long text, 18px font, Arabic RTL, three sizes, agent states, small/large cards; balanced padding, centered icons/actions, >=32px targets, bounded labels; actual pointer expansion and keyboard Escape
+PASS GNOME real EIS pointer: expand, transport, forecast selection, Now Brief and agent selection; keyboard forecast scroll/Home/End and Escape. No widget activation calls in this mode.
+PASS stock GNOME 50: extension ACTIVE; expands/collapses, pauses fixture playback, opens lyrics/audio; no extension errors. Input mode: EIS event delivery

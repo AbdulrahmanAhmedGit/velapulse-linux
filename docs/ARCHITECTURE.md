@@ -22,3 +22,9 @@ Both renderers share `extension/presentation.js` for activity categories, displa
 Phase 1–2 separates MPRIS (`src/music.rs`), safe normalized artwork (`src/artwork.rs`), local LRC (`src/lyrics.rs`), opt-in accounting (`src/history.rs`) and bounded audio tools (`src/audio.rs`). Activities carry optional provider-owned `music` details. `extension/music-state.js` shares selection, lyrics and color rules; GTK and St controls live in toolkit-specific modules. These are implemented music responsibilities, not speculative provider frameworks for future phases. Configuration and history are separate: disabling collection preserves existing records until the user clears them.
 
 Phase 3–4 adds `weather.rs` (fixed-host API, validated forecast/cache/notices), `brief.rs` (local time/composition), `developer.rs` (bounded persistent session state and notifications) and `tasks.rs` (explicit owned command groups / Codex JSONL wrapper). Renderers share `context-state.js` for plain text and unit/timezone presentation; business state remains Rust-owned. `context-preferences.js` provides opt-in configuration and reviewable Claude hook management. `integrations/claude-hook.py` strips private payload fields; `claude-setup.py` merges only its observer entries, registers ownership and backs up changes. No general-purpose agent RPC server, transcript crawler or permission broker is introduced.
+
+The product UI overhaul centralizes semantic tokens in `layout.js`, generates
+separate native stylesheets, extracts keyed widget reconciliation to `card-tree.js`
+and indexes existing Adw settings rows through `settings-search.js`. Preferences
+uses an adaptive OverlaySplitView, preserving the existing host/input ownership
+contract. Rust and D-Bus state remain authoritative. See DESIGN_SYSTEM.md.

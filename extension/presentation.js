@@ -41,8 +41,8 @@ export function present(a) {
     if(type==='developer'&&a?.developer?.state==='waiting'){p.accent='#f0bd7e';p.icon='dialog-warning-symbolic';}
     if(type==='media'&&a.music){p.accent=musicColor(a);p.tint=a.music.color||p.tint;}
     const progress = Math.max(0, Math.min(1, a?.progress ?? 0));
-    let title = a?.title ?? 'Make room for the moment';
-    let subtitle = a?.description || 'Your live activities, in one quiet place.';
+    let title = a?.title?.trim() || (type==='media'?'Unknown track':type==='idle'?'Your activities':'Live activity');
+    let subtitle = a?.description || 'Start a timer or choose an activity below.';
     let compact = type === 'idle' ? 'VelaPulse' : title;
     let detail = type === 'idle' ? 'Ready when you are' : a?.status === 'paused' ? 'Paused' : p.label;
     if(type==='developer'&&a?.developer){const d=a.developer;detail=`${d.state} · ${clock(d.elapsed)}`;const symbols={waiting:'dialog-warning-symbolic',failed:'dialog-error-symbolic',completed:'emblem-ok-symbolic',cancelled:'process-stop-symbolic',disconnected:'network-offline-symbolic'};p.icon=symbols[d.state]??p.icon;}
@@ -53,13 +53,13 @@ export function present(a) {
     if (type === 'timer' || type === 'stopwatch') {
         metric = timeText(a.description);
         compact = metric;
-        subtitle = a.status === 'completed' ? 'Time is up. Take a breath.' : a.status === 'paused' ? 'Paused · ready when you are' : type === 'timer' ? 'A little focus goes a long way.' : 'Every moment counts.';
+        subtitle = a.status === 'completed' ? 'Finished' : a.status === 'paused' ? 'Paused' : 'Running';
         detail = a.status === 'completed' ? 'Complete' : a.status === 'paused' ? 'Paused' : p.label;
     } else if (type === 'battery') {
         metric = `${Math.round(progress * 100)}%`;
         compact = metric;
         detail = a.description.split('·')[1]?.trim() || 'Battery';
-        title = a.status === 'warning' ? 'Time to plug in' : progress >= .99 ? 'Ready to go' : 'Power for what’s next';
+        title = a.status === 'warning' ? 'Low battery' : 'Battery';
         subtitle = a.description;
     } else if (type === 'volume') {
         const level = Number(a.description.match(/Volume:\s*([\d.]+)/)?.[1]);

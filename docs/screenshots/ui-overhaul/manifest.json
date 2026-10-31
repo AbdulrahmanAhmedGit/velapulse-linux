@@ -1,0 +1,417 @@
+{
+  "baseline": "7ee1ab6",
+  "branch": "refactor/product-ui-overhaul",
+  "notes": "Unedited compositor captures, not mockups. Fixture peers and cached weather are test data. Native activity screenshots match 723e7c5; preferences captures match f0cc723, with subsequent search-only refinements. Capture_source is a development path, not a shipped dependency.",
+  "source_hashes": {
+    "extension/layout.js": "ec8644d638c8791e2ca7e88a4aac2cddee519091b0c71d5e7ef8b8e5407c6393",
+    "extension/extension.js": "bdc6d737fa9451a6c41291be6f214a5ced58161a179c403dcf393b43a62b1753",
+    "backends/layer-shell.js": "47a030c9b5eeb461e4cb3ce78bedd47a353187e01426e23c64d1687938eb4172",
+    "extension/preferences.js": "7bc51561e61cea75668b2353e0a186efe52351e5d8b4263649487aa5ef2c26f9",
+    "extension/settings-search.js": "28021f2c4cd32f0ad2c2179c7befb6d9f9bf9c2c8edfafa1f3e621a41d119a1f",
+    "scripts/generate-layout-css.mjs": "2dbea84fa813e3601019c704cc7207dce168807d8e25de6f60a02e65d666b250"
+  },
+  "captures": [
+    {
+      "file": "gtk/gtk-idle-pill-preview.png",
+      "sha256": "ff9d6e799c701ff3641d045aac39a47a73bc93fb728b3dc2d67e2d88c5d7a0c9",
+      "capture_source": "target/ui-scale-1/gtk-idle-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-idle-card-preview.png",
+      "sha256": "3c60a546eeb8d88f92011294bd23d84609809cbf839098674aea4945734d0611",
+      "capture_source": "target/ui-scale-1/gtk-idle-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-music-pill-preview.png",
+      "sha256": "a417ce9a42f5fed5d9a9e41b9e86fbe2705c70baa64b0e85bcb0af09380195f9",
+      "capture_source": "target/ui-scale-1/gtk-music-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-music-card-preview.png",
+      "sha256": "e71cce829d6625e146165a363ed9e693c2c98fed14ebf4be692a330e55a49c33",
+      "capture_source": "target/ui-scale-1/gtk-music-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-weather-pill-preview.png",
+      "sha256": "3f15d2e1a83311a492b63770d605a8cd3981ec41a318143488f7a80f61bcaa6e",
+      "capture_source": "target/ui-scale-1/gtk-weather-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-weather-card-preview.png",
+      "sha256": "fa24dbc8a8bd33b15aadb062777b925c3c0e42f9e6c6ac722f69a18b9c317e10",
+      "capture_source": "target/ui-scale-1/gtk-weather-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-brief-pill-preview.png",
+      "sha256": "1d248fba5ebaa1a85f123c3f897549e538624f10c8ff346126f0b2d8f5b0fe68",
+      "capture_source": "target/ui-scale-1/gtk-brief-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-brief-card-preview.png",
+      "sha256": "086fd682d6411d597a0da1064d9454879758ed31460d2f7e743a93aad689ada5",
+      "capture_source": "target/ui-scale-1/gtk-brief-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-developer-pill-preview.png",
+      "sha256": "0faac115b1fe102c00247f597960be338fa9d4d995a1b3e523ab18b829c97645",
+      "capture_source": "target/ui-scale-1/gtk-developer-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-developer-card-preview.png",
+      "sha256": "f8e30c9fdea05686bf76cb1c0756efcd2410d4f02e886e8bcdd4288feb5a0243",
+      "capture_source": "target/ui-scale-1/gtk-developer-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-timer-pill-preview.png",
+      "sha256": "b53f8910f921ffcbdbc69c2656a945936f6f359579d965897b699fd29e2e593f",
+      "capture_source": "target/ui-scale-1/gtk-timer-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-timer-card-preview.png",
+      "sha256": "a6d33fe327b29208c2c46593422b485fdda5fa9047671aafca6a069598a77638",
+      "capture_source": "target/ui-scale-1/gtk-timer-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-stopwatch-pill-preview.png",
+      "sha256": "3e704ec7f378e78f30c2a7e5ab3114cd470c020fdb5f87db9ee6e0e4c1fdb25c",
+      "capture_source": "target/ui-scale-1/gtk-stopwatch-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-stopwatch-card-preview.png",
+      "sha256": "9034634ce49ac036b0cef04215b6d8108f127de8a52c88fac81f18ed148cb646",
+      "capture_source": "target/ui-scale-1/gtk-stopwatch-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-battery-pill-preview.png",
+      "sha256": "01de05ca9e140d136f7fb16da25c85d06c1455e2507fc7b832928fa3d0e5281a",
+      "capture_source": "target/ui-scale-1/gtk-battery-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-battery-card-preview.png",
+      "sha256": "06b2ed7457c9291dbb47e6f146bd9249230ecb4ba7908c6081ac608e01ab8c94",
+      "capture_source": "target/ui-scale-1/gtk-battery-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-volume-pill-preview.png",
+      "sha256": "da99034ab15ea1b3478f76212243f7219e530a91a29204c636066781e2f00aad",
+      "capture_source": "target/ui-scale-1/gtk-volume-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-volume-card-preview.png",
+      "sha256": "8182dca4c6ec7d6950f416be922aed413679bb9143bd1b535e7064dd97e4d57a",
+      "capture_source": "target/ui-scale-1/gtk-volume-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-long-pill-preview.png",
+      "sha256": "002b7e0415e074cf5ed3c997db8518dc271bf15cecb77652933c2684828c6011",
+      "capture_source": "target/ui-scale-1/gtk-long-pill-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-rtl-pill-preview.png",
+      "sha256": "246456851e6c1de8bb3aecd1f65104be4ad392c2d1e6f88291d0552ec3be1bb9",
+      "capture_source": "target/ui-scale-1/gtk-rtl-pill-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-reduced-motion-preview.png",
+      "sha256": "086fd682d6411d597a0da1064d9454879758ed31460d2f7e743a93aad689ada5",
+      "capture_source": "target/ui-scale-1/gtk-reduced-motion-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-large-card-preview.png",
+      "sha256": "16d5ca5ad3bc5c2689d4410b92d8586b72920ec3d34a625b9a41aae85db8eb85",
+      "capture_source": "target/ui-scale-1/gtk-large-card-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/gtk-small-card-preview.png",
+      "sha256": "e112b323f02ffae8d5a9fc92805ad2800d4cc12978ca03e0c60a02119e6f3cff",
+      "capture_source": "target/ui-scale-1/gtk-small-card-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-idle-pill-preview.png",
+      "sha256": "45e0f33a8762093538f707c2b40700795430cd9609cf841bc864ec4f26d80087",
+      "capture_source": "target/gnome-final/gnome-idle-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-idle-card-preview.png",
+      "sha256": "2b5af3b85adc70e5b754cf8e7b89412d996ea051ccaf066663a6213ed0de3d8e",
+      "capture_source": "target/gnome-final/gnome-idle-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-music-pill-preview.png",
+      "sha256": "4171556db56b87568af699f7d65e4b0f8eb70131a5e40f55fa07314340eef072",
+      "capture_source": "target/gnome-final/gnome-music-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-music-card-preview.png",
+      "sha256": "531c2b4b486d7c1eaeda6d2c93b9d8590bb8cfe183cd3bbef332f52eea258d38",
+      "capture_source": "target/gnome-final/gnome-music-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-weather-pill-preview.png",
+      "sha256": "14334c119e4a0f6fd6cf7a0b4df3775cfa6581b27c800eda433d7a297b47315d",
+      "capture_source": "target/gnome-final/gnome-weather-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-weather-card-preview.png",
+      "sha256": "a99453c5f92e6efb8deb9b996907b8ec7e0543483bfe47e088330bc737b4df55",
+      "capture_source": "target/gnome-final/gnome-weather-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-brief-pill-preview.png",
+      "sha256": "57c9ec5df7cb96515b9636f8c9c78736707a965b748d7eb8a1ad9b5b7ce9233c",
+      "capture_source": "target/gnome-final/gnome-brief-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-brief-card-preview.png",
+      "sha256": "58c77438cef993517297aff183e7a274ea5fc255aa9d73f605b75776b3a9f2d4",
+      "capture_source": "target/gnome-final/gnome-brief-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-developer-pill-preview.png",
+      "sha256": "a759e2ccccf42515cc313cbc876e960007e0c5df4f8a9304b4965a9baa1a0682",
+      "capture_source": "target/gnome-final/gnome-developer-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-developer-card-preview.png",
+      "sha256": "ffd35a3ca664443f8d00307e8ddac5c4757aafd3afa5d7984bf38a7da151df31",
+      "capture_source": "target/gnome-final/gnome-developer-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-timer-pill-preview.png",
+      "sha256": "f07c3bcb8d6b2e277f24c8b82b16d09c1cd01831b1b2a00104ecbabc1f12ad2e",
+      "capture_source": "target/gnome-final/gnome-timer-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-timer-card-preview.png",
+      "sha256": "ba611c4dda1b747bc2a6293914411500df84a6e973f0d66101a52ef178527d33",
+      "capture_source": "target/gnome-final/gnome-timer-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-stopwatch-pill-preview.png",
+      "sha256": "6f835eeba511e142fd529f98f6521a6c3702d01d48e8a0d32c5991e9f0adcedf",
+      "capture_source": "target/gnome-final/gnome-stopwatch-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-stopwatch-card-preview.png",
+      "sha256": "271a9ea7d8bd549416f5d8ffa6cdcbb90a8c6cec2a053ef01dc40ebb4196ebb8",
+      "capture_source": "target/gnome-final/gnome-stopwatch-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-battery-pill-preview.png",
+      "sha256": "026731d124b5fec878ba7a0bf41e3a771194e82b24070b96b2b5a9b08d1690b8",
+      "capture_source": "target/gnome-final/gnome-battery-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-battery-card-preview.png",
+      "sha256": "f17192cd40ff3239d10ea1e5b87b8a248da400318b0f8de64451866d077a884e",
+      "capture_source": "target/gnome-final/gnome-battery-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-volume-pill-preview.png",
+      "sha256": "80f3e23c23cd92c76e4d82bf71509f135f1212aed216c31660f9f9245ea99b1e",
+      "capture_source": "target/gnome-final/gnome-volume-pill-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-volume-card-preview.png",
+      "sha256": "b24b785831c8d1e374f85185cb5016179e182d1a4641e5588619021cd20179b9",
+      "capture_source": "target/gnome-final/gnome-volume-card-preview.png",
+      "provenance": "Production native renderer, private compositor, UI-only deterministic fixtures. Native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-long-pill-preview.png",
+      "sha256": "4cec6b296e81d314fa80679ec0dcf0d4412e79927b2171fae03693a5839bfe40",
+      "capture_source": "target/gnome-final/gnome-long-pill-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-rtl-pill-preview.png",
+      "sha256": "f208a148e6a0a1d24dcad6c5a120f327e768c03910b6f36843becdb94eb25cc6",
+      "capture_source": "target/gnome-final/gnome-rtl-pill-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-reduced-motion-preview.png",
+      "sha256": "7d4b528f03d3750d91ef3fa1a603768d4b800442ab6485004ab355d197429566",
+      "capture_source": "target/gnome-final/gnome-reduced-motion-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-large-card-preview.png",
+      "sha256": "23160452c338b62d6f6e25259ed435ed64b42821692ff8d20263711291f17f4e",
+      "capture_source": "target/gnome-final/gnome-large-card-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/gnome-small-card-preview.png",
+      "sha256": "f2a5617b4f2d1542394d5551e0fdd20ee726c668b096d970b463730812d4a9af",
+      "capture_source": "target/gnome-final/gnome-small-card-preview.png",
+      "provenance": "Private real-input layout matrix, native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/1.25-gtk-rtl-pill-preview.png",
+      "sha256": "9cfa7b9b4ae7b9aeb549f0edf6ebecfc7e637b891653e0840b1ba53496b6fc3e",
+      "capture_source": "target/ui-scale-1.25/gtk-rtl-pill-preview.png",
+      "provenance": "Actual private output scale 1.25; fixture data, native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/1.25-gtk-weather-card-preview.png",
+      "sha256": "35a949c61b15c7c2f59a12feafb05440192e0b416129d6e499e212bdebcda94c",
+      "capture_source": "target/ui-scale-1.25/gtk-weather-card-preview.png",
+      "provenance": "Actual private output scale 1.25; fixture data, native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/1.5-gtk-rtl-pill-preview.png",
+      "sha256": "044e57fbd2ad4f5facaf31d86432ca4f245500850d6a7f30b6d3d808807eb230",
+      "capture_source": "target/ui-scale-1.5/gtk-rtl-pill-preview.png",
+      "provenance": "Actual private output scale 1.5; fixture data, native source matches 723e7c5."
+    },
+    {
+      "file": "gtk/1.5-gtk-weather-card-preview.png",
+      "sha256": "144eeaaa1235e1a16939756a221517c3f89cd0d746b06b02c3d4d56cbd6434ef",
+      "capture_source": "target/ui-scale-1.5/gtk-weather-card-preview.png",
+      "provenance": "Actual private output scale 1.5; fixture data, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/1.25-gnome-rtl-pill-preview.png",
+      "sha256": "acb0cc0df524379ca45a4658838c64a96854d330290d9bd74841de2912889da9",
+      "capture_source": "target/gnome-1.25/gnome-rtl-pill-preview.png",
+      "provenance": "Actual private output scale 1.25; fixture data, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/1.25-gnome-weather-card-preview.png",
+      "sha256": "a3ab11dda1f4c000cde9d663b00b9425d16e2e841bfbb905e8853a91dcae4c26",
+      "capture_source": "target/gnome-1.25/gnome-weather-card-preview.png",
+      "provenance": "Actual private output scale 1.25; fixture data, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/1.5-gnome-rtl-pill-preview.png",
+      "sha256": "f15883ae22415fff71dfafba31d0793ce5f1b1ee28f87d5bb4e183a25599bd3e",
+      "capture_source": "target/gnome-1.5/gnome-rtl-pill-preview.png",
+      "provenance": "Actual private output scale 1.5; fixture data, native source matches 723e7c5."
+    },
+    {
+      "file": "shell/1.5-gnome-weather-card-preview.png",
+      "sha256": "93fb19276a90bb10e1ef5c3f7c30412bf0f9a54973008a7c04b9cb581f6f6888",
+      "capture_source": "target/gnome-1.5/gnome-weather-card-preview.png",
+      "provenance": "Actual private output scale 1.5; fixture data, native source matches 723e7c5."
+    },
+    {
+      "file": "before/gtk-music-pill-preview.png",
+      "sha256": "2a9a2ad90cd2613c99e9189c820b31a6731578d1d034bc0994f5ae7a1db9c4e2",
+      "capture_source": "target/ui-before/gtk-music-pill-preview.png",
+      "provenance": "Baseline 7ee1ab6, actual GTK capture with deterministic layout fixtures."
+    },
+    {
+      "file": "before/gtk-music-card-preview.png",
+      "sha256": "72e799eb13690597e740893474c3fee8cee5063605bb4fea7096c5da23d3f684",
+      "capture_source": "target/ui-before/gtk-music-card-preview.png",
+      "provenance": "Baseline 7ee1ab6, actual GTK capture with deterministic layout fixtures."
+    },
+    {
+      "file": "before/gtk-weather-card-preview.png",
+      "sha256": "088b023644b602865c381a7a9d39c4874b600faea9abfb7548513d5e2307dd28",
+      "capture_source": "target/ui-before/gtk-weather-card-preview.png",
+      "provenance": "Baseline 7ee1ab6, actual GTK capture with deterministic layout fixtures."
+    },
+    {
+      "file": "before/gtk-brief-card-preview.png",
+      "sha256": "4bd4e8fe20a415f7c785a90f0b5eef2bd8c83babe31ca9ee920d654a05b1bf0d",
+      "capture_source": "target/ui-before/gtk-brief-card-preview.png",
+      "provenance": "Baseline 7ee1ab6, actual GTK capture with deterministic layout fixtures."
+    },
+    {
+      "file": "before/preferences.png",
+      "sha256": "c21cea81b8632d53d8f2ffe7985647f19e400406b47febce2d328a26419bb617",
+      "capture_source": "target/prefs-before/liquid-glass.png",
+      "provenance": "Baseline 7ee1ab6 standalone preferences; actual pointer/keyboard-selected Glass appearance."
+    },
+    {
+      "file": "preferences/dark.png",
+      "sha256": "ad5a7eec4d79c381072dbd6e44564cc2340522bb4643928a7a96c9324b508e65",
+      "capture_source": "target/prefs-theme-0/liquid-glass.png",
+      "provenance": "Native preferences matching f0cc723; actual input selects theme, 940px window."
+    },
+    {
+      "file": "preferences/glass.png",
+      "sha256": "e68aecdefe8d734809231fceb91325ef7d6974a8741017ba324d72264458ce82",
+      "capture_source": "target/prefs-theme-1/liquid-glass.png",
+      "provenance": "Native preferences matching f0cc723; actual input selects theme, 940px window."
+    },
+    {
+      "file": "preferences/light.png",
+      "sha256": "c8027986318b69e2cbf325e8d2f564b0f4de0c272f74ca16573d174353aa33ac",
+      "capture_source": "target/prefs-theme-2/liquid-glass.png",
+      "provenance": "Native preferences matching f0cc723; actual input selects theme, 940px window."
+    },
+    {
+      "file": "preferences/narrow.png",
+      "sha256": "8da55165aa88b152157961ef63eb05b096c877963e626b097250cbeb0e2b2f08",
+      "capture_source": "target/prefs-narrow/liquid-glass.png",
+      "provenance": "Actual 640px native preferences: Ctrl+F, global search, native dropdown and persistence."
+    },
+    {
+      "file": "gtk/weather-dark.png",
+      "sha256": "52c0ea602cc8b9fefb0c7b1a686b7edc7a5b167c6f68d6d84289744fa299522a",
+      "capture_source": "target/ui-scale-1/native-weather-dark.png",
+      "provenance": "Running layer-shell renderer, deterministic cached weather fixture, actual theme configuration."
+    },
+    {
+      "file": "gtk/weather-light.png",
+      "sha256": "311ba98bcfa618e43b93891785a3dd9de125433fd80e9770374f16bf9db88bd6",
+      "capture_source": "target/ui-scale-1/native-weather-light.png",
+      "provenance": "Running layer-shell renderer, deterministic cached weather fixture, actual theme configuration."
+    },
+    {
+      "file": "gtk/weather-glass.png",
+      "sha256": "27d956c2d57fe02d75eeccb7fc0171df935518d23cabd27c772e10835b302a42",
+      "capture_source": "target/ui-scale-1/native-weather-glass.png",
+      "provenance": "Running layer-shell renderer, deterministic cached weather fixture, actual theme configuration."
+    },
+    {
+      "file": "gtk/music-real-input.png",
+      "sha256": "ea39f36d6ced3a1eebc47cb2bd892cca38812dc50a0b0c56d79ed569a6212a92",
+      "capture_source": "target/music-input/native-music-card.png",
+      "provenance": "Running production GTK music card, actual player/transport/seek against MPRIS test peers."
+    }
+  ]
+}

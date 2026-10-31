@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {cardIdentity,controlsTree,navigationTree} from '../extension/card-state.js';
+import {createContextCard} from '../extension/card-tree.js';
+const playing={id:'timer',title:'Timer',description:'00:04:32',status:'active',controls:['pause','reset']};
+const paused={...playing,status:'paused',controls:['resume','reset']};
+assert.equal(cardIdentity(playing),cardIdentity(paused));
+assert.notEqual(cardIdentity(playing),cardIdentity({...playing,id:'stopwatch'}));
+const ui={create:n=>({type:n.type}),update:(w,n)=>{w.action=n.action;},children:(w,c)=>{w.children=c;},remove:()=>{}};
+const control=createContextCard(ui,controlsTree,playing,()=>{}),toggle=control.widget.children.find(w=>w.action==='pause');
+control.update(paused);assert.equal(control.widget.children.find(w=>w.action==='resume'),toggle);assert.equal(toggle.action,'resume');
+control.update(playing);assert.equal(control.widget.children.find(w=>w.action==='pause'),toggle);assert.equal(toggle.action,'pause');
+const activities=Array.from({length:12},(_,i)=>({...playing,id:'external:'+i,title:'Task '+i}));
+const navigation=navigationTree({activities,selected:activities[10].id});
+assert.equal(navigation.children[0].children.length,12,'Every activity must be reachable');
+assert.match(navigation.children[0].children[10].style,/selected/);
+console.log('PASS stable card identity, in-place pause/resume commands and uncapped activity navigation');
